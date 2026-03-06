@@ -197,7 +197,7 @@ export default function OnboardingPage() {
               <div className="space-y-5">
                 <div>
                   <h1 className="font-display text-2xl font-bold">Add photos</h1>
-                  <p className="text-sm text-muted-foreground">Add up to 6 photos. First one is your main photo.</p>
+                  <p className="text-sm text-muted-foreground">Add at least 3 photos (up to 6). First one is your main photo.</p>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {Array.from({ length: 6 }).map((_, i) => (

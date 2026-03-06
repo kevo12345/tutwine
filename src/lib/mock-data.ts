@@ -6,7 +6,7 @@ export interface MockProfile {
   bio: string;
   interests: string[];
   photos: string[];
-  distance: number;
+  distance: number | null;
   city: string;
   state: string;
   verified: boolean;

@@ -32,7 +32,9 @@ export function ProfileCard({ profile, style, className }: ProfileCardProps) {
         </div>
         <div className="mt-1 flex items-center gap-1 text-sm opacity-90">
           <MapPin className="h-3.5 w-3.5" />
-          <span>Within {profile.distance} km · {profile.city}</span>
+          <span>
+            {profile.distance != null ? `${profile.distance} km away` : profile.city || profile.state || "Nearby"}
+          </span>
         </div>
         <p className="mt-2 line-clamp-2 text-sm opacity-80">{profile.bio}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
