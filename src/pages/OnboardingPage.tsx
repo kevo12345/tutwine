@@ -186,6 +186,10 @@ export default function OnboardingPage() {
                   <Textarea placeholder="A few words about you..." value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} maxLength={300} rows={3} />
                   <p className="text-xs text-muted-foreground text-right">{profile.bio.length}/300</p>
                 </div>
+                <div className="space-y-2">
+                  <Label>Phone number *</Label>
+                  <Input type="tel" placeholder="+254 700 000000" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+                </div>
               </div>
             )}
 
