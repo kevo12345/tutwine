@@ -36,8 +36,8 @@ export default function DiscoverPage() {
 
   const likesUsed = usage?.likes_count ?? 0;
   const viewsUsed = usage?.profile_views ?? 0;
-  const likesLeft = limits.likesPerDay === Infinity ? "∞" : Math.max(0, limits.likesPerDay - likesUsed);
-  const viewsLeft = limits.viewsPerDay === Infinity ? "∞" : Math.max(0, limits.viewsPerDay - viewsUsed);
+  const likesLeft = limits.likes === Infinity ? "∞" : Math.max(0, limits.likes - likesUsed);
+  const viewsLeft = limits.profileViews === Infinity ? "∞" : Math.max(0, limits.profileViews - viewsUsed);
 
   useEffect(() => {
     if (!user) return;
