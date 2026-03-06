@@ -57,6 +57,7 @@ export default function OnboardingPage() {
             : [genderMap[profile.interestedIn]].filter(Boolean) as any,
           bio: profile.bio,
           photos: profile.photos,
+          phone: profile.phone,
           interests: profile.interests,
           state: profile.state,
           city: profile.city,
