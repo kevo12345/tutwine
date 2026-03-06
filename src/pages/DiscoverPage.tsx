@@ -17,7 +17,7 @@ type Profile = Tables<"profiles">;
 
 export default function DiscoverPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { limits } = useSubscription();
   const { usage, increment } = useDailyUsage();
   const [profiles, setProfiles] = useState<Profile[]>([]);
