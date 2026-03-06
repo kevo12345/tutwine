@@ -9,7 +9,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import OnboardingPage from "./pages/OnboardingPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DiscoverPage from "./pages/DiscoverPage";
 import MatchesPage from "./pages/MatchesPage";
 import ChatListPage from "./pages/ChatListPage";
