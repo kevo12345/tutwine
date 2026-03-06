@@ -27,7 +27,7 @@ const tiers = [
   },
   {
     key: "pro" as const,
-    features: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts"],
+    features: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Video chat"],
     popular: false,
   },
 ];
