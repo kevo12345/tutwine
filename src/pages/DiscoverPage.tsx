@@ -129,7 +129,7 @@ export default function DiscoverPage() {
     return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   };
 
-  const myProfile = user ? profiles.find(p => p.user_id === user.id) : null;
+  
 
   const profileForCard = currentProfile ? {
     id: currentProfile.user_id,
