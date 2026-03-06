@@ -8,6 +8,7 @@ import { Heart, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { lovable } from "@/integrations/lovable/index";
 
 export default function SignupPage() {
   const navigate = useNavigate();
