@@ -89,7 +89,7 @@ export default function MatchesPage() {
           <div className="flex flex-col items-center py-20 text-center">
             <Heart className="h-16 w-16 text-muted-foreground/30" />
             <h2 className="mt-4 font-display text-xl font-bold">No matches yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Keep swiping to find your match!</p>
+            <p className="mt-2 text-sm text-muted-foreground">Keep mingling to find your match!</p>
           </div>
         ) : (
           <>
