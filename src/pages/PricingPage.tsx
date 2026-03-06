@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowLeft, Crown, Zap, Star } from "lucide-react";
+import { Check, ArrowLeft, Crown, Zap, Star, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TIER_PRICES } from "@/lib/constants";
 import { toast } from "sonner";
