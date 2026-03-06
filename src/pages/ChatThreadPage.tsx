@@ -1,29 +1,120 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, MoreVertical, Shield, Flag } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Shield, Flag, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MOCK_MATCHES, MOCK_MESSAGES } from "@/lib/mock-data";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Tables } from "@/integrations/supabase/types";
+
+type Message = Tables<"messages">;
 
 export default function ChatThreadPage() {
   const navigate = useNavigate();
   const { matchId } = useParams();
-  const match = MOCK_MATCHES.find((m) => m.id === matchId) ?? MOCK_MATCHES[0];
-  const messages = MOCK_MESSAGES[match.id] ?? [];
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
-  const [localMessages, setLocalMessages] = useState(messages);
+  const [otherProfile, setOtherProfile] = useState<Tables<"profiles"> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = () => {
-    if (!newMsg.trim()) return;
-    setLocalMessages((prev) => [
-      ...prev,
-      { id: `new-${Date.now()}`, senderId: "me", content: newMsg, type: "text" as const, createdAt: "Now", read: false },
-    ]);
+  useEffect(() => {
+    if (!matchId || !user) return;
+
+    const loadData = async () => {
+      // Get the match to find the other user
+      const { data: match } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("id", matchId)
+        .single();
+
+      if (!match) { navigate("/chat"); return; }
+
+      const otherUserId = match.user_a === user.id ? match.user_b : match.user_a;
+
+      // Fetch other user's profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", otherUserId)
+        .single();
+      setOtherProfile(profile);
+
+      // Fetch messages
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("created_at", { ascending: true });
+      setMessages(msgs ?? []);
+      setLoading(false);
+    };
+    loadData();
+
+    // Subscribe to realtime messages
+    const channel = supabase
+      .channel(`messages:${matchId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `match_id=eq.${matchId}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [matchId, user, navigate]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !user || !matchId) return;
+    const content = newMsg.trim();
     setNewMsg("");
+
+    await supabase.from("messages").insert({
+      match_id: matchId,
+      sender_id: user.id,
+      content,
+      type: "text",
+    });
   };
+
+  const handleBlock = async () => {
+    if (!user || !otherProfile) return;
+    await supabase.from("blocked_users").insert({
+      blocker_id: user.id,
+      blocked_id: otherProfile.user_id,
+    });
+    toast.success("User blocked");
+    navigate("/chat");
+  };
+
+  const handleReport = async () => {
+    if (!user || !otherProfile) return;
+    await supabase.from("reports").insert({
+      reporter_id: user.id,
+      target_user_id: otherProfile.user_id,
+      reason: "Reported from chat",
+    });
+    toast.success("Report submitted");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -33,11 +124,11 @@ export default function ChatThreadPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <Avatar className="h-10 w-10">
-          <AvatarImage src={match.profile.photos[0]} />
-          <AvatarFallback>{match.profile.displayName[0]}</AvatarFallback>
+          <AvatarImage src={otherProfile?.photos?.[0] ?? ""} />
+          <AvatarFallback>{otherProfile?.display_name?.[0] ?? "?"}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h2 className="font-medium">{match.profile.displayName}</h2>
+          <h2 className="font-medium">{otherProfile?.display_name ?? "User"}</h2>
           <p className="text-xs text-muted-foreground">Active now</p>
         </div>
         <DropdownMenu>
@@ -47,11 +138,10 @@ export default function ChatThreadPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => toast.info("Profile view coming soon")}>View Profile</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.success("User blocked")} className="text-destructive">
+            <DropdownMenuItem onClick={handleBlock} className="text-destructive">
               <Shield className="mr-2 h-4 w-4" /> Block User
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.success("Report submitted")} className="text-destructive">
+            <DropdownMenuItem onClick={handleReport} className="text-destructive">
               <Flag className="mr-2 h-4 w-4" /> Report
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -60,8 +150,11 @@ export default function ChatThreadPage() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {localMessages.map((msg) => {
-          const isMe = msg.senderId === "me";
+        {messages.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-8">Say hello! 👋</p>
+        )}
+        {messages.map((msg) => {
+          const isMe = msg.sender_id === user?.id;
           return (
             <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
@@ -69,12 +162,14 @@ export default function ChatThreadPage() {
               }`}>
                 <p className="text-sm">{msg.content}</p>
                 <p className={`mt-1 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                  {msg.createdAt} {isMe && msg.read && "✓✓"}
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {isMe && msg.read_at && " ✓✓"}
                 </p>
               </div>
             </div>
           );
         })}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input */}

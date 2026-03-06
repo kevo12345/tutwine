@@ -4,19 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Heart, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  if (user) { navigate("/discover", { replace: true }); return null; }
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Welcome back!");
     navigate("/discover");
   };
@@ -64,8 +76,8 @@ export default function LoginPage() {
                 Forgot password?
               </button>
             </div>
-            <Button type="submit" className="w-full gradient-warm border-0 text-primary-foreground shadow-glow">
-              Log In
+            <Button type="submit" className="w-full gradient-warm border-0 text-primary-foreground shadow-glow" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Log In"}
             </Button>
           </form>
           <div className="mt-6 text-center text-sm text-muted-foreground">

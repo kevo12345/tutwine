@@ -1,48 +1,126 @@
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { BadgeCheck } from "lucide-react";
-import { MOCK_MATCHES } from "@/lib/mock-data";
+import { BadgeCheck, Loader2, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Tables } from "@/integrations/supabase/types";
+
+interface ChatItem {
+  matchId: string;
+  profile: Tables<"profiles">;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unread: number;
+}
 
 export default function ChatListPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [chats, setChats] = useState<ChatItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data: matches } = await supabase
+        .from("matches")
+        .select("*")
+        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+        .order("created_at", { ascending: false });
+
+      if (!matches) { setLoading(false); return; }
+
+      const items: ChatItem[] = [];
+      for (const m of matches) {
+        const otherUserId = m.user_a === user.id ? m.user_b : m.user_a;
+        const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", otherUserId).single();
+        if (!profile) continue;
+
+        const { data: lastMsg } = await supabase
+          .from("messages")
+          .select("content, created_at")
+          .eq("match_id", m.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const { count } = await supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("match_id", m.id)
+          .neq("sender_id", user.id)
+          .is("read_at", null);
+
+        items.push({
+          matchId: m.id,
+          profile,
+          lastMessage: lastMsg?.content,
+          lastMessageAt: lastMsg?.created_at ? new Date(lastMsg.created_at).toLocaleDateString() : undefined,
+          unread: count ?? 0,
+        });
+      }
+      setChats(items);
+      setLoading(false);
+    };
+    load();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
       <div className="px-4 pt-4">
         <h1 className="mb-6 font-display text-2xl font-bold">Chat</h1>
-        <div className="space-y-1">
-          {MOCK_MATCHES.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => navigate(`/chat/${m.id}`)}
-              className="flex w-full items-center gap-3 rounded-2xl p-3 hover:bg-secondary transition-colors"
-            >
-              <Avatar className="h-14 w-14">
-                <AvatarImage src={m.profile.photos[0]} alt={m.profile.displayName} />
-                <AvatarFallback>{m.profile.displayName[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 text-left">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium">{m.profile.displayName}</span>
-                    {m.profile.verified && <BadgeCheck className="h-4 w-4 text-info" />}
+        {chats.length === 0 ? (
+          <div className="flex flex-col items-center py-20 text-center">
+            <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
+            <h2 className="mt-4 font-display text-xl font-bold">No conversations</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Match with someone to start chatting!</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {chats.map((c) => (
+              <button
+                key={c.matchId}
+                onClick={() => navigate(`/chat/${c.matchId}`)}
+                className="flex w-full items-center gap-3 rounded-2xl p-3 hover:bg-secondary transition-colors"
+              >
+                <Avatar className="h-14 w-14">
+                  <AvatarImage src={c.profile.photos?.[0] ?? ""} alt={c.profile.display_name ?? ""} />
+                  <AvatarFallback>{c.profile.display_name?.[0] ?? "?"}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">{c.profile.display_name}</span>
+                      {c.profile.verified && <BadgeCheck className="h-4 w-4 text-info" />}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{c.lastMessageAt}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{m.matchedAt}</span>
+                  <p className={`text-sm line-clamp-1 ${c.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                    {c.lastMessage ?? "Say hello! 👋"}
+                  </p>
                 </div>
-                <p className={`text-sm line-clamp-1 ${m.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                  {m.lastMessage}
-                </p>
-              </div>
-              {m.unread > 0 && (
-                <Badge className="gradient-warm border-0 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full flex items-center justify-center p-0">
-                  {m.unread}
-                </Badge>
-              )}
-            </button>
-          ))}
-        </div>
+                {c.unread > 0 && (
+                  <Badge className="gradient-warm border-0 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full flex items-center justify-center p-0">
+                    {c.unread}
+                  </Badge>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

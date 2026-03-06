@@ -4,21 +4,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Heart, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const { signUp, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "", displayName: "" });
 
-  const handleSignup = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  if (user) { navigate("/discover", { replace: true }); return null; }
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ageConfirmed) { toast.error("You must confirm you are 18+ to join."); return; }
     if (form.password !== form.confirmPassword) { toast.error("Passwords don't match."); return; }
     if (form.password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
+
+    setLoading(true);
+    const { error } = await signUp(form.email, form.password, form.displayName);
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Account created! Let's set up your profile.");
     navigate("/onboarding");
   };
@@ -45,6 +60,10 @@ export default function SignupPage() {
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input id="displayName" placeholder="How others will see you" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
             </div>
@@ -67,8 +86,8 @@ export default function SignupPage() {
                 I confirm that I am <strong>18 years or older</strong> and agree to the Terms of Service and Privacy Policy.
               </Label>
             </div>
-            <Button type="submit" className="w-full gradient-warm border-0 text-primary-foreground shadow-glow">
-              Create Account
+            <Button type="submit" className="w-full gradient-warm border-0 text-primary-foreground shadow-glow" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Account"}
             </Button>
           </form>
           <div className="mt-6 text-center text-sm text-muted-foreground">

@@ -3,19 +3,29 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Edit3, BadgeCheck, MapPin, Camera } from "lucide-react";
+import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { MOCK_PROFILES } from "@/lib/mock-data";
-
-const myProfile = {
-  ...MOCK_PROFILES[3],
-  displayName: "You",
-  bio: "Tech nerd who loves the outdoors 🏕️ Weekend warrior.",
-  photos: [MOCK_PROFILES[3].photos[0]],
-};
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { profile, loading } = useAuth();
+  const { tier } = useSubscription();
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const age = profile?.date_of_birth
+    ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / 31557600000)
+    : null;
 
   return (
     <AppLayout>
@@ -27,13 +37,12 @@ export default function ProfilePage() {
           </Button>
         </div>
 
-        {/* Profile header */}
         <div className="flex flex-col items-center text-center">
           <div className="relative">
             <div className="rounded-full p-1 gradient-warm">
               <Avatar className="h-28 w-28 border-4 border-card">
-                <AvatarImage src={myProfile.photos[0]} />
-                <AvatarFallback>ME</AvatarFallback>
+                <AvatarImage src={profile?.photos?.[0] ?? ""} />
+                <AvatarFallback>{profile?.display_name?.[0] ?? "?"}</AvatarFallback>
               </Avatar>
             </div>
             <button className="absolute bottom-0 right-0 rounded-full gradient-warm p-2 text-primary-foreground shadow-glow">
@@ -41,65 +50,68 @@ export default function ProfilePage() {
             </button>
           </div>
           <div className="mt-4 flex items-center gap-2">
-            <h2 className="font-display text-2xl font-bold">{myProfile.displayName}, {myProfile.age}</h2>
-            <BadgeCheck className="h-5 w-5 text-info" />
+            <h2 className="font-display text-2xl font-bold">{profile?.display_name}{age ? `, ${age}` : ""}</h2>
+            {profile?.verified && <BadgeCheck className="h-5 w-5 text-info" />}
           </div>
-          <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{myProfile.city}, {myProfile.state}</span>
-          </div>
-          <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={() => navigate("/profile/edit")}>
+          {(profile?.city || profile?.state) && (
+            <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5" />
+              <span>{[profile?.city, profile?.state].filter(Boolean).join(", ")}</span>
+            </div>
+          )}
+          <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={() => navigate("/onboarding")}>
             <Edit3 className="h-3.5 w-3.5" /> Edit Profile
           </Button>
         </div>
 
-        {/* Bio */}
-        <Card className="mt-6 border-0 shadow-card">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">About me</h3>
-            <p className="text-sm">{myProfile.bio}</p>
-          </CardContent>
-        </Card>
+        {profile?.bio && (
+          <Card className="mt-6 border-0 shadow-card">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">About me</h3>
+              <p className="text-sm">{profile.bio}</p>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Interests */}
-        <Card className="mt-3 border-0 shadow-card">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Interests</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {myProfile.interests.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {profile?.interests && profile.interests.length > 0 && (
+          <Card className="mt-3 border-0 shadow-card">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Interests</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.interests.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Photos */}
-        <Card className="mt-3 border-0 shadow-card">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Photos</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {myProfile.photos.map((p, i) => (
-                <div key={i} className="aspect-square overflow-hidden rounded-xl">
-                  <img src={p} alt="" className="h-full w-full object-cover" />
-                </div>
-              ))}
-              <button className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground hover:text-foreground">
-                <Camera className="h-6 w-6" />
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+        {profile?.photos && profile.photos.length > 0 && (
+          <Card className="mt-3 border-0 shadow-card">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Photos</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {profile.photos.map((p, i) => (
+                  <div key={i} className="aspect-square overflow-hidden rounded-xl">
+                    <img src={p} alt="" className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Subscription status */}
         <Card className="mt-3 border-0 shadow-card gradient-warm text-primary-foreground">
           <CardContent className="flex items-center justify-between p-4">
             <div>
-              <p className="text-sm font-medium opacity-90">Free Plan</p>
-              <p className="text-xs opacity-70">Upgrade for more features</p>
+              <p className="text-sm font-medium opacity-90 capitalize">{tier} Plan</p>
+              <p className="text-xs opacity-70">{tier === "free" ? "Upgrade for more features" : "You're on a premium plan"}</p>
             </div>
-            <Button size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90" onClick={() => navigate("/pricing")}>
-              Upgrade
-            </Button>
+            {tier === "free" && (
+              <Button size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90" onClick={() => navigate("/pricing")}>
+                Upgrade
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
