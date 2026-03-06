@@ -14,16 +14,371 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      daily_usage: {
+        Row: {
+          boosts_count: number | null
+          date: string
+          id: string
+          likes_count: number | null
+          profile_views: number | null
+          user_id: string
+        }
+        Insert: {
+          boosts_count?: number | null
+          date?: string
+          id?: string
+          likes_count?: number | null
+          profile_views?: number | null
+          user_id: string
+        }
+        Update: {
+          boosts_count?: number | null
+          date?: string
+          id?: string
+          likes_count?: number | null
+          profile_views?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          match_id: string
+          read_at: string | null
+          sender_id: string
+          type: Database["public"]["Enums"]["message_type"]
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          match_id: string
+          read_at?: string | null
+          sender_id: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          match_id?: string
+          read_at?: string | null
+          sender_id?: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          display_name: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          geohash: string | null
+          hide_distance: boolean | null
+          hide_state: boolean | null
+          id: string
+          interested_in: Database["public"]["Enums"]["gender_type"][] | null
+          interests: string[] | null
+          latitude: number | null
+          longitude: number | null
+          onboarding_complete: boolean | null
+          photos: string[] | null
+          preferred_age_max: number | null
+          preferred_age_min: number | null
+          preferred_distance_km: number | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          geohash?: string | null
+          hide_distance?: boolean | null
+          hide_state?: boolean | null
+          id?: string
+          interested_in?: Database["public"]["Enums"]["gender_type"][] | null
+          interests?: string[] | null
+          latitude?: number | null
+          longitude?: number | null
+          onboarding_complete?: boolean | null
+          photos?: string[] | null
+          preferred_age_max?: number | null
+          preferred_age_min?: number | null
+          preferred_distance_km?: number | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          geohash?: string | null
+          hide_distance?: boolean | null
+          hide_state?: boolean | null
+          id?: string
+          interested_in?: Database["public"]["Enums"]["gender_type"][] | null
+          interests?: string[] | null
+          latitude?: number | null
+          longitude?: number | null
+          onboarding_complete?: boolean | null
+          photos?: string[] | null
+          preferred_age_max?: number | null
+          preferred_age_min?: number | null
+          preferred_distance_km?: number | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      region_pricing: {
+        Row: {
+          basic_price: number
+          country: string
+          currency: string
+          id: string
+          plus_price: number
+          pro_price: number
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          basic_price?: number
+          country: string
+          currency?: string
+          id?: string
+          plus_price?: number
+          pro_price?: number
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          basic_price?: number
+          country?: string
+          currency?: string
+          id?: string
+          plus_price?: number
+          pro_price?: number
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          status: Database["public"]["Enums"]["report_status"]
+          target_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: Database["public"]["Enums"]["report_status"]
+          target_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+          target_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          currency: string | null
+          ends_at: string | null
+          id: string
+          price: number | null
+          provider: string | null
+          provider_sub_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          ends_at?: string | null
+          id?: string
+          price?: number | null
+          provider?: string | null
+          provider_sub_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          ends_at?: string | null
+          id?: string
+          price?: number | null
+          provider?: string | null
+          provider_sub_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      swipes: {
+        Row: {
+          action: Database["public"]["Enums"]["swipe_action"]
+          created_at: string
+          id: string
+          swiper_id: string
+          target_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["swipe_action"]
+          created_at?: string
+          id?: string
+          swiper_id: string
+          target_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["swipe_action"]
+          created_at?: string
+          id?: string
+          swiper_id?: string
+          target_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      gender_type: "man" | "woman" | "non-binary" | "other"
+      message_type: "text" | "emoji" | "image"
+      report_status: "pending" | "reviewed" | "resolved" | "dismissed"
+      subscription_status: "active" | "canceled" | "expired" | "past_due"
+      subscription_tier: "free" | "basic" | "plus" | "pro"
+      swipe_action: "like" | "pass"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +505,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      gender_type: ["man", "woman", "non-binary", "other"],
+      message_type: ["text", "emoji", "image"],
+      report_status: ["pending", "reviewed", "resolved", "dismissed"],
+      subscription_status: ["active", "canceled", "expired", "past_due"],
+      subscription_tier: ["free", "basic", "plus", "pro"],
+      swipe_action: ["like", "pass"],
+    },
   },
 } as const
