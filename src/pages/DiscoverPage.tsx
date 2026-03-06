@@ -17,7 +17,7 @@ type Profile = Tables<"profiles">;
 
 export default function DiscoverPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { limits } = useSubscription();
   const { usage, increment } = useDailyUsage();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -120,6 +120,17 @@ export default function DiscoverPage() {
     );
   }
 
+  // Haversine distance calculation
+  const calcDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  
+
   const profileForCard = currentProfile ? {
     id: currentProfile.user_id,
     displayName: currentProfile.display_name ?? "Unknown",
@@ -130,7 +141,9 @@ export default function DiscoverPage() {
     bio: currentProfile.bio ?? "",
     interests: currentProfile.interests ?? [],
     photos: (currentProfile.photos?.length ? currentProfile.photos : ["https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop"]) as string[],
-    distance: 0,
+    distance: (myProfile?.latitude && myProfile?.longitude && currentProfile.latitude && currentProfile.longitude)
+      ? calcDistanceKm(myProfile.latitude, myProfile.longitude, currentProfile.latitude, currentProfile.longitude)
+      : null,
     city: currentProfile.city ?? "",
     state: currentProfile.state ?? "",
     verified: currentProfile.verified ?? false,

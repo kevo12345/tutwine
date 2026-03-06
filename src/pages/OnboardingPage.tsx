@@ -22,14 +22,17 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState({
-    displayName: "", age: "", gender: "", interestedIn: "", bio: "",
+    displayName: "", age: "", gender: "", interestedIn: "", bio: "", phone: "",
     photos: [] as string[], interests: [] as string[],
     state: "", city: "",
   });
 
   const nextStep = async () => {
-    if (step === 0 && (!profile.displayName || !profile.age || !profile.gender)) {
+    if (step === 0 && (!profile.displayName || !profile.age || !profile.gender || !profile.phone)) {
       toast.error("Please fill in all required fields"); return;
+    }
+    if (step === 1 && profile.photos.length < 3) {
+      toast.error("Please upload at least 3 photos"); return;
     }
     if (step < STEPS.length - 1) {
       setStep(step + 1);
@@ -54,6 +57,7 @@ export default function OnboardingPage() {
             : [genderMap[profile.interestedIn]].filter(Boolean) as any,
           bio: profile.bio,
           photos: profile.photos,
+          phone: profile.phone,
           interests: profile.interests,
           state: profile.state,
           city: profile.city,
@@ -182,6 +186,10 @@ export default function OnboardingPage() {
                   <Textarea placeholder="A few words about you..." value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} maxLength={300} rows={3} />
                   <p className="text-xs text-muted-foreground text-right">{profile.bio.length}/300</p>
                 </div>
+                <div className="space-y-2">
+                  <Label>Phone number *</Label>
+                  <Input type="tel" placeholder="+254 700 000000" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+                </div>
               </div>
             )}
 
@@ -189,7 +197,7 @@ export default function OnboardingPage() {
               <div className="space-y-5">
                 <div>
                   <h1 className="font-display text-2xl font-bold">Add photos</h1>
-                  <p className="text-sm text-muted-foreground">Add up to 6 photos. First one is your main photo.</p>
+                  <p className="text-sm text-muted-foreground">Add at least 3 photos (up to 6). First one is your main photo.</p>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {Array.from({ length: 6 }).map((_, i) => (
