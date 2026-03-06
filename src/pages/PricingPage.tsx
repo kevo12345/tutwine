@@ -23,7 +23,7 @@ const tiers = [
   {
     key: "pro" as const,
     icon: Star,
-    features: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe"],
+    features: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe", "Video chat"],
     color: "bg-accent/10 text-accent",
   },
 ];
