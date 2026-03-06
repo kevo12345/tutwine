@@ -61,8 +61,8 @@ export default function ForgotPasswordPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
-              <Button type="submit" className="w-full gradient-warm border-0 text-primary-foreground shadow-glow">
-                Send Reset Link
+              <Button type="submit" className="w-full gradient-warm border-0 text-primary-foreground shadow-glow" disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Link"}
               </Button>
             </form>
           )}
