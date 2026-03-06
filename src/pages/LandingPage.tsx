@@ -357,7 +357,7 @@ export default function LandingPage() {
             <a href="#" className="hover:text-foreground">Safety</a>
             <a href="#" className="hover:text-foreground">Support</a>
           </nav>
-          <p className="text-sm text-muted-foreground">© 2026 PulseMatch. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2026 Tutwine. All rights reserved.</p>
         </div>
       </footer>
     </div>
