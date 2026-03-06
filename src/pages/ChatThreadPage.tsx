@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tables } from "@/integrations/supabase/types";
+import VideoCall from "@/components/VideoCall";
 
 type Message = Tables<"messages">;
 
@@ -131,6 +132,7 @@ export default function ChatThreadPage() {
           <h2 className="font-medium">{otherProfile?.display_name ?? "User"}</h2>
           <p className="text-xs text-muted-foreground">Active now</p>
         </div>
+        <VideoCall matchId={matchId!} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
