@@ -22,7 +22,7 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState({
-    displayName: "", age: "", gender: "", interestedIn: "", bio: "",
+    displayName: "", age: "", gender: "", interestedIn: "", bio: "", phone: "",
     photos: [] as string[], interests: [] as string[],
     state: "", city: "",
   });
