@@ -83,10 +83,8 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="gradient-warm rounded-xl p-1.5">
-              <Heart className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold">PulseMatch</span>
+            <img src="/logo.jpeg" alt="Tutwine" className="h-9 w-9 rounded-xl object-cover" />
+            <span className="font-display text-xl font-bold">Tutwine</span>
           </div>
           <div className="flex items-center gap-3">
             {/* Urgency micro-banner */}
