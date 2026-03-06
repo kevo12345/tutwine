@@ -139,6 +139,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           onboarding_complete: boolean | null
+          phone: string | null
           photos: string[] | null
           preferred_age_max: number | null
           preferred_age_min: number | null
@@ -165,6 +166,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           onboarding_complete?: boolean | null
+          phone?: string | null
           photos?: string[] | null
           preferred_age_max?: number | null
           preferred_age_min?: number | null
@@ -191,6 +193,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           onboarding_complete?: boolean | null
+          phone?: string | null
           photos?: string[] | null
           preferred_age_max?: number | null
           preferred_age_min?: number | null
