@@ -348,10 +348,8 @@ export default function LandingPage() {
       <footer className="border-t border-border px-4 py-8" role="contentinfo">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="gradient-warm rounded-lg p-1">
-              <Heart className="h-4 w-4 text-primary-foreground fill-primary-foreground" />
-            </div>
-            <span className="font-display font-bold">PulseMatch</span>
+            <img src="/logo.jpeg" alt="Tutwine" className="h-7 w-7 rounded-lg object-cover" />
+            <span className="font-display font-bold">Tutwine</span>
           </div>
           <nav className="flex gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
             <a href="#" className="hover:text-foreground">Terms</a>
