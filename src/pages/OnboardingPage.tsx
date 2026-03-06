@@ -28,8 +28,11 @@ export default function OnboardingPage() {
   });
 
   const nextStep = async () => {
-    if (step === 0 && (!profile.displayName || !profile.age || !profile.gender)) {
+    if (step === 0 && (!profile.displayName || !profile.age || !profile.gender || !profile.phone)) {
       toast.error("Please fill in all required fields"); return;
+    }
+    if (step === 1 && profile.photos.length < 3) {
+      toast.error("Please upload at least 3 photos"); return;
     }
     if (step < STEPS.length - 1) {
       setStep(step + 1);
