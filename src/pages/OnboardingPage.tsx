@@ -133,8 +133,8 @@ export default function OnboardingPage() {
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
           <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-primary fill-primary" />
-            <span className="font-display font-bold">PulseMatch</span>
+            <img src="/logo.jpeg" alt="Tutwine" className="h-8 w-8 rounded-lg object-cover" />
+            <span className="font-display font-bold">Tutwine</span>
           </div>
           <span className="text-sm text-muted-foreground">{step + 1}/{STEPS.length}</span>
         </div>

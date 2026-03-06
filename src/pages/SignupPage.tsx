@@ -47,16 +47,14 @@ export default function SignupPage() {
       </button>
 
       <div className="mb-8 flex items-center gap-2">
-        <div className="gradient-warm rounded-xl p-2">
-          <Heart className="h-6 w-6 text-primary-foreground fill-primary-foreground" />
-        </div>
-        <span className="font-display text-2xl font-bold">PulseMatch</span>
+        <img src="/logo.jpeg" alt="Tutwine" className="h-10 w-10 rounded-xl object-cover" />
+        <span className="font-display text-2xl font-bold">Tutwine</span>
       </div>
 
       <Card className="w-full max-w-sm border-0 shadow-card">
         <CardHeader className="text-center">
           <CardTitle className="font-display text-2xl">Create account</CardTitle>
-          <CardDescription>Join PulseMatch and find real connections</CardDescription>
+          <CardDescription>Join Tutwine and find real connections</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">

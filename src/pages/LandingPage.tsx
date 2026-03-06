@@ -39,7 +39,7 @@ const steps = [
 ];
 
 const testimonials = [
-  { name: "Sarah K.", age: 27, text: "I met my partner on PulseMatch after just 2 weeks. The matching is actually smart — not random.", rating: 5 },
+  { name: "Sarah K.", age: 27, text: "I met my partner on Tutwine after just 2 weeks. The matching is actually smart — not random.", rating: 5 },
   { name: "James M.", age: 31, text: "Finally a dating app where people are real. No catfish, no bots. Highly recommend.", rating: 5 },
   { name: "Amina W.", age: 24, text: "The safety features gave me confidence to actually go on dates. Best decision I made this year!", rating: 5 },
 ];
@@ -83,10 +83,8 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="gradient-warm rounded-xl p-1.5">
-              <Heart className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
-            </div>
-            <span className="font-display text-xl font-bold">PulseMatch</span>
+            <img src="/logo.jpeg" alt="Tutwine" className="h-9 w-9 rounded-xl object-cover" />
+            <span className="font-display text-xl font-bold">Tutwine</span>
           </div>
           <div className="flex items-center gap-3">
             {/* Urgency micro-banner */}
@@ -116,7 +114,7 @@ export default function LandingPage() {
               <span className="text-gradient"> Start connecting.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-              PulseMatch uses <strong>47 compatibility factors</strong> to match you with real, verified people nearby.
+              Tutwine uses <strong>47 compatibility factors</strong> to match you with real, verified people nearby.
               No bots. No catfish. Just genuine connections.
             </p>
 
@@ -210,7 +208,7 @@ export default function LandingPage() {
       {/* Features — Benefit-driven copy */}
       <section className="px-4 py-20" aria-labelledby="features-heading">
         <div className="mx-auto max-w-5xl">
-          <h2 id="features-heading" className="text-center font-display text-3xl font-bold sm:text-4xl">Why 50,000+ choose PulseMatch</h2>
+          <h2 id="features-heading" className="text-center font-display text-3xl font-bold sm:text-4xl">Why 50,000+ choose Tutwine</h2>
           <p className="mt-3 text-center text-muted-foreground">Every feature is designed to help you find someone worth your time.</p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {features.map((f, i) => (
@@ -315,7 +313,7 @@ export default function LandingPage() {
           <Shield className="mx-auto h-12 w-12 text-primary" />
           <h2 id="safety-heading" className="mt-4 font-display text-3xl font-bold">Your safety is non-negotiable</h2>
           <p className="mt-3 text-muted-foreground">
-            PulseMatch is <strong>18+ only</strong>. We never show your exact location. Block and report any user instantly.
+            Tutwine is <strong>18+ only</strong>. We never show your exact location. Block and report any user instantly.
             Our trust & safety team reviews flagged content within 24 hours. Your data is encrypted with bank-level security.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -350,10 +348,8 @@ export default function LandingPage() {
       <footer className="border-t border-border px-4 py-8" role="contentinfo">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="gradient-warm rounded-lg p-1">
-              <Heart className="h-4 w-4 text-primary-foreground fill-primary-foreground" />
-            </div>
-            <span className="font-display font-bold">PulseMatch</span>
+            <img src="/logo.jpeg" alt="Tutwine" className="h-7 w-7 rounded-lg object-cover" />
+            <span className="font-display font-bold">Tutwine</span>
           </div>
           <nav className="flex gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
             <a href="#" className="hover:text-foreground">Terms</a>
@@ -361,7 +357,7 @@ export default function LandingPage() {
             <a href="#" className="hover:text-foreground">Safety</a>
             <a href="#" className="hover:text-foreground">Support</a>
           </nav>
-          <p className="text-sm text-muted-foreground">© 2026 PulseMatch. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2026 Tutwine. All rights reserved.</p>
         </div>
       </footer>
     </div>
