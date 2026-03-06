@@ -54,7 +54,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-sm border-0 shadow-card">
         <CardHeader className="text-center">
           <CardTitle className="font-display text-2xl">Create account</CardTitle>
-          <CardDescription>Join Tutwine and find real connections</CardDescription>
+          <CardDescription>Let's Mingle — join Tutwine today</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">

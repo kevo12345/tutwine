@@ -93,7 +93,7 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        <p className="mb-20 text-center text-xs text-muted-foreground">PulseMatch v1.0 · Terms · Privacy</p>
+        <p className="mb-20 text-center text-xs text-muted-foreground">Tutwine v1.0 · Terms · Privacy</p>
       </div>
     </AppLayout>
   );

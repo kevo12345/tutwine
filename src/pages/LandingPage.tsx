@@ -110,7 +110,7 @@ export default function LandingPage() {
               <Sparkles className="mr-1 h-3.5 w-3.5" /> 🔥 Trending in your area
             </Badge>
             <h1 className="font-display text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-              Stop swiping.
+              Let's Mingle.
               <span className="text-gradient"> Start connecting.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">

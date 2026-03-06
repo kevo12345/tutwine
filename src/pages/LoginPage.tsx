@@ -49,7 +49,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm border-0 shadow-card">
         <CardHeader className="text-center">
           <CardTitle className="font-display text-2xl">Welcome back</CardTitle>
-          <CardDescription>Log in to find your matches</CardDescription>
+          <CardDescription>Let's Mingle — welcome back</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
