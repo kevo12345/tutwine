@@ -6,34 +6,23 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, User, Bell, Shield, CreditCard, LogOut, Trash2, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
-const settingSections = [
-  {
-    title: "Account",
-    items: [
-      { icon: User, label: "Edit Profile", action: "navigate", path: "/profile/edit" },
-      { icon: CreditCard, label: "Subscription", action: "navigate", path: "/pricing" },
-    ],
-  },
-  {
-    title: "Privacy",
-    items: [
-      { icon: Shield, label: "Hide my distance", action: "toggle", key: "hideDistance" },
-      { icon: Shield, label: "Hide my state", action: "toggle", key: "hideState" },
-    ],
-  },
-  {
-    title: "Notifications",
-    items: [
-      { icon: Bell, label: "New matches", action: "toggle", key: "notifyMatches" },
-      { icon: Bell, label: "New messages", action: "toggle", key: "notifyMessages" },
-      { icon: Bell, label: "Likes received", action: "toggle", key: "notifyLikes" },
-    ],
-  },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { signOut, profile, user } = useAuth();
+
+  const handleToggle = async (field: "hide_distance" | "hide_state", value: boolean) => {
+    if (!user) return;
+    await supabase.from("profiles").update({ [field]: value }).eq("user_id", user.id);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Logged out");
+    navigate("/");
+  };
 
   return (
     <AppLayout>
@@ -45,35 +34,54 @@ export default function SettingsPage() {
           <h1 className="font-display text-2xl font-bold">Settings</h1>
         </div>
 
-        {settingSections.map((section) => (
-          <div key={section.title} className="mb-6">
-            <h2 className="mb-2 text-sm font-medium text-muted-foreground">{section.title}</h2>
-            <Card className="border-0 shadow-card overflow-hidden">
-              {section.items.map((item, i) => (
-                <CardContent key={i} className={`flex items-center justify-between p-4 ${i > 0 ? "border-t border-border" : ""}`}>
-                  <div className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{item.label}</span>
-                  </div>
-                  {item.action === "toggle" ? (
-                    <Switch defaultChecked={item.key === "notifyMatches" || item.key === "notifyMessages"} />
-                  ) : (
-                    <button onClick={() => navigate(item.path!)} className="text-muted-foreground">
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  )}
-                </CardContent>
-              ))}
-            </Card>
-          </div>
-        ))}
+        {/* Account */}
+        <div className="mb-6">
+          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Account</h2>
+          <Card className="border-0 shadow-card overflow-hidden">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Edit Profile</span>
+              </div>
+              <button onClick={() => navigate("/onboarding")} className="text-muted-foreground"><ChevronRight className="h-4 w-4" /></button>
+            </CardContent>
+            <CardContent className="flex items-center justify-between p-4 border-t border-border">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Subscription</span>
+              </div>
+              <button onClick={() => navigate("/pricing")} className="text-muted-foreground"><ChevronRight className="h-4 w-4" /></button>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Danger zone */}
+        {/* Privacy */}
+        <div className="mb-6">
+          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Privacy</h2>
+          <Card className="border-0 shadow-card overflow-hidden">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Hide my distance</span>
+              </div>
+              <Switch defaultChecked={profile?.hide_distance ?? false} onCheckedChange={(v) => handleToggle("hide_distance", v)} />
+            </CardContent>
+            <CardContent className="flex items-center justify-between p-4 border-t border-border">
+              <div className="flex items-center gap-3">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Hide my state</span>
+              </div>
+              <Switch defaultChecked={profile?.hide_state ?? false} onCheckedChange={(v) => handleToggle("hide_state", v)} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Account Actions */}
         <div className="mb-6">
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">Account Actions</h2>
           <Card className="border-0 shadow-card overflow-hidden">
             <CardContent className="p-4">
-              <Button variant="ghost" className="w-full justify-start gap-3 text-sm" onClick={() => { toast.success("Logged out"); navigate("/"); }}>
+              <Button variant="ghost" className="w-full justify-start gap-3 text-sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" /> Log Out
               </Button>
             </CardContent>

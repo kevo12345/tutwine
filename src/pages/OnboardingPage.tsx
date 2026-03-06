@@ -1,33 +1,72 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, Camera, MapPin, ArrowRight, ArrowLeft, Plus, X } from "lucide-react";
+import { Heart, Camera, MapPin, ArrowRight, ArrowLeft, Plus, X, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { GENDER_OPTIONS, INTEREST_TAGS } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const STEPS = ["Profile", "Photos", "Interests", "Location"];
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState({
     displayName: "", age: "", gender: "", interestedIn: "", bio: "",
     photos: [] as string[], interests: [] as string[],
     state: "", city: "",
   });
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === 0 && (!profile.displayName || !profile.age || !profile.gender)) {
       toast.error("Please fill in all required fields"); return;
     }
-    if (step < STEPS.length - 1) setStep(step + 1);
-    else { toast.success("Profile complete! Start discovering."); navigate("/discover"); }
+    if (step < STEPS.length - 1) {
+      setStep(step + 1);
+    } else {
+      // Save profile to database
+      if (!user) return;
+      setSaving(true);
+
+      const dob = new Date();
+      dob.setFullYear(dob.getFullYear() - parseInt(profile.age));
+
+      const genderMap: Record<string, string> = { "Man": "man", "Woman": "woman", "Non-binary": "non-binary", "Other": "other" };
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          display_name: profile.displayName,
+          date_of_birth: dob.toISOString().split("T")[0],
+          gender: genderMap[profile.gender] as any,
+          interested_in: profile.interestedIn === "Everyone"
+            ? ["man", "woman", "non-binary", "other"]
+            : [genderMap[profile.interestedIn]].filter(Boolean) as any,
+          bio: profile.bio,
+          photos: profile.photos,
+          interests: profile.interests,
+          state: profile.state,
+          city: profile.city,
+          onboarding_complete: true,
+        })
+        .eq("user_id", user.id);
+
+      setSaving(false);
+      if (error) { toast.error("Failed to save profile"); return; }
+      await refreshProfile();
+      toast.success("Profile complete! Start discovering.");
+      navigate("/discover");
+    }
   };
 
   const toggleInterest = (tag: string) => {
@@ -39,18 +78,51 @@ export default function OnboardingPage() {
     }));
   };
 
-  const addPhoto = () => {
-    if (profile.photos.length >= 6) return;
-    const urls = [
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=300&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop",
-    ];
-    setProfile((p) => ({ ...p, photos: [...p.photos, urls[p.photos.length % urls.length]] }));
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || profile.photos.length >= 6) return;
+
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage.from("photos").upload(path, file);
+    if (error) { toast.error("Upload failed"); return; }
+
+    const { data: { publicUrl } } = supabase.storage.from("photos").getPublicUrl(path);
+    setProfile((p) => ({ ...p, photos: [...p.photos, publicUrl] }));
+    toast.success("Photo uploaded!");
+  };
+
+  const removePhoto = async (index: number) => {
+    setProfile((p) => ({ ...p, photos: p.photos.filter((_, j) => j !== index) }));
+  };
+
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        // Round coordinates for privacy
+        const lat = Math.round(pos.coords.latitude * 10) / 10;
+        const lng = Math.round(pos.coords.longitude * 10) / 10;
+
+        if (user) {
+          await supabase.from("profiles").update({
+            latitude: lat, longitude: lng,
+          }).eq("user_id", user.id);
+        }
+        toast.success("Approximate location detected");
+        setProfile((p) => ({ ...p, state: "Detected", city: "Detected" }));
+      },
+      () => toast.error("Location denied. Enter manually below.")
+    );
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-background p-4">
+      <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
           <button onClick={() => step > 0 ? setStep(step - 1) : navigate("/signup")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -126,7 +198,7 @@ export default function OnboardingPage() {
                         <>
                           <img src={profile.photos[i]} alt="" className="h-full w-full object-cover" />
                           <button
-                            onClick={() => setProfile((p) => ({ ...p, photos: p.photos.filter((_, j) => j !== i) }))}
+                            onClick={() => removePhoto(i)}
                             className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground"
                           >
                             <X className="h-3 w-3" />
@@ -134,7 +206,7 @@ export default function OnboardingPage() {
                           {i === 0 && <Badge className="absolute bottom-1 left-1 text-[10px] gradient-warm border-0 text-primary-foreground">Main</Badge>}
                         </>
                       ) : (
-                        <button onClick={addPhoto} className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
+                        <button onClick={() => fileInputRef.current?.click()} className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
                           <Plus className="h-6 w-6" />
                           <span className="text-xs">Add</span>
                         </button>
@@ -179,7 +251,7 @@ export default function OnboardingPage() {
                   <h1 className="font-display text-2xl font-bold">Your location</h1>
                   <p className="text-sm text-muted-foreground">We'll show approximate distance to keep you safe.</p>
                 </div>
-                <Button variant="outline" className="w-full gap-2" onClick={() => { toast.success("Location detected: Austin, TX"); setProfile({ ...profile, state: "TX", city: "Austin" }); }}>
+                <Button variant="outline" className="w-full gap-2" onClick={requestLocation}>
                   <MapPin className="h-4 w-4" /> Use my approximate location
                 </Button>
                 <div className="relative flex items-center gap-4">
@@ -200,8 +272,8 @@ export default function OnboardingPage() {
           </motion.div>
         </AnimatePresence>
 
-        <Button onClick={nextStep} className="mt-8 w-full gradient-warm border-0 text-primary-foreground shadow-glow" size="lg">
-          {step < STEPS.length - 1 ? "Continue" : "Start Discovering"} <ArrowRight className="ml-1 h-4 w-4" />
+        <Button onClick={nextStep} className="mt-8 w-full gradient-warm border-0 text-primary-foreground shadow-glow" size="lg" disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < STEPS.length - 1 ? <>Continue <ArrowRight className="ml-1 h-4 w-4" /></> : <>Start Discovering <ArrowRight className="ml-1 h-4 w-4" /></>}
         </Button>
       </div>
     </div>
