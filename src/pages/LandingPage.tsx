@@ -189,27 +189,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social proof bar — Authority */}
-      <section className="border-y border-border bg-card px-4 py-6">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-6 sm:gap-10">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Shield className="h-4 w-4 text-success" />
-            <span>256-bit encryption</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4 text-info" />
-            <span>50,000+ verified users</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <span>3x more matches than average</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Zap className="h-4 w-4 text-warning" />
-            <span>Response in under 5 min</span>
-          </div>
-        </div>
-      </section>
 
       {/* About Us */}
       <section className="px-4 py-20 bg-background" aria-labelledby="about-heading">
