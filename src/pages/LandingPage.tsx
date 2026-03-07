@@ -39,7 +39,7 @@ const steps = [
 ];
 
 const testimonials = [
-  { name: "Sarah K.", age: 27, text: "I met my partner on Tutwine after just 2 weeks. The matching is actually smart — not random.", rating: 5 },
+  { name: "Sarah K.", age: 27, text: "I met my partner on tutwine after just 2 weeks. The matching is actually smart — not random.", rating: 5 },
   { name: "James M.", age: 31, text: "Finally a dating app where people are real. No catfish, no bots. Highly recommend.", rating: 5 },
   { name: "Amina W.", age: 24, text: "The safety features gave me confidence to actually go on dates. Best decision I made this year!", rating: 5 },
 ];
