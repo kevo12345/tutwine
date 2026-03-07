@@ -349,7 +349,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <img src="/logo.jpeg" alt="Tutwine" className="h-7 w-7 rounded-lg object-cover" />
-            <span className="font-display font-bold">Tutwine</span>
+            <span className="font-display font-bold">tutwine</span>
           </div>
           <nav className="flex gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
             <a href="#" className="hover:text-foreground">Terms</a>
