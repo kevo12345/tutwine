@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import heroBg from "@/assets/hero-bg.jpg";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap } from "lucide-react";
