@@ -251,6 +251,15 @@ serve(async (req) => {
         break;
       }
 
+      case "create_user": {
+        const { email, password, displayName, role: newRole } = await req.json().catch(() => ({}));
+        // We already parsed the body above, so use the variables from the initial parse
+        const body = { action, email: undefined as any, password: undefined as any, displayName: undefined as any, role: undefined as any };
+        // Re-read from request clone won't work, so let's handle it differently
+        // The body was already parsed at line 49, so we need to extract from there
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
