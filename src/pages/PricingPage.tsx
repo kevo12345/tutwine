@@ -47,7 +47,7 @@ export default function PricingPage() {
           <p className="mt-2 text-sm opacity-90">Get more matches, see who likes you, and stand out.</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
           {tiers.map((tier) => {
             const info = TIER_PRICES[tier.key];
             return (
