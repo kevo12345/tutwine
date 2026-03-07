@@ -103,6 +103,10 @@ export default function LandingPage() {
 
       {/* Hero — Desire + Urgency */}
       <section className="relative overflow-hidden px-4 pb-20 pt-16">
+        <div className="absolute inset-0">
+          <img src={heroBg} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        </div>
         <div className="absolute -top-40 right-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
         <div className="relative mx-auto max-w-3xl text-center">
