@@ -93,6 +93,7 @@ export default function LandingPage() {
               <span className="h-2 w-2 rounded-full bg-success" />
               {8400 + liveSignups} people online now
             </span>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/support")}>Support</Button>
             <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Log in</Button>
             <Button size="sm" className="gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => navigate("/signup")}>
               Get Started — Free
