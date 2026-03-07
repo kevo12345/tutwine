@@ -84,7 +84,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <img src="/logo.jpeg" alt="Tutwine" className="h-9 w-9 rounded-xl object-cover" />
-            <span className="font-display text-xl font-bold">Tutwine</span>
+            <span className="font-display text-xl font-bold">tutwine</span>
           </div>
           <div className="flex items-center gap-3">
             {/* Urgency micro-banner */}
