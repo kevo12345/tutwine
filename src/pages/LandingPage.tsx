@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap } from "lucide-react";
+import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { TIER_PRICES } from "@/lib/constants";
@@ -73,6 +73,7 @@ export default function LandingPage() {
 
   // Simulated "live" activity for social proof
   const [liveSignups, setLiveSignups] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => {
     const iv = setInterval(() => setLiveSignups((n) => n + 1), 8000);
     return () => clearInterval(iv);
@@ -87,9 +88,9 @@ export default function LandingPage() {
             <img src="/logo.jpeg" alt="Tutwine" className="h-9 w-9 rounded-xl object-cover" />
             <span className="font-display text-xl font-bold">tutwine</span>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Urgency micro-banner */}
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse">
+          {/* Desktop nav */}
+          <div className="hidden sm:flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse">
               <span className="h-2 w-2 rounded-full bg-success" />
               {8400 + liveSignups} people online now
             </span>
@@ -99,7 +100,25 @@ export default function LandingPage() {
               Get Started — Free
             </Button>
           </div>
+          {/* Mobile hamburger */}
+          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
         </div>
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-border bg-card px-4 py-3 flex flex-col gap-2">
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse">
+              <span className="h-2 w-2 rounded-full bg-success" />
+              {8400 + liveSignups} people online now
+            </span>
+            <Button variant="ghost" size="sm" className="justify-start" onClick={() => { navigate("/support"); setMobileMenuOpen(false); }}>Support</Button>
+            <Button variant="ghost" size="sm" className="justify-start" onClick={() => { navigate("/login"); setMobileMenuOpen(false); }}>Log in</Button>
+            <Button size="sm" className="gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => { navigate("/signup"); setMobileMenuOpen(false); }}>
+              Get Started — Free
+            </Button>
+          </div>
+        )}
       </nav>
 
       {/* Hero — Desire + Urgency */}
