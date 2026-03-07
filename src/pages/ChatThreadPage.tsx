@@ -118,80 +118,82 @@ export default function ChatThreadPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border bg-card px-4 py-3">
-        <button onClick={() => navigate("/chat")} className="text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={otherProfile?.photos?.[0] ?? ""} />
-          <AvatarFallback>{otherProfile?.display_name?.[0] ?? "?"}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h2 className="font-medium">{otherProfile?.display_name ?? "User"}</h2>
-          <p className="text-xs text-muted-foreground">Active now</p>
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex h-full w-full flex-col lg:mx-auto lg:my-8 lg:h-[calc(100vh-4rem)] lg:max-w-2xl lg:rounded-2xl lg:border lg:border-border lg:shadow-card">
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 lg:rounded-t-2xl">
+          <button onClick={() => navigate("/chat")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={otherProfile?.photos?.[0] ?? ""} />
+            <AvatarFallback>{otherProfile?.display_name?.[0] ?? "?"}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h2 className="font-medium">{otherProfile?.display_name ?? "User"}</h2>
+            <p className="text-xs text-muted-foreground">Active now</p>
+          </div>
+          <VideoCall matchId={matchId!} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleBlock} className="text-destructive">
+                <Shield className="mr-2 h-4 w-4" /> Block User
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleReport} className="text-destructive">
+                <Flag className="mr-2 h-4 w-4" /> Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <VideoCall matchId={matchId!} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleBlock} className="text-destructive">
-              <Shield className="mr-2 h-4 w-4" /> Block User
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleReport} className="text-destructive">
-              <Flag className="mr-2 h-4 w-4" /> Report
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {messages.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-8">Say hello! 👋</p>
-        )}
-        {messages.map((msg) => {
-          const isMe = msg.sender_id === user?.id;
-          return (
-            <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                isMe ? "gradient-warm text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
-              }`}>
-                <p className="text-sm">{msg.content}</p>
-                <p className={`mt-1 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  {isMe && msg.read_at && " ✓✓"}
-                </p>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          {messages.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground py-8">Say hello! 👋</p>
+          )}
+          {messages.map((msg) => {
+            const isMe = msg.sender_id === user?.id;
+            return (
+              <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  isMe ? "gradient-warm text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                }`}>
+                  <p className="text-sm">{msg.content}</p>
+                  <p className={`mt-1 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {isMe && msg.read_at && " ✓✓"}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
 
-      {/* Input */}
-      <div className="border-t border-border bg-card p-3 safe-bottom">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Type a message..."
-            value={newMsg}
-            onChange={(e) => setNewMsg(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            className="rounded-full"
-          />
-          <Button
-            size="icon"
-            className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground"
-            onClick={sendMessage}
-            disabled={!newMsg.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        {/* Input */}
+        <div className="border-t border-border bg-card p-3 safe-bottom lg:rounded-b-2xl">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Type a message..."
+              value={newMsg}
+              onChange={(e) => setNewMsg(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              className="rounded-full"
+            />
+            <Button
+              size="icon"
+              className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground"
+              onClick={sendMessage}
+              disabled={!newMsg.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
