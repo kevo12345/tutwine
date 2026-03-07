@@ -211,6 +211,26 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* About Us */}
+      <section className="px-4 py-20 bg-background" aria-labelledby="about-heading">
+        <div className="mx-auto max-w-4xl text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 px-4 py-1.5 text-sm">
+              <Heart className="mr-1 h-3.5 w-3.5" /> About Us
+            </Badge>
+            <h2 id="about-heading" className="font-display text-3xl font-bold sm:text-4xl">
+              What is <span className="text-gradient">tutwine</span>?
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Tutwine is a vibrant dating and social community designed to bring people together in meaningful ways. Inspired by the idea of <strong className="text-foreground">"tu"</strong> (let's) and <strong className="text-foreground">"twine"</strong> (connect or intertwine), Tutwine encourages genuine connections, conversations, and relationships.
+            </p>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              It's a space where individuals can mingle, discover like-minded people, and build friendships, romance, or lasting bonds in a welcoming and engaging environment.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* How it works — Simplicity bias */}
       <section className="bg-secondary/50 px-4 py-20" aria-labelledby="how-heading">
         <div className="mx-auto max-w-5xl">
