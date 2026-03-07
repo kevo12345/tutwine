@@ -105,7 +105,7 @@ export default function LandingPage() {
       <section className="relative overflow-hidden px-4 pb-20 pt-16">
         <div className="absolute inset-0">
           <img src={heroBg} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-background/50" />
+          <div className="absolute inset-0 bg-black/60" />
         </div>
         <div className="absolute -top-40 right-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
@@ -114,11 +114,11 @@ export default function LandingPage() {
             <Badge className="mb-4 gradient-warm border-0 text-primary-foreground px-4 py-1.5 text-sm">
               <Sparkles className="mr-1 h-3.5 w-3.5" /> 🔥 Trending in your area
             </Badge>
-            <h1 className="font-display text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+            <h1 className="font-display text-5xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
               Let's Mingle.
               <span className="text-gradient"> Start connecting.</span>
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
+            <p className="mt-6 text-lg text-white/80 sm:text-xl">
               tutwine uses <strong>47 compatibility factors</strong> to match you with real, verified people nearby.
               No bots. No catfish. Just genuine connections.
             </p>
