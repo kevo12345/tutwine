@@ -177,14 +177,6 @@ export default function LandingPage() {
                 View Plans
               </Button>
             </div>
-            {/* Trust + scarcity */}
-            <div className="mt-4 flex flex-col items-center gap-1">
-              <p className="text-sm text-muted-foreground">✅ Free forever · 🔒 18+ verified · ⚡ 2 min signup</p>
-              <p className="text-xs text-muted-foreground/70">
-                <Clock className="inline h-3 w-3 mr-0.5" />
-                Limited: Free accounts include 30 daily likes — <button onClick={() => navigate("/pricing")} className="text-primary underline">upgrade anytime</button>
-              </p>
-            </div>
           </motion.div>
         </div>
       </section>
