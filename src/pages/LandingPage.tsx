@@ -73,6 +73,7 @@ export default function LandingPage() {
 
   // Simulated "live" activity for social proof
   const [liveSignups, setLiveSignups] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => {
     const iv = setInterval(() => setLiveSignups((n) => n + 1), 8000);
     return () => clearInterval(iv);
