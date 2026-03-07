@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Flag, BarChart3, CreditCard, UserPlus,
-  Settings, LogOut, ChevronLeft, Bell, Search,
+  Settings, LogOut, ChevronLeft, Bell, Search, MessageCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const navItems = [
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
+  { title: "Support", url: "/admin/support", icon: MessageCircle },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
