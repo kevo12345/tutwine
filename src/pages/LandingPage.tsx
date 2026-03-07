@@ -114,7 +114,7 @@ export default function LandingPage() {
               <span className="text-gradient"> Start connecting.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-              Tutwine uses <strong>47 compatibility factors</strong> to match you with real, verified people nearby.
+              tutwine uses <strong>47 compatibility factors</strong> to match you with real, verified people nearby.
               No bots. No catfish. Just genuine connections.
             </p>
 
