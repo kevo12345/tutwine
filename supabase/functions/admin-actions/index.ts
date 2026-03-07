@@ -1,0 +1,270 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Verify the caller is an admin
+    const authHeader = req.headers.get("Authorization")!;
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user: caller } } = await callerClient.auth.getUser();
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check admin role
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: roleData } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", caller.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { action, targetUserId, reason, reportId } = await req.json();
+
+    let result: any = { success: true };
+
+    switch (action) {
+      case "get_stats": {
+        const { count: totalUsers } = await adminClient
+          .from("profiles")
+          .select("*", { count: "exact", head: true });
+        const { count: pendingReports } = await adminClient
+          .from("reports")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending");
+        const { count: subscribers } = await adminClient
+          .from("subscriptions")
+          .select("*", { count: "exact", head: true })
+          .neq("tier", "free")
+          .eq("status", "active");
+        // Recent signups (last 7 days)
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { count: recentSignups } = await adminClient
+          .from("profiles")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", sevenDaysAgo);
+
+        result = {
+          totalUsers: totalUsers ?? 0,
+          pendingReports: pendingReports ?? 0,
+          subscribers: subscribers ?? 0,
+          recentSignups: recentSignups ?? 0,
+        };
+        break;
+      }
+
+      case "get_users": {
+        const { data: users } = await adminClient
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        // Get subscriptions for these users
+        const userIds = (users ?? []).map((u: any) => u.user_id);
+        const { data: subs } = await adminClient
+          .from("subscriptions")
+          .select("*")
+          .in("user_id", userIds)
+          .eq("status", "active");
+
+        // Get blocked status
+        const { data: blockedUsers } = await adminClient
+          .from("blocked_users")
+          .select("blocked_id")
+          .eq("blocker_id", "system");
+
+        const blockedIds = new Set((blockedUsers ?? []).map((b: any) => b.blocked_id));
+
+        result = (users ?? []).map((u: any) => {
+          const sub = (subs ?? []).find((s: any) => s.user_id === u.user_id);
+          return {
+            ...u,
+            tier: sub?.tier ?? "free",
+            status: blockedIds.has(u.user_id) ? "suspended" : "active",
+          };
+        });
+        break;
+      }
+
+      case "get_reports": {
+        const { data: reports } = await adminClient
+          .from("reports")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        // Enrich with profile names
+        const allUserIds = new Set<string>();
+        (reports ?? []).forEach((r: any) => {
+          allUserIds.add(r.reporter_id);
+          allUserIds.add(r.target_user_id);
+        });
+        const { data: profiles } = await adminClient
+          .from("profiles")
+          .select("user_id, display_name, photos")
+          .in("user_id", Array.from(allUserIds));
+
+        const profileMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
+
+        result = (reports ?? []).map((r: any) => ({
+          ...r,
+          reporter_name: profileMap.get(r.reporter_id)?.display_name ?? "Unknown",
+          target_name: profileMap.get(r.target_user_id)?.display_name ?? "Unknown",
+          target_photo: profileMap.get(r.target_user_id)?.photos?.[0] ?? null,
+        }));
+        break;
+      }
+
+      case "suspend_user": {
+        // Add to blocked_users with system as blocker
+        await adminClient.from("blocked_users").upsert({
+          blocker_id: caller.id,
+          blocked_id: targetUserId,
+        });
+        result = { success: true, message: "User suspended" };
+        break;
+      }
+
+      case "unsuspend_user": {
+        await adminClient
+          .from("blocked_users")
+          .delete()
+          .eq("blocked_id", targetUserId);
+        result = { success: true, message: "User unsuspended" };
+        break;
+      }
+
+      case "warn_user": {
+        // Create a report as a warning record
+        await adminClient.from("reports").insert({
+          reporter_id: caller.id,
+          target_user_id: targetUserId,
+          reason: reason ?? "Admin warning",
+          status: "resolved",
+          details: "Admin warning issued",
+        });
+        result = { success: true, message: "Warning issued" };
+        break;
+      }
+
+      case "resolve_report": {
+        await adminClient
+          .from("reports")
+          .update({ status: "resolved" })
+          .eq("id", reportId);
+        result = { success: true, message: "Report resolved" };
+        break;
+      }
+
+      case "dismiss_report": {
+        await adminClient
+          .from("reports")
+          .update({ status: "dismissed" })
+          .eq("id", reportId);
+        result = { success: true, message: "Report dismissed" };
+        break;
+      }
+
+      case "ban_user": {
+        // Suspend + update all their reports
+        await adminClient.from("blocked_users").upsert({
+          blocker_id: caller.id,
+          blocked_id: targetUserId,
+        });
+        await adminClient
+          .from("reports")
+          .update({ status: "resolved" })
+          .eq("target_user_id", targetUserId)
+          .eq("status", "pending");
+        result = { success: true, message: "User banned" };
+        break;
+      }
+
+      case "get_analytics": {
+        // Get signups per day for last 30 days
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentProfiles } = await adminClient
+          .from("profiles")
+          .select("created_at")
+          .gte("created_at", thirtyDaysAgo)
+          .order("created_at", { ascending: true });
+
+        // Group by day
+        const signupsByDay: Record<string, number> = {};
+        (recentProfiles ?? []).forEach((p: any) => {
+          const day = p.created_at.substring(0, 10);
+          signupsByDay[day] = (signupsByDay[day] ?? 0) + 1;
+        });
+
+        // Get subscriptions breakdown
+        const { data: allSubs } = await adminClient
+          .from("subscriptions")
+          .select("tier, status")
+          .eq("status", "active");
+
+        const tierCounts: Record<string, number> = {};
+        (allSubs ?? []).forEach((s: any) => {
+          tierCounts[s.tier] = (tierCounts[s.tier] ?? 0) + 1;
+        });
+
+        // Matches per day
+        const { data: recentMatches } = await adminClient
+          .from("matches")
+          .select("created_at")
+          .gte("created_at", thirtyDaysAgo);
+
+        const matchesByDay: Record<string, number> = {};
+        (recentMatches ?? []).forEach((m: any) => {
+          const day = m.created_at.substring(0, 10);
+          matchesByDay[day] = (matchesByDay[day] ?? 0) + 1;
+        });
+
+        result = { signupsByDay, tierCounts, matchesByDay };
+        break;
+      }
+
+      default:
+        return new Response(JSON.stringify({ error: "Unknown action" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
