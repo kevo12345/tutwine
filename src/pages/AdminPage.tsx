@@ -8,6 +8,7 @@ import CreateUserPage from "@/components/admin/CreateUserPage";
 import ReportsPage from "@/components/admin/ReportsPage";
 import AnalyticsPage from "@/components/admin/AnalyticsPage";
 import PaymentsPage from "@/components/admin/PaymentsPage";
+import SupportInboxPage from "@/components/admin/SupportInboxPage";
 import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
 import { useAdminData } from "@/hooks/useAdminData";
 
