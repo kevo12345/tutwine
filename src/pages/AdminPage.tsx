@@ -47,6 +47,7 @@ export default function AdminPage() {
         <Route path="reports" element={<ReportsPage reports={reports} actionLoading={actionLoading} handleAction={handleAction} />} />
         <Route path="analytics" element={<AnalyticsPage analytics={analytics} />} />
         <Route path="payments" element={<PaymentsPage />} />
+        <Route path="support" element={<SupportInboxPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
       </Routes>
     </AdminLayout>

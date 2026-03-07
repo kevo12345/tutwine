@@ -21,6 +21,7 @@ const navItems = [
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
+  { title: "Support", url: "/admin/support", icon: MessageCircle },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
