@@ -208,7 +208,7 @@ export default function LandingPage() {
       {/* Features — Benefit-driven copy */}
       <section className="px-4 py-20" aria-labelledby="features-heading">
         <div className="mx-auto max-w-5xl">
-          <h2 id="features-heading" className="text-center font-display text-3xl font-bold sm:text-4xl">Why 50,000+ choose Tutwine</h2>
+          <h2 id="features-heading" className="text-center font-display text-3xl font-bold sm:text-4xl">Why 50,000+ choose tutwine</h2>
           <p className="mt-3 text-center text-muted-foreground">Every feature is designed to help you find someone worth your time.</p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {features.map((f, i) => (
