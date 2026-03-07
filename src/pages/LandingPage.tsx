@@ -313,7 +313,7 @@ export default function LandingPage() {
           <Shield className="mx-auto h-12 w-12 text-primary" />
           <h2 id="safety-heading" className="mt-4 font-display text-3xl font-bold">Your safety is non-negotiable</h2>
           <p className="mt-3 text-muted-foreground">
-            Tutwine is <strong>18+ only</strong>. We never show your exact location. Block and report any user instantly.
+            tutwine is <strong>18+ only</strong>. We never show your exact location. Block and report any user instantly.
             Our trust & safety team reviews flagged content within 24 hours. Your data is encrypted with bank-level security.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
