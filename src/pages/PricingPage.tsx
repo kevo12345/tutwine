@@ -33,7 +33,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      <div className="mx-auto max-w-lg px-4">
+      <div className="mx-auto max-w-lg px-4 lg:max-w-5xl">
         <div className="flex items-center gap-3 py-4">
           <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
