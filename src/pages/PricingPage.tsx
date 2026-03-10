@@ -1,10 +1,22 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowLeft, Crown, Zap, Star, Video } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Check, ArrowLeft, Crown, Zap, Star, Loader2, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TIER_PRICES } from "@/lib/constants";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const tiers = [
   {
@@ -28,8 +40,68 @@ const tiers = [
   },
 ];
 
+// KES pricing (approximate conversion from USD)
+const KES_PRICES: Record<string, number> = {
+  basic: 400,
+  plus: 650,
+  pro: 1300,
+};
+
 export default function PricingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleSelectPlan = (tierKey: string) => {
+    if (!user) {
+      toast.info("Please sign in first to subscribe.");
+      navigate("/login");
+      return;
+    }
+    setSelectedTier(tierKey);
+    setDialogOpen(true);
+  };
+
+  const handlePayment = async () => {
+    if (!selectedTier || !phone) return;
+
+    const cleanPhone = phone.replace(/\s+/g, "");
+    if (!/^(0?[17]\d{8}|254[17]\d{8}|\+254[17]\d{8})$/.test(cleanPhone)) {
+      toast.error("Enter a valid Safaricom phone number (e.g. 0712345678)");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sellapay-stk-push", {
+        body: {
+          phone: cleanPhone,
+          amount: KES_PRICES[selectedTier],
+          tier: selectedTier,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("M-Pesa prompt sent!", {
+          description: "Check your phone and enter your M-Pesa PIN to complete payment.",
+        });
+        setDialogOpen(false);
+        setPhone("");
+      } else {
+        toast.error(data?.error || "Payment failed. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast.error("Payment failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -50,6 +122,7 @@ export default function PricingPage() {
         <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
           {tiers.map((tier) => {
             const info = TIER_PRICES[tier.key];
+            const kesPrice = KES_PRICES[tier.key];
             return (
               <Card key={tier.key} className={`relative border-0 shadow-card overflow-hidden ${tier.popular ? "ring-2 ring-primary" : ""}`}>
                 {tier.popular && (
@@ -65,7 +138,7 @@ export default function PricingPage() {
                     <div>
                       <CardTitle className="font-display text-lg">{info.label}</CardTitle>
                       <CardDescription>
-                        <span className="text-2xl font-display font-bold text-foreground">${info.usd}</span>
+                        <span className="text-2xl font-display font-bold text-foreground">KES {kesPrice}</span>
                         <span className="text-muted-foreground">/mo</span>
                       </CardDescription>
                     </div>
@@ -82,7 +155,7 @@ export default function PricingPage() {
                   <Button
                     className={`mt-4 w-full ${tier.popular ? "gradient-warm border-0 text-primary-foreground shadow-glow" : ""}`}
                     variant={tier.popular ? "default" : "outline"}
-                    onClick={() => toast.info("Payment integration coming soon!", { description: "Stripe checkout will be connected in the next phase." })}
+                    onClick={() => handleSelectPlan(tier.key)}
                   >
                     Get {info.label}
                   </Button>
@@ -93,9 +166,60 @@ export default function PricingPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Cancel anytime. Prices shown in USD. Local pricing available.
+          Cancel anytime. Pay via M-Pesa. Prices in KES.
         </p>
       </div>
+
+      {/* M-Pesa Phone Number Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Phone className="h-5 w-5 text-primary" />
+              Pay with M-Pesa
+            </DialogTitle>
+            <DialogDescription>
+              Enter your Safaricom number to receive the M-Pesa payment prompt.
+              {selectedTier && (
+                <span className="mt-1 block font-semibold text-foreground">
+                  Amount: KES {KES_PRICES[selectedTier]} for {TIER_PRICES[selectedTier as keyof typeof TIER_PRICES]?.label} plan
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                placeholder="0712345678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                type="tel"
+                maxLength={13}
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Safaricom number (e.g. 0712345678 or 254712345678)
+              </p>
+            </div>
+            <Button
+              onClick={handlePayment}
+              disabled={loading || !phone}
+              className="w-full gradient-warm border-0 text-primary-foreground shadow-glow"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending prompt...
+                </>
+              ) : (
+                `Pay KES ${selectedTier ? KES_PRICES[selectedTier] : ""}`
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
