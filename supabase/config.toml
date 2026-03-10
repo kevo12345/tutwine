@@ -2,3 +2,6 @@ project_id = "erhmkxbcubdopxbryetm"
 
 [functions.create-daily-room]
 verify_jwt = false
+
+[functions.sellapay-stk-push]
+verify_jwt = false
