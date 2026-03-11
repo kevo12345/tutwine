@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.sellapay-stk-push]
 verify_jwt = false
+
+[functions.sellapay-callback]
+verify_jwt = false
+
+[functions.admin-actions]
+verify_jwt = false
