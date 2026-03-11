@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Heart, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 
 export default function LoginPage() {
@@ -18,7 +19,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  if (user) { navigate("/discover", { replace: true }); return null; }
+  // Redirect logged-in users based on role
+  useEffect(() => {
+    if (!user) return;
+    const checkRoleAndRedirect = async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      navigate(data ? "/admin" : "/discover", { replace: true });
+    };
+    checkRoleAndRedirect();
+  }, [user, navigate]);
+
+  if (user) return null;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +47,7 @@ export default function LoginPage() {
       return;
     }
     toast.success("Welcome back!");
-    navigate("/discover");
+    // Redirect handled by useEffect above after user state updates
   };
 
   return (

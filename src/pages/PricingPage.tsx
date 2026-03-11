@@ -40,7 +40,6 @@ const tiers = [
   },
 ];
 
-// KES pricing (approximate conversion from USD)
 const KES_PRICES: Record<string, number> = {
   basic: 400,
   plus: 650,
@@ -88,7 +87,7 @@ export default function PricingPage() {
 
       if (data?.success) {
         toast.success("M-Pesa prompt sent!", {
-          description: "Check your phone and enter your M-Pesa PIN to complete payment.",
+          description: "Check your phone and enter your M-Pesa PIN to complete payment. Your subscription will activate once payment is confirmed.",
         });
         setDialogOpen(false);
         setPhone("");
@@ -170,7 +169,6 @@ export default function PricingPage() {
         </p>
       </div>
 
-      {/* M-Pesa Phone Number Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -201,6 +199,11 @@ export default function PricingPage() {
               />
               <p className="text-xs text-muted-foreground">
                 Safaricom number (e.g. 0712345678 or 254712345678)
+              </p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">
+                ⚠️ Your subscription will only activate after you complete the M-Pesa payment on your phone. If you cancel or don't enter your PIN, no charges will apply.
               </p>
             </div>
             <Button

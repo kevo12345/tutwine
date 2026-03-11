@@ -3,7 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertTriangle, Ban, CheckCircle } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { AdminUser } from "@/hooks/useAdminData";
 
 interface UsersPageProps {
@@ -99,6 +110,33 @@ export default function UsersPage({ users, actionLoading, handleAction }: UsersP
                           <CheckCircle className="mr-1 h-3 w-3" /> Unsuspend
                         </Button>
                       )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive"
+                            disabled={actionLoading === u.user_id}
+                          >
+                            <Trash2 className="mr-1 h-3 w-3" /> Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete <strong>{u.display_name ?? "this user"}</strong> and all their data. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleAction("delete_user", { targetUserId: u.user_id }, "User deleted permanently")}
+                            >
+                              Delete Forever
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
