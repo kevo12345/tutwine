@@ -121,11 +121,12 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .eq('status', 'active');
 
-    // Create new subscription (active on successful STK push initiation)
+    // Create new subscription as past_due (pending M-Pesa payment confirmation)
+    // This should only be changed to 'active' via a SellaPay callback/webhook
     const { error: subError } = await serviceClient.from('subscriptions').insert({
       user_id: userId,
       tier,
-      status: 'active',
+      status: 'past_due',
       price: Number(amount),
       currency: 'KES',
       provider: 'sellapay',
