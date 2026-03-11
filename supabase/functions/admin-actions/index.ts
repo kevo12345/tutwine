@@ -167,6 +167,20 @@ serve(async (req) => {
         break;
       }
 
+      case "delete_user": {
+        if (!targetUserId) {
+          return new Response(JSON.stringify({ error: "targetUserId is required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Delete from auth (cascades to profiles via trigger/FK)
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(targetUserId);
+        if (deleteError) throw deleteError;
+        result = { success: true, message: "User deleted permanently" };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
