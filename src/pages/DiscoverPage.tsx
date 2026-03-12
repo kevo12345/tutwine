@@ -54,6 +54,7 @@ export default function DiscoverPage() {
         .from("profiles")
         .select("*")
         .eq("onboarding_complete", true)
+        .eq("suspended", false)
         .not("user_id", "in", `(${excludeIds.join(",")})`)
         .limit(50);
 

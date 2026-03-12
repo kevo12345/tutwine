@@ -129,12 +129,14 @@ serve(async (req) => {
 
       case "suspend_user": {
         await adminClient.from("blocked_users").upsert({ blocker_id: caller.id, blocked_id: targetUserId });
+        await adminClient.from("profiles").update({ suspended: true }).eq("user_id", targetUserId);
         result = { success: true, message: "User suspended" };
         break;
       }
 
       case "unsuspend_user": {
         await adminClient.from("blocked_users").delete().eq("blocked_id", targetUserId);
+        await adminClient.from("profiles").update({ suspended: false }).eq("user_id", targetUserId);
         result = { success: true, message: "User unsuspended" };
         break;
       }
@@ -162,6 +164,7 @@ serve(async (req) => {
 
       case "ban_user": {
         await adminClient.from("blocked_users").upsert({ blocker_id: caller.id, blocked_id: targetUserId });
+        await adminClient.from("profiles").update({ suspended: true }).eq("user_id", targetUserId);
         await adminClient.from("reports").update({ status: "resolved" }).eq("target_user_id", targetUserId).eq("status", "pending");
         result = { success: true, message: "User banned" };
         break;
