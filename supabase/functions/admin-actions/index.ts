@@ -164,6 +164,7 @@ serve(async (req) => {
 
       case "ban_user": {
         await adminClient.from("blocked_users").upsert({ blocker_id: caller.id, blocked_id: targetUserId });
+        await adminClient.from("profiles").update({ suspended: true }).eq("user_id", targetUserId);
         await adminClient.from("reports").update({ status: "resolved" }).eq("target_user_id", targetUserId).eq("status", "pending");
         result = { success: true, message: "User banned" };
         break;
