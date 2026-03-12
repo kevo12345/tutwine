@@ -129,12 +129,14 @@ serve(async (req) => {
 
       case "suspend_user": {
         await adminClient.from("blocked_users").upsert({ blocker_id: caller.id, blocked_id: targetUserId });
+        await adminClient.from("profiles").update({ suspended: true }).eq("user_id", targetUserId);
         result = { success: true, message: "User suspended" };
         break;
       }
 
       case "unsuspend_user": {
         await adminClient.from("blocked_users").delete().eq("blocked_id", targetUserId);
+        await adminClient.from("profiles").update({ suspended: false }).eq("user_id", targetUserId);
         result = { success: true, message: "User unsuspended" };
         break;
       }
