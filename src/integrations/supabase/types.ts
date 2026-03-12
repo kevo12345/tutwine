@@ -145,6 +145,7 @@ export type Database = {
           preferred_age_min: number | null
           preferred_distance_km: number | null
           state: string | null
+          suspended: boolean
           updated_at: string
           user_id: string
           verified: boolean | null
@@ -172,6 +173,7 @@ export type Database = {
           preferred_age_min?: number | null
           preferred_distance_km?: number | null
           state?: string | null
+          suspended?: boolean
           updated_at?: string
           user_id: string
           verified?: boolean | null
@@ -199,6 +201,7 @@ export type Database = {
           preferred_age_min?: number | null
           preferred_distance_km?: number | null
           state?: string | null
+          suspended?: boolean
           updated_at?: string
           user_id?: string
           verified?: boolean | null
