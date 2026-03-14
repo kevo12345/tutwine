@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+
 
 type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable";
 
@@ -28,7 +28,7 @@ export function useLocationPrompt() {
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationStatus("unavailable");
-      toast.error("Geolocation is not supported by your browser.");
+      return;
       return;
     }
 
@@ -49,7 +49,7 @@ export function useLocationPrompt() {
               setLocationStatus("denied");
             } else {
               setLocationStatus("idle");
-              toast.error("Could not get your location. Please try again.");
+              setLocationStatus("idle");
             }
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
@@ -63,7 +63,7 @@ export function useLocationPrompt() {
               setLocationStatus("denied");
             } else {
               setLocationStatus("idle");
-              toast.error("Could not get your location. Please try again.");
+              setLocationStatus("idle");
             }
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
@@ -77,7 +77,7 @@ export function useLocationPrompt() {
             setLocationStatus("denied");
           } else {
             setLocationStatus("idle");
-            toast.error("Could not get your location. Please try again.");
+            setLocationStatus("idle");
           }
         },
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
