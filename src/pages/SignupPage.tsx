@@ -8,7 +8,7 @@ import { MailCheck, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { lovable } from "@/integrations/lovable/index";
+import { signInWithProvider } from "@/lib/oauth-helper";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -130,7 +130,7 @@ export default function SignupPage() {
               variant="outline"
               className="w-full"
               onClick={async () => {
-                const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+                const { error } = await signInWithProvider("google");
                 if (error) toast.error(error.message);
               }}
             >
@@ -142,7 +142,7 @@ export default function SignupPage() {
               variant="outline"
               className="w-full"
               onClick={async () => {
-                const { error } = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
+                const { error } = await signInWithProvider("apple");
                 if (error) toast.error(error.message);
               }}
             >
