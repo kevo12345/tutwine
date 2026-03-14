@@ -5,7 +5,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
 import { Button } from "@/components/ui/button";
-import { Heart, X, Star, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Heart, X, Star, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
@@ -250,10 +250,19 @@ export default function DiscoverPage() {
                       className="absolute inset-0 touch-none select-none"
                     >
                       <div className="h-full w-full relative">
-                        <div className="absolute inset-0 z-10 flex">
-                          <div className="w-1/2 h-full" onClick={() => handleSwipe("pass")} />
-                          <div className="w-1/2 h-full" onClick={() => handleSwipe("like")} />
-                        </div>
+                        {/* Arrow overlays */}
+                        <button
+                          onClick={() => handleSwipe("pass")}
+                          className="absolute left-1 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/70 hover:bg-background/80 transition-colors"
+                        >
+                          <ChevronLeft className="h-6 w-6" />
+                        </button>
+                        <button
+                          onClick={() => handleSwipe("like")}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/70 hover:bg-background/80 transition-colors"
+                        >
+                          <ChevronRight className="h-6 w-6" />
+                        </button>
                         <ProfileCard profile={profileForCard} />
                       </div>
                     </motion.div>
