@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Search, Sparkles, HelpCircle, User } from "lucide-react";
+import { Heart, MessageCircle, Search, Sparkles, Eye, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,9 +7,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 const navItems = [
   { icon: Search, label: "Discover", path: "/discover" },
   { icon: Heart, label: "Matches", path: "/matches" },
-  { icon: Sparkles, label: "Boost", path: "/pricing" },
+  { icon: Eye, label: "Likes", path: "/likes" },
   { icon: MessageCircle, label: "Chat", path: "/chat" },
-  { icon: HelpCircle, label: "Support", path: "/support" },
+  { icon: Sparkles, label: "Boost", path: "/pricing" },
 ];
 
 export function BottomNav() {
