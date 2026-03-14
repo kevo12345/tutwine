@@ -33,12 +33,7 @@ export function useLikeNotifications() {
             .eq("user_id", swipe.swiper_id)
             .single();
 
-          const name = profile?.display_name ?? "Someone";
-
-          toast(`💕 ${name} liked your profile!`, {
-            description: "Check your likes to see who's interested.",
-            duration: 5000,
-          });
+          // Silently refresh — no disruptive toast while swiping
 
           // Refresh the likes query
           queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
