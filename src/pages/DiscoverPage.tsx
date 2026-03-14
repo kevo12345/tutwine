@@ -12,7 +12,6 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-mo
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
@@ -21,7 +20,7 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const { user, profile: myProfile } = useAuth();
   const { limits } = useSubscription();
-  const { usage, increment } = useDailyUsage();
+  
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
   const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
@@ -40,10 +39,6 @@ export default function DiscoverPage() {
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-  const likesUsed = usage?.likes_count ?? 0;
-  const viewsUsed = usage?.profile_views ?? 0;
-  const likesLeft = limits.likes === Infinity ? "∞" : Math.max(0, limits.likes - likesUsed);
-  const viewsLeft = limits.profileViews === Infinity ? "∞" : Math.max(0, limits.profileViews - viewsUsed);
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
@@ -122,12 +117,6 @@ export default function DiscoverPage() {
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
 
-    if (action === "like") {
-      if (typeof likesLeft === "number" && likesLeft <= 0) {
-        toast.error("Daily like limit reached!", { description: "Upgrade for more likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
-        return;
-      }
-    }
 
     isSwiping.current = true;
 
@@ -152,10 +141,6 @@ export default function DiscoverPage() {
       if (error) console.error(error);
     });
 
-    if (action === "like") {
-      increment.mutate("likes_count");
-    }
-    increment.mutate("profile_views");
 
     if (action === "like") {
       supabase
@@ -171,7 +156,7 @@ export default function DiscoverPage() {
           }
         });
     }
-  }, [currentProfile, user, likesLeft, navigate, increment, x]);
+  }, [currentProfile, user, navigate, x]);
 
   if (loading) {
     return (
