@@ -20,7 +20,7 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   const { user, profile: myProfile } = useAuth();
   const { limits } = useSubscription();
-  const { usage, increment } = useDailyUsage();
+  
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
   const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
