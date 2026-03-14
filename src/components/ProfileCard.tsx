@@ -14,36 +14,9 @@ const tierConfig: Record<string, { icon: React.ElementType; label: string; class
   pro: { icon: Star, label: "Pro", className: "bg-accent/20 text-accent border-accent/30" },
 };
 
-/**
- * If the photo URL is from our Supabase storage, append render/image
- * transform params so the CDN returns a sharp, properly-sized image.
- */
-function getOptimizedPhotoUrl(url: string, width = 800): string {
-  if (!url) return url;
-  try {
-    const u = new URL(url);
-    // Only transform Supabase storage URLs
-    if (u.pathname.includes("/storage/v1/object/public/")) {
-      // Use Supabase image transformation endpoint
-      const transformedPath = u.pathname.replace(
-        "/storage/v1/object/public/",
-        "/storage/v1/render/image/public/"
-      );
-      u.pathname = transformedPath;
-      u.searchParams.set("width", String(width));
-      u.searchParams.set("quality", "85");
-      u.searchParams.set("resize", "cover");
-      return u.toString();
-    }
-  } catch {
-    // Not a valid URL, return as-is
-  }
-  return url;
-}
-
 export function ProfileCard({ profile, style, className }: ProfileCardProps) {
   const tier = profile.tier && profile.tier !== "free" ? tierConfig[profile.tier] : null;
-  const photoUrl = getOptimizedPhotoUrl(profile.photos[0], 800);
+  const photoUrl = profile.photos[0] || "";
 
   return (
     <div
@@ -56,8 +29,7 @@ export function ProfileCard({ profile, style, className }: ProfileCardProps) {
         className="absolute inset-0 h-full w-full object-cover"
         loading="lazy"
         decoding="async"
-        srcSet={`${getOptimizedPhotoUrl(profile.photos[0], 400)} 400w, ${getOptimizedPhotoUrl(profile.photos[0], 800)} 800w, ${getOptimizedPhotoUrl(profile.photos[0], 1200)} 1200w`}
-        sizes="(max-width: 640px) 100vw, 400px"
+        style={{ imageRendering: "auto" }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
 
