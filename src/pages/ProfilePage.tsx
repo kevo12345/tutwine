@@ -3,15 +3,28 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star } from "lucide-react";
+import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 
+const TIER_FEATURES: Record<string, string[]> = {
+  basic: ["100 profile views/day", "50 likes/day", "Ad-free experience"],
+  plus: ["Unlimited profile views", "200 likes/day", "1 weekly boost", "Advanced filters", "Ad-free experience"],
+  pro: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe", "Video chat", "Super Like"],
+};
+
+const TIER_ICONS: Record<string, React.ElementType> = { basic: Zap, plus: Crown, pro: Star };
+const TIER_COLORS: Record<string, string> = {
+  basic: "bg-info/10 text-info border-info/30",
+  plus: "bg-primary/10 text-primary border-primary/30",
+  pro: "bg-accent/10 text-accent border-accent/30",
+};
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { profile, loading } = useAuth();
-  const { tier } = useSubscription();
+  const { tier, subscription } = useSubscription();
 
   if (loading) {
     return (
@@ -26,6 +39,9 @@ export default function ProfilePage() {
   const age = profile?.date_of_birth
     ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / 31557600000)
     : null;
+
+  const TierIcon = tier !== "free" ? TIER_ICONS[tier] : null;
+  const endsAt = subscription?.ends_at ? new Date(subscription.ends_at) : null;
 
   return (
     <AppLayout>
@@ -52,13 +68,9 @@ export default function ProfilePage() {
           <div className="mt-4 flex items-center gap-2">
             <h2 className="font-display text-2xl font-bold">{profile?.display_name}{age ? `, ${age}` : ""}</h2>
             {profile?.verified && <BadgeCheck className="h-5 w-5 text-info" />}
-            {tier !== "free" && (
-              <Badge className={`gap-1 text-xs ${
-                tier === "pro" ? "bg-accent/20 text-accent border-accent/30" :
-                tier === "plus" ? "bg-primary/20 text-primary border-primary/30" :
-                "bg-info/20 text-info border-info/30"
-              }`}>
-                {tier === "pro" ? <Star className="h-3 w-3" /> : tier === "plus" ? <Crown className="h-3 w-3" /> : <Zap className="h-3 w-3" />}
+            {tier !== "free" && TierIcon && (
+              <Badge className={`gap-1 text-xs ${TIER_COLORS[tier]}`}>
+                <TierIcon className="h-3 w-3" />
                 {tier.charAt(0).toUpperCase() + tier.slice(1)}
               </Badge>
             )}
@@ -111,16 +123,50 @@ export default function ProfilePage() {
           </Card>
         )}
 
-        <Card className="mt-3 border-0 shadow-card gradient-warm text-primary-foreground">
-          <CardContent className="flex items-center justify-between p-4">
-            <div>
-              <p className="text-sm font-medium opacity-90 capitalize">{tier} Plan</p>
-              <p className="text-xs opacity-70">{tier === "free" ? "Upgrade for more features" : "You're on a premium plan"}</p>
-            </div>
-            {tier === "free" && (
-              <Button size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90" onClick={() => navigate("/pricing")}>
-                Upgrade
-              </Button>
+        {/* Subscription Status Card */}
+        <Card className={`mt-3 border-0 shadow-card overflow-hidden ${tier === "free" ? "gradient-warm text-primary-foreground" : ""}`}>
+          <CardContent className="p-4">
+            {tier === "free" ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium opacity-90">Free Plan</p>
+                  <p className="text-xs opacity-70">Upgrade for more features</p>
+                </div>
+                <Button size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90" onClick={() => navigate("/pricing")}>
+                  Upgrade
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {TierIcon && <TierIcon className="h-5 w-5 text-primary" />}
+                    <div>
+                      <p className="text-sm font-semibold">{tier.charAt(0).toUpperCase() + tier.slice(1)} Plan</p>
+                      <p className="text-xs text-muted-foreground">
+                        {subscription?.status === "active" ? "Active" : subscription?.status ?? "Active"}
+                        {endsAt && ` · Renews ${endsAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs text-success border-success/30 bg-success/10">
+                    {subscription?.status === "active" ? "Active" : subscription?.status ?? "Active"}
+                  </Badge>
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Your features</p>
+                  <ul className="space-y-1.5">
+                    {TIER_FEATURES[tier]?.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-xs text-foreground">
+                        <Check className="h-3 w-3 text-success shrink-0" /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => navigate("/pricing")}>
+                  Manage Subscription
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

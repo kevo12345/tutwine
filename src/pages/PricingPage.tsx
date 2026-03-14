@@ -10,6 +10,7 @@ import { TIER_PRICES } from "@/lib/constants";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +50,7 @@ const KES_PRICES: Record<string, number> = {
 export default function PricingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tier: currentTier } = useSubscription();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -125,12 +127,16 @@ export default function PricingPage() {
             const info = TIER_PRICES[tier.key];
             const kesPrice = KES_PRICES[tier.key];
             return (
-              <Card key={tier.key} className={`relative border-0 shadow-card overflow-hidden ${tier.popular ? "ring-2 ring-primary" : ""}`}>
-                {tier.popular && (
+              <Card key={tier.key} className={`relative border-0 shadow-card overflow-hidden ${currentTier === tier.key ? "ring-2 ring-success" : tier.popular ? "ring-2 ring-primary" : ""}`}>
+                {currentTier === tier.key ? (
+                  <div className="absolute right-0 top-0 bg-success px-3 py-1 text-[10px] font-bold text-success-foreground rounded-bl-xl uppercase tracking-wider">
+                    Current Plan
+                  </div>
+                ) : tier.popular ? (
                   <div className="absolute right-0 top-0 gradient-warm px-3 py-1 text-[10px] font-bold text-primary-foreground rounded-bl-xl uppercase tracking-wider">
                     Most Popular
                   </div>
-                )}
+                ) : null}
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div className={`rounded-xl p-2 ${tier.color}`}>
@@ -154,11 +160,12 @@ export default function PricingPage() {
                     ))}
                   </ul>
                   <Button
-                    className={`mt-4 w-full ${tier.popular ? "gradient-warm border-0 text-primary-foreground shadow-glow" : ""}`}
-                    variant={tier.popular ? "default" : "outline"}
+                    className={`mt-4 w-full ${currentTier === tier.key ? "" : tier.popular ? "gradient-warm border-0 text-primary-foreground shadow-glow" : ""}`}
+                    variant={currentTier === tier.key ? "secondary" : tier.popular ? "default" : "outline"}
+                    disabled={currentTier === tier.key}
                     onClick={() => handleSelectPlan(tier.key)}
                   >
-                    Get {info.label}
+                    {currentTier === tier.key ? "Current Plan" : `Get ${info.label}`}
                   </Button>
                 </CardContent>
               </Card>
