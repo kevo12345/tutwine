@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { MapPin, BadgeCheck, MessageCircle, Lock, Circle } from "lucide-react";
+import { MapPin, BadgeCheck, MessageCircle, Lock, Circle, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { fetchUserPresence } from "@/hooks/usePresence";
