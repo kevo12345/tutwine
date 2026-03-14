@@ -29,7 +29,7 @@ function formatLastSeen(lastSeen: string | null): string {
 export default function UserProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { profile: myProfile } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { tier } = useSubscription();
   const isFree = tier === "free";
 
