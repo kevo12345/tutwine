@@ -119,6 +119,11 @@ export default function ChatThreadPage() {
     );
   }
 
+  if (tier === "free") {
+    navigate("/chat");
+    return null;
+  }
+
   return (
     <div className="flex h-screen items-center justify-center bg-background">
       <div className="flex h-full w-full flex-col lg:mx-auto lg:my-8 lg:h-[calc(100vh-4rem)] lg:max-w-2xl lg:rounded-2xl lg:border lg:border-border lg:shadow-card">
