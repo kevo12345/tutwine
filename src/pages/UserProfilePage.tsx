@@ -252,6 +252,8 @@ export default function UserProfilePage() {
               className="h-14 w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive shrink-0"
               onClick={async () => {
                 if (!userId || !user) return;
+                // Delete any existing swipe first, then insert pass
+                await supabase.from("swipes").delete().eq("swiper_id", user.id).eq("target_id", userId);
                 await supabase.from("swipes").insert({ swiper_id: user.id, target_id: userId, action: "pass" });
                 toast("Passed");
                 navigate(-1);
@@ -265,6 +267,8 @@ export default function UserProfilePage() {
               className="h-16 w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow shrink-0"
               onClick={async () => {
                 if (!userId || !user) return;
+                // Delete any existing swipe first, then insert like
+                await supabase.from("swipes").delete().eq("swiper_id", user.id).eq("target_id", userId);
                 const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: userId, action: "like" });
                 if (error) { console.error(error); return; }
                 // Check for match
