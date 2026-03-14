@@ -73,11 +73,11 @@ export default function LikesPage() {
     if (!user || likingBack) return;
     setLikingBack(liker.user_id);
 
-    const { error } = await supabase.from("swipes").insert({
+    const { error } = await supabase.from("swipes").upsert({
       swiper_id: user.id,
       target_id: liker.user_id,
       action: "like",
-    });
+    }, { onConflict: "swiper_id,target_id" });
 
     if (error) {
       toast.error("Failed to like back");
