@@ -17,14 +17,34 @@ const STEPS = ["Profile", "Photos", "Interests", "Location"];
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile: existingProfile, refreshProfile } = useAuth();
+  const isEditing = existingProfile?.onboarding_complete === true;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Compute age from date_of_birth
+  const existingAge = existingProfile?.date_of_birth
+    ? String(Math.floor((Date.now() - new Date(existingProfile.date_of_birth).getTime()) / 31557600000))
+    : "";
+
+  const genderDisplayMap: Record<string, string> = { man: "Man", woman: "Woman", "non-binary": "Non-binary", other: "Other" };
+  const existingGender = existingProfile?.gender ? genderDisplayMap[existingProfile.gender] ?? "" : "";
+  const existingInterestedIn = existingProfile?.interested_in
+    ? existingProfile.interested_in.length >= 4 ? "Everyone" : genderDisplayMap[existingProfile.interested_in[0]] ?? ""
+    : "";
+
   const [profile, setProfile] = useState({
-    displayName: "", age: "", gender: "", interestedIn: "", bio: "", phone: "",
-    photos: [] as string[], interests: [] as string[],
-    state: "", city: "",
+    displayName: existingProfile?.display_name ?? "",
+    age: existingAge,
+    gender: existingGender,
+    interestedIn: existingInterestedIn,
+    bio: existingProfile?.bio ?? "",
+    phone: existingProfile?.phone ?? "",
+    photos: (existingProfile?.photos as string[]) ?? [],
+    interests: (existingProfile?.interests as string[]) ?? [],
+    state: existingProfile?.state ?? "",
+    city: existingProfile?.city ?? "",
   });
 
   const nextStep = async () => {
@@ -68,8 +88,8 @@ export default function OnboardingPage() {
       setSaving(false);
       if (error) { toast.error("Failed to save profile"); return; }
       await refreshProfile();
-      toast.success("Profile complete! Start discovering.");
-      navigate("/discover");
+      toast.success(isEditing ? "Profile updated!" : "Profile complete! Start discovering.");
+      navigate(isEditing ? "/profile" : "/discover");
     }
   };
 
@@ -129,7 +149,7 @@ export default function OnboardingPage() {
       <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
-          <button onClick={() => step > 0 ? setStep(step - 1) : navigate("/signup")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <button onClick={() => step > 0 ? setStep(step - 1) : navigate(isEditing ? "/profile" : "/signup")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
           <div className="flex items-center gap-2">
@@ -281,7 +301,7 @@ export default function OnboardingPage() {
         </AnimatePresence>
 
         <Button onClick={nextStep} className="mt-8 w-full gradient-warm border-0 text-primary-foreground shadow-glow" size="lg" disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < STEPS.length - 1 ? <>Continue <ArrowRight className="ml-1 h-4 w-4" /></> : <>Start Discovering <ArrowRight className="ml-1 h-4 w-4" /></>}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < STEPS.length - 1 ? <>Continue <ArrowRight className="ml-1 h-4 w-4" /></> : isEditing ? <>Save Changes <ArrowRight className="ml-1 h-4 w-4" /></> : <>Start Discovering <ArrowRight className="ml-1 h-4 w-4" /></>}
         </Button>
       </div>
     </div>
