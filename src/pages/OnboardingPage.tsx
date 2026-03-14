@@ -21,6 +21,7 @@ export default function OnboardingPage() {
   const isEditing = existingProfile?.onboarding_complete === true;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Compute age from date_of_birth
