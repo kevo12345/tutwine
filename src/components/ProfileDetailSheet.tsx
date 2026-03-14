@@ -133,6 +133,12 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
             <SheetTitle className="flex items-center gap-2 font-display text-2xl">
               {profile.displayName}, {profile.age}
               {profile.verified && <BadgeCheck className="h-5 w-5 text-info" />}
+              {(profile.likesCount ?? 0) > 0 && (
+                <Badge className="gap-1 text-xs bg-primary/80 text-primary-foreground border-0 ml-1">
+                  <Heart className="h-3 w-3 fill-current" />
+                  {profile.likesCount}
+                </Badge>
+              )}
             </SheetTitle>
           </SheetHeader>
 
