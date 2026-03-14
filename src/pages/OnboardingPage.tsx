@@ -21,6 +21,7 @@ export default function OnboardingPage() {
   const isEditing = existingProfile?.onboarding_complete === true;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Compute age from date_of_birth
@@ -106,15 +107,68 @@ export default function OnboardingPage() {
     const file = e.target.files?.[0];
     if (!file || !user || profile.photos.length >= 6) return;
 
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
+    // Reset file input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
 
-    const { error } = await supabase.storage.from("photos").upload(path, file);
-    if (error) { toast.error("Upload failed"); return; }
+    setUploading(true);
 
-    const { data: { publicUrl } } = supabase.storage.from("photos").getPublicUrl(path);
-    setProfile((p) => ({ ...p, photos: [...p.photos, publicUrl] }));
-    toast.success("Photo uploaded!");
+    try {
+      // Compress large images before upload
+      let uploadFile: File | Blob = file;
+      if (file.size > 2 * 1024 * 1024) {
+        // If > 2MB, try to compress via canvas
+        try {
+          const bitmap = await createImageBitmap(file);
+          const canvas = document.createElement("canvas");
+          const maxDim = 1920;
+          let w = bitmap.width;
+          let h = bitmap.height;
+          if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim / w, maxDim / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(bitmap, 0, 0, w, h);
+          uploadFile = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+              (blob) => (blob ? resolve(blob) : reject(new Error("Compression failed"))),
+              "image/jpeg",
+              0.85
+            );
+          });
+        } catch {
+          // Fall back to original file if compression fails
+          uploadFile = file;
+        }
+      }
+
+      const ext = file.type === "image/png" ? "png" : "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+
+      const { error } = await supabase.storage.from("photos").upload(path, uploadFile, {
+        contentType: uploadFile instanceof Blob ? `image/${ext}` : file.type,
+        upsert: false,
+      });
+
+      if (error) {
+        console.error("Upload error:", error);
+        toast.error(`Upload failed: ${error.message}`);
+        setUploading(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from("photos").getPublicUrl(path);
+      setProfile((p) => ({ ...p, photos: [...p.photos, publicUrl] }));
+      toast.success("Photo uploaded!");
+    } catch (err: any) {
+      console.error("Upload exception:", err);
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removePhoto = async (index: number) => {
@@ -146,7 +200,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background p-4">
-      <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+      <input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/webp,image/heic" capture={undefined} className="hidden" onChange={handlePhotoUpload} />
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
           <button onClick={() => step > 0 ? setStep(step - 1) : navigate(isEditing ? "/profile" : "/signup")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -234,9 +288,9 @@ export default function OnboardingPage() {
                           {i === 0 && <Badge className="absolute bottom-1 left-1 text-[10px] gradient-warm border-0 text-primary-foreground">Main</Badge>}
                         </>
                       ) : (
-                        <button onClick={() => fileInputRef.current?.click()} className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
-                          <Plus className="h-6 w-6" />
-                          <span className="text-xs">Add</span>
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-50">
+                          {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-6 w-6" />}
+                          <span className="text-xs">{uploading ? "Uploading..." : "Add"}</span>
                         </button>
                       )}
                     </div>
