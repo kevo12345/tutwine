@@ -108,12 +108,26 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    height: -webkit-fill-available;
+    overflow: hidden;
   }
   body {
     @apply bg-background text-foreground font-body antialiased;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif;
+  }
+  /* Prevent iOS bounce scroll on body */
+  #root {
+    height: 100dvh;
+    overflow: hidden;
   }
 }
 
