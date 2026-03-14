@@ -203,6 +203,24 @@ export default function ChatThreadPage() {
           </div>
         </div>
       </div>
+
+      <ProfileDetailSheet
+        open={showProfile}
+        onClose={() => setShowProfile(false)}
+        profile={otherProfile ? {
+          id: otherProfile.user_id,
+          displayName: otherProfile.display_name ?? "Unknown",
+          age: otherProfile.date_of_birth ? Math.floor((Date.now() - new Date(otherProfile.date_of_birth).getTime()) / 31557600000) : 0,
+          gender: otherProfile.gender ?? "other",
+          bio: otherProfile.bio ?? "",
+          interests: otherProfile.interests ?? [],
+          photos: (otherProfile.photos?.length ? otherProfile.photos : []) as string[],
+          distance: null,
+          city: otherProfile.city ?? "",
+          state: otherProfile.state ?? "",
+          verified: otherProfile.verified ?? false,
+        } : null}
+      />
     </div>
   );
 }
