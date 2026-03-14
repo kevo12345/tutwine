@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useLikesCount() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [hasNewLike, setHasNewLike] = useState(false);
+
+  const clearNewLike = useCallback(() => setHasNewLike(false), []);
 
   const { data: count = 0 } = useQuery({
     queryKey: ["likes-count", user?.id],
@@ -51,7 +54,13 @@ export function useLikesCount() {
           table: "swipes",
           filter: `target_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          const swipe = payload.new as { action: string };
+          if (swipe.action === "like") {
+            setHasNewLike(true);
+            // Auto-clear pulse after 3 seconds
+            setTimeout(() => setHasNewLike(false), 3000);
+          }
           queryClient.invalidateQueries({ queryKey: ["likes-count", user.id] });
           queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
         }
@@ -63,5 +72,5 @@ export function useLikesCount() {
     };
   }, [user, queryClient]);
 
-  return count;
+  return { count, hasNewLike, clearNewLike };
 }
