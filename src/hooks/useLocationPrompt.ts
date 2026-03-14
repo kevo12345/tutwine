@@ -63,7 +63,7 @@ export function useLocationPrompt() {
               setLocationStatus("denied");
             } else {
               setLocationStatus("idle");
-              toast.error("Could not get your location. Please try again.");
+              setLocationStatus("idle");
             }
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
