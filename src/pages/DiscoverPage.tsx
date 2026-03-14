@@ -286,11 +286,11 @@ export default function DiscoverPage() {
           </>
         )}
 
-        <div className="mt-6 rounded-2xl bg-secondary p-4 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-4 sm:mt-6 rounded-2xl bg-secondary p-3 sm:p-4 text-center">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             🔒 {likesLeft} likes & {viewsLeft} views remaining today
           </p>
-          <Button variant="link" className="text-primary text-sm" onClick={() => navigate("/pricing")}>
+          <Button variant="link" className="text-primary text-xs sm:text-sm" onClick={() => navigate("/pricing")}>
             Upgrade for unlimited access →
           </Button>
         </div>
