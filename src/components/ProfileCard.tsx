@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { MapPin, BadgeCheck, Crown, Zap, Star } from "lucide-react";
+import { MapPin, BadgeCheck, Crown, Zap, Star, Heart } from "lucide-react";
 import type { MockProfile } from "@/lib/mock-data";
 
 interface ProfileCardProps {
@@ -33,14 +33,20 @@ export function ProfileCard({ profile, style, className }: ProfileCardProps) {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
 
-      {tier && (
-        <div className="absolute top-3 right-3">
+      <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+        {tier && (
           <Badge className={`${tier.className} gap-1 text-xs backdrop-blur-sm`}>
             <tier.icon className="h-3 w-3" />
             {tier.label}
           </Badge>
-        </div>
-      )}
+        )}
+        {profile.likesCount != null && profile.likesCount > 0 && (
+          <Badge className="gap-1 text-xs backdrop-blur-sm bg-primary/80 text-primary-foreground border-0">
+            <Heart className="h-3 w-3 fill-current" />
+            {profile.likesCount}
+          </Badge>
+        )}
+      </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-5 text-primary-foreground">
         <div className="flex items-center gap-2">
