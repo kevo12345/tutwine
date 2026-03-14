@@ -20,7 +20,7 @@ export function ProfileCard({ profile, style, className }: ProfileCardProps) {
 
   return (
     <div
-      className={`relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-card shadow-card ${className ?? ""}`}
+      className={`relative h-full w-full overflow-hidden rounded-2xl bg-card shadow-card ${className ?? ""}`}
       style={style}
     >
       <img
