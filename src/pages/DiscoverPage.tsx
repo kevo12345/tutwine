@@ -12,7 +12,6 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-mo
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useDailyUsage } from "@/hooks/useDailyUsage";
 import { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
