@@ -256,6 +256,7 @@ export default function DiscoverPage() {
                         state: nextP.state ?? "",
                         verified: nextP.verified ?? false,
                         tier: profileTiers[nextP.user_id] ?? "free",
+                        likesCount: profileLikes[nextP.user_id] ?? 0,
                       }} />
                     </div>
                   );
