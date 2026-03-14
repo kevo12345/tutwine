@@ -1,17 +1,34 @@
+import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Bell, Shield, CreditCard, LogOut, Trash2, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, User, Shield, CreditCard, LogOut, Trash2, ChevronRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const TUTWINE_URL = "https://tutwine.com";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const handleToggle = async (field: "hide_distance" | "hide_state", value: boolean) => {
     if (!user) return;
@@ -22,6 +39,25 @@ export default function SettingsPage() {
     await signOut();
     toast.success("Logged out");
     navigate("/");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "DELETE") return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-actions", {
+        body: { action: "delete_own_account" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      // Sign out locally and redirect to tutwine.com
+      await supabase.auth.signOut();
+      window.location.href = TUTWINE_URL;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete account");
+      setDeleting(false);
+    }
   };
 
   return (
@@ -86,9 +122,39 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
             <CardContent className="border-t border-border p-4">
-              <Button variant="ghost" className="w-full justify-start gap-3 text-sm text-destructive hover:text-destructive" onClick={() => toast.error("Account deletion requires confirmation via email.")}>
-                <Trash2 className="h-4 w-4" /> Delete Account
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start gap-3 text-sm text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4" /> Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-3">
+                      <p>This action is <strong>permanent and cannot be undone</strong>. All your data, matches, messages, and photos will be deleted.</p>
+                      <p>Type <strong>DELETE</strong> to confirm:</p>
+                      <Input
+                        value={deleteConfirm}
+                        onChange={(e) => setDeleteConfirm(e.target.value)}
+                        placeholder="Type DELETE"
+                        className="mt-2"
+                      />
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setDeleteConfirm("")}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirm !== "DELETE" || deleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Delete Forever
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
