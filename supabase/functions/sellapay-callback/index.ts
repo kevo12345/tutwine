@@ -14,11 +14,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log('SellaPay callback received:', JSON.stringify(body));
 
-    const { transaction_id, status, ResultCode, ResultDesc } = body;
+    const { transaction_id, status, ResultCode, ResultDesc, CheckoutRequestID, reference } = body;
 
-    if (!transaction_id) {
+    // Try multiple identifiers to find the subscription
+    const lookupId = transaction_id || CheckoutRequestID || reference;
+
+    if (!lookupId) {
+      console.error('No identifier found in callback body:', JSON.stringify(body));
       return new Response(
-        JSON.stringify({ error: 'Missing transaction_id' }),
+        JSON.stringify({ error: 'No transaction identifier found' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -31,8 +35,57 @@ Deno.serve(async (req) => {
     // Check if payment was successful (ResultCode 0 = success in M-Pesa)
     const isSuccess = ResultCode === 0 || ResultCode === '0' || status === 'completed' || status === 'success';
 
+    // Try to find the subscription by provider_sub_id
+    const { data: sub } = await serviceClient
+      .from('subscriptions')
+      .select('id, user_id, tier')
+      .eq('provider_sub_id', lookupId)
+      .eq('status', 'past_due')
+      .maybeSingle();
+
+    if (!sub) {
+      console.error('No pending subscription found for identifier:', lookupId);
+      // Try alternate identifiers
+      for (const altId of [transaction_id, CheckoutRequestID, reference].filter(Boolean)) {
+        if (altId === lookupId) continue;
+        const { data: altSub } = await serviceClient
+          .from('subscriptions')
+          .select('id, user_id, tier')
+          .eq('provider_sub_id', altId)
+          .eq('status', 'past_due')
+          .maybeSingle();
+        if (altSub) {
+          console.log('Found subscription via alternate ID:', altId);
+          if (isSuccess) {
+            await serviceClient
+              .from('subscriptions')
+              .update({
+                status: 'active',
+                started_at: new Date().toISOString(),
+                ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              })
+              .eq('id', altSub.id);
+            console.log('Subscription activated for user:', altSub.user_id, 'tier:', altSub.tier);
+          } else {
+            await serviceClient
+              .from('subscriptions')
+              .update({ status: 'canceled' })
+              .eq('id', altSub.id);
+          }
+          return new Response(
+            JSON.stringify({ success: true }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ error: 'Subscription not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (isSuccess) {
-      // Activate the subscription
       const { error } = await serviceClient
         .from('subscriptions')
         .update({
@@ -40,26 +93,23 @@ Deno.serve(async (req) => {
           started_at: new Date().toISOString(),
           ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         })
-        .eq('provider_sub_id', transaction_id)
-        .eq('status', 'past_due');
+        .eq('id', sub.id);
 
       if (error) {
         console.error('Error activating subscription:', error);
       } else {
-        console.log('Subscription activated for transaction:', transaction_id);
+        console.log('Subscription activated for user:', sub.user_id, 'tier:', sub.tier);
       }
     } else {
-      // Payment failed or cancelled - mark subscription as canceled
       const { error } = await serviceClient
         .from('subscriptions')
         .update({ status: 'canceled' })
-        .eq('provider_sub_id', transaction_id)
-        .eq('status', 'past_due');
+        .eq('id', sub.id);
 
       if (error) {
         console.error('Error canceling subscription:', error);
       } else {
-        console.log('Subscription canceled for transaction:', transaction_id, 'Reason:', ResultDesc || status);
+        console.log('Subscription canceled for:', sub.user_id, 'Reason:', ResultDesc || status);
       }
     }
 

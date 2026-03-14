@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Clean phone number - remove country code prefix if present, keep local format
+    // Clean phone number
     let cleanPhone = phone.replace(/\s+/g, '').replace(/^(\+?254)/, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = cleanPhone.substring(1);
@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
 
     // Get SellaPay access token
     const sellapayToken = await getSellapayToken();
+
+    const subRef = reference || `SUB-${tier.toUpperCase()}-${userId.slice(0, 8)}-${Date.now()}`;
 
     // Initiate STK Push
     const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
@@ -93,12 +95,13 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         phone: cleanPhone,
         amount: Number(amount),
-        reference: reference || `SUB-${tier.toUpperCase()}-${Date.now()}`,
+        reference: subRef,
         description: `TutWine ${tier} subscription`,
       }),
     });
 
     const stkData = await stkRes.json();
+    console.log('STK Push response:', JSON.stringify(stkData));
 
     if (!stkRes.ok) {
       console.error('STK Push failed:', stkData);
@@ -108,7 +111,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Store pending subscription using service role for insert
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -121,8 +123,17 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .eq('status', 'active');
 
-    // Create new subscription as past_due (pending M-Pesa payment confirmation)
-    // This should only be changed to 'active' via a SellaPay callback/webhook
+    // Also clean up any lingering past_due subscriptions for this user
+    await serviceClient
+      .from('subscriptions')
+      .update({ status: 'canceled' })
+      .eq('user_id', userId)
+      .eq('status', 'past_due');
+
+    // Use transaction_id if available, otherwise use the reference as fallback
+    const providerSubId = stkData.transaction_id || stkData.CheckoutRequestID || subRef;
+
+    // Create new subscription as past_due (pending M-Pesa confirmation)
     const { error: subError } = await serviceClient.from('subscriptions').insert({
       user_id: userId,
       tier,
@@ -130,7 +141,7 @@ Deno.serve(async (req) => {
       price: Number(amount),
       currency: 'KES',
       provider: 'sellapay',
-      provider_sub_id: stkData.transaction_id || null,
+      provider_sub_id: providerSubId,
       started_at: new Date().toISOString(),
       ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
@@ -143,7 +154,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'STK push sent! Check your phone for the M-Pesa prompt.',
-        transaction_id: stkData.transaction_id,
+        transaction_id: providerSubId,
         status: stkData.status,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
