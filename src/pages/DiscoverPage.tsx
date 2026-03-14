@@ -221,7 +221,7 @@ export default function DiscoverPage() {
           <div className="mb-4 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{viewsLeft} views · {likesLeft} likes left</span>
+              
               <Button variant="ghost" size="icon" className="h-9 w-9">
                 <SlidersHorizontal className="h-4 w-4" />
               </Button>
