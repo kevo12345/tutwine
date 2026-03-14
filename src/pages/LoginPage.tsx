@@ -115,7 +115,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
               onClick={async () => {
-                const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+                const { error } = await signInWithProvider("google");
                 if (error) toast.error(error.message);
               }}
             >
