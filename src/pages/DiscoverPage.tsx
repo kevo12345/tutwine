@@ -269,8 +269,8 @@ export default function DiscoverPage() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                 </Button>
               )}
-              <Button size="icon" className="h-16 w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
-                <Heart className="h-8 w-8 fill-current" />
+              <Button size="icon" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
+                <Heart className="h-7 w-7 sm:h-8 sm:w-8 fill-current" />
               </Button>
               <Button variant="outline" size="icon" className={`h-14 w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
                 if (!limits.superLike) {
