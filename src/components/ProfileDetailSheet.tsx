@@ -1,9 +1,12 @@
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MapPin, BadgeCheck, MessageCircle, Lock, Circle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
+import { fetchUserPresence } from "@/hooks/usePresence";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ProfileDetailProps {
@@ -24,15 +27,62 @@ interface ProfileDetailProps {
   } | null;
 }
 
+function formatLastSeen(lastSeen: string | null): string {
+  if (!lastSeen) return "";
+  const diff = Date.now() - new Date(lastSeen).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProps) {
   const navigate = useNavigate();
   const { tier } = useSubscription();
   const isFree = tier === "free";
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastSeen, setLastSeen] = useState<string | null>(null);
+
+  // Fetch presence when sheet opens
+  useEffect(() => {
+    if (!open || !profile) return;
+
+    const load = async () => {
+      const presence = await fetchUserPresence(profile.id);
+      setIsOnline(presence.isOnline);
+      setLastSeen(presence.lastSeen);
+    };
+    load();
+
+    // Subscribe to realtime presence changes
+    const channel = supabase
+      .channel(`presence-${profile.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_presence",
+          filter: `user_id=eq.${profile.id}`,
+        },
+        (payload: any) => {
+          const data = payload.new;
+          if (data) {
+            setIsOnline(data.is_online);
+            setLastSeen(data.last_seen_at);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [open, profile?.id]);
 
   if (!profile) return null;
-
-  // Simple online simulation based on user id hash (in production, use presence)
-  const isOnline = profile.id.charCodeAt(0) % 3 !== 0;
 
   const handleChat = () => {
     if (isFree) {
@@ -43,7 +93,6 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
       return;
     }
     onClose();
-    // Navigate to chat — in practice this would need a match ID
     navigate("/chat");
   };
 
@@ -71,8 +120,8 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
                   : "bg-muted/60 text-muted-foreground border-muted"
               }`}
             >
-              <Circle className={`h-2 w-2 fill-current`} />
-              {isOnline ? "Online" : "Offline"}
+              <Circle className="h-2 w-2 fill-current" />
+              {isOnline ? "Online" : lastSeen ? `Last seen ${formatLastSeen(lastSeen)}` : "Offline"}
             </Badge>
           </div>
         </div>
