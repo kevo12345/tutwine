@@ -206,7 +206,7 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 px-3 sm:px-4 flex flex-col max-h-[calc(100dvh-10rem)] md:max-h-[calc(100dvh-8rem)]">
+        <div className="flex-1 min-h-0 px-3 sm:px-4 flex flex-col">
           {noMoreProfiles ? (
             <div className="flex flex-col items-center justify-center flex-1 text-center">
               <Heart className="h-16 w-16 text-muted-foreground/30" />
