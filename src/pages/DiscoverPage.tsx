@@ -215,7 +215,7 @@ export default function DiscoverPage() {
             </div>
           ) : (
             <>
-              <div className="relative mx-auto w-full max-w-sm flex-1 min-h-0">
+              <div className="relative mx-auto w-full max-w-sm md:max-w-md lg:max-w-lg flex-1 min-h-0">
                 {nextEffectiveIndex >= 0 && profiles[nextEffectiveIndex] && (() => {
                   const nextP = profiles[nextEffectiveIndex];
                   return (
