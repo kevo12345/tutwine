@@ -1,16 +1,15 @@
 project_id = "erhmkxbcubdopxbryetm"
 
-[functions.create-daily-room]
-verify_jwt = false
-
-[functions.sellapay-stk-push]
-verify_jwt = false
-
-[functions.sellapay-callback]
-verify_jwt = false
-
-[functions.admin-actions]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.admin-actions]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.create-daily-room]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.sellapay-callback]
+    verify_jwt = false
+  [functions.sellapay-stk-push]
+    verify_jwt = false
