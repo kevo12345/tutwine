@@ -198,7 +198,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <div className="px-4 pt-4">
+      <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold">Discover</h1>
           <div className="flex items-center gap-2">
