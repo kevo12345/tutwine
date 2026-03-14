@@ -195,13 +195,6 @@ serve(async (req) => {
         break;
       }
 
-      case "delete_own_account": {
-        // Allow any authenticated user to delete their own account
-        const { error: selfDeleteError } = await adminClient.auth.admin.deleteUser(caller.id);
-        if (selfDeleteError) throw selfDeleteError;
-        result = { success: true, message: "Account deleted" };
-        break;
-      }
 
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
