@@ -134,7 +134,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       )}
-      <main className="flex-1 relative overflow-y-auto mx-auto w-full max-w-lg pb-20 -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
+      <main className="flex-1 min-h-0 relative overflow-y-auto mx-auto w-full max-w-lg pb-0 -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
       <BottomNav />
 
       {/* Location Settings Guide Dialog */}
