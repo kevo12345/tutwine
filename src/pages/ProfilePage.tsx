@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2 } from "lucide-react";
+import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -52,6 +52,16 @@ export default function ProfilePage() {
           <div className="mt-4 flex items-center gap-2">
             <h2 className="font-display text-2xl font-bold">{profile?.display_name}{age ? `, ${age}` : ""}</h2>
             {profile?.verified && <BadgeCheck className="h-5 w-5 text-info" />}
+            {tier !== "free" && (
+              <Badge className={`gap-1 text-xs ${
+                tier === "pro" ? "bg-accent/20 text-accent border-accent/30" :
+                tier === "plus" ? "bg-primary/20 text-primary border-primary/30" :
+                "bg-info/20 text-info border-info/30"
+              }`}>
+                {tier === "pro" ? <Star className="h-3 w-3" /> : tier === "plus" ? <Crown className="h-3 w-3" /> : <Zap className="h-3 w-3" />}
+                {tier.charAt(0).toUpperCase() + tier.slice(1)}
+              </Badge>
+            )}
           </div>
           {(profile?.city || profile?.state) && (
             <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">

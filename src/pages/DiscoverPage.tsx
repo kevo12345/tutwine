@@ -22,6 +22,7 @@ export default function DiscoverPage() {
   const { limits } = useSubscription();
   const { usage, increment } = useDailyUsage();
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [showMatch, setShowMatch] = useState(false);
@@ -66,6 +67,20 @@ export default function DiscoverPage() {
         (p) => p.photos && p.photos.length > 0 && p.display_name
       );
       setProfiles(validProfiles);
+
+      // Fetch subscription tiers for these profiles
+      if (validProfiles.length > 0) {
+        const userIds = validProfiles.map(p => p.user_id);
+        const { data: subs } = await supabase
+          .from("subscriptions")
+          .select("user_id, tier")
+          .in("user_id", userIds)
+          .eq("status", "active");
+        const tierMap: Record<string, string> = {};
+        subs?.forEach(s => { tierMap[s.user_id] = s.tier; });
+        setProfileTiers(tierMap);
+      }
+
       setLoading(false);
     };
     fetchProfiles();
@@ -155,6 +170,7 @@ export default function DiscoverPage() {
     city: currentProfile.city ?? "",
     state: currentProfile.state ?? "",
     verified: currentProfile.verified ?? false,
+    tier: profileTiers[currentProfile.user_id] ?? "free",
   } : null;
 
   const noMoreProfiles = profiles.length === 0;
