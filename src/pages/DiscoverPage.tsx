@@ -193,9 +193,9 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <div className="h-full overflow-hidden overscroll-none" style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}>
-        <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="h-full flex flex-col overflow-hidden overscroll-none" style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}>
+        <div className="px-3 pt-3 sm:px-4 sm:pt-4 shrink-0">
+          <div className="mb-3 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
             <div className="flex items-center gap-2">
               
@@ -204,16 +204,18 @@ export default function DiscoverPage() {
               </Button>
             </div>
           </div>
+        </div>
 
+        <div className="flex-1 min-h-0 px-3 sm:px-4 flex flex-col">
           {noMoreProfiles ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex flex-col items-center justify-center flex-1 text-center">
               <Heart className="h-16 w-16 text-muted-foreground/30" />
               <h2 className="mt-4 font-display text-xl font-bold">No profiles yet</h2>
               <p className="mt-2 text-sm text-muted-foreground">Be the first! Invite your friends to join.</p>
             </div>
           ) : (
             <>
-              <div className="relative mx-auto aspect-[3/4] w-full max-w-sm">
+              <div className="relative mx-auto w-full max-w-sm flex-1 min-h-0">
                 {nextEffectiveIndex >= 0 && profiles[nextEffectiveIndex] && (() => {
                   const nextP = profiles[nextEffectiveIndex];
                   return (
@@ -270,19 +272,19 @@ export default function DiscoverPage() {
                 </AnimatePresence>
               </div>
 
-              <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
-                <Button variant="outline" size="icon" className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
-                  <X className="h-6 w-6 sm:h-7 sm:w-7" />
+              <div className="shrink-0 py-3 flex items-center justify-center gap-3 sm:gap-4">
+                <Button variant="outline" size="icon" className="h-11 w-11 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
+                  <X className="h-5 w-5 sm:h-7 sm:w-7" />
                 </Button>
                 {limits.undoSwipe && (
-                  <Button variant="outline" size="icon" className="h-10 w-10 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
+                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                   </Button>
                 )}
-                <Button size="icon" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
-                  <Heart className="h-7 w-7 sm:h-8 sm:w-8 fill-current" />
+                <Button size="icon" className="h-13 w-13 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
+                  <Heart className="h-6 w-6 sm:h-8 sm:w-8 fill-current" />
                 </Button>
-                <Button variant="outline" size="icon" className={`h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
+                <Button variant="outline" size="icon" className={`h-11 w-11 sm:h-14 sm:w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
                   if (!limits.superLike) {
                     toast("⭐ Super Like is a Pro feature", { description: "Upgrade to Pro to send Super Likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
                   } else {
@@ -290,12 +292,11 @@ export default function DiscoverPage() {
                     handleSwipe("like");
                   }
                 }}>
-                  <Star className="h-6 w-6 sm:h-7 sm:w-7" />
+                  <Star className="h-5 w-5 sm:h-7 sm:w-7" />
                 </Button>
               </div>
             </>
           )}
-
         </div>
       </div>
 
