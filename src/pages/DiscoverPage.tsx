@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { PullToRefresh } from "@/components/PullToRefresh";
+
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
@@ -109,10 +109,6 @@ export default function DiscoverPage() {
 
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
 
-  const handleRefresh = useCallback(async () => {
-    await fetchProfiles();
-    toast.success("Profiles refreshed!");
-  }, [fetchProfiles]);
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
@@ -201,7 +197,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <PullToRefresh onRefresh={handleRefresh} className="h-full">
+      <div className="h-full overflow-y-auto overscroll-contain">
         <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
@@ -309,7 +305,7 @@ export default function DiscoverPage() {
           )}
 
         </div>
-      </PullToRefresh>
+      </div>
 
       <MatchAnimation
         show={showMatch}
