@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { PullToRefresh } from "@/components/PullToRefresh";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
