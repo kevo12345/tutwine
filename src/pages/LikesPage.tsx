@@ -17,7 +17,13 @@ type Profile = Tables<"profiles">;
 
 export default function LikesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [showMatch, setShowMatch] = useState(false);
+  const [matchName, setMatchName] = useState("");
+  const [matchId, setMatchId] = useState("");
+  const [likingBack, setLikingBack] = useState<string | null>(null);
 
   const { data: likers = [], isLoading } = useQuery({
     queryKey: ["who-liked-me", user?.id],
