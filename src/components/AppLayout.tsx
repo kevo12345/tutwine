@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { BottomNav } from "./BottomNav";
 import { usePresence } from "@/hooks/usePresence";
 import { useLocationPrompt } from "@/hooks/useLocationPrompt";
+import { useLikeNotifications } from "@/hooks/useLikeNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, X, Settings, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ function getSettingsInstructions() {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   usePresence();
+  useLikeNotifications();
   const { hasLocation, requestLocation, locationStatus } = useLocationPrompt();
   const { profile } = useAuth();
   const [dismissed, setDismissed] = useState(false);
