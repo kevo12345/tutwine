@@ -20,6 +20,7 @@ import SettingsPage from "./pages/SettingsPage";
 import PricingPage from "./pages/PricingPage";
 import AdminPage from "./pages/AdminPage";
 import SupportPage from "./pages/SupportPage";
+import LikesPage from "./pages/LikesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
             <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
+            <Route path="/likes" element={<ProtectedRoute><LikesPage /></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><ChatListPage /></ProtectedRoute>} />
             <Route path="/chat/:matchId" element={<ProtectedRoute><ChatThreadPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
