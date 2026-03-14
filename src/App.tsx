@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,29 +7,49 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import DiscoverPage from "./pages/DiscoverPage";
-import MatchesPage from "./pages/MatchesPage";
-import ChatListPage from "./pages/ChatListPage";
-import ChatThreadPage from "./pages/ChatThreadPage";
-import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
-import PricingPage from "./pages/PricingPage";
-import AdminPage from "./pages/AdminPage";
-import SupportPage from "./pages/SupportPage";
-import LikesPage from "./pages/LikesPage";
-import InstallPage from "./pages/InstallPage";
-import UserProfilePage from "./pages/UserProfilePage";
-import TermsPage from "./pages/TermsPage";
-import FaqPage from "./pages/FaqPage";
-import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+// Lazy-load all pages for code-splitting
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const DiscoverPage = lazy(() => import("./pages/DiscoverPage"));
+const MatchesPage = lazy(() => import("./pages/MatchesPage"));
+const ChatListPage = lazy(() => import("./pages/ChatListPage"));
+const ChatThreadPage = lazy(() => import("./pages/ChatThreadPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const SupportPage = lazy(() => import("./pages/SupportPage"));
+const LikesPage = lazy(() => import("./pages/LikesPage"));
+const InstallPage = lazy(() => import("./pages/InstallPage"));
+const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const FaqPage = lazy(() => import("./pages/FaqPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+function PageLoader() {
+  return (
+    <div className="flex h-[100dvh] items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -38,29 +59,31 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
-            <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
-            <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
-            <Route path="/likes" element={<ProtectedRoute><LikesPage /></ProtectedRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><ChatListPage /></ProtectedRoute>} />
-            <Route path="/chat/:matchId" element={<ProtectedRoute><ChatThreadPage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/profile/:userId" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/support" element={<SupportPage />} />
-            <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-            <Route path="/install" element={<InstallPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/faq" element={<FaqPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+              <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
+              <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
+              <Route path="/likes" element={<ProtectedRoute><LikesPage /></ProtectedRoute>} />
+              <Route path="/chat" element={<ProtectedRoute><ChatListPage /></ProtectedRoute>} />
+              <Route path="/chat/:matchId" element={<ProtectedRoute><ChatThreadPage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/profile/:userId" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+              <Route path="/install" element={<InstallPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/faq" element={<FaqPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

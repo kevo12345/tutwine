@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -112,6 +112,7 @@
   }
   html {
     height: -webkit-fill-available;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground font-body antialiased;
@@ -119,12 +120,20 @@
     min-height: -webkit-fill-available;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    text-rendering: optimizeSpeed;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', sans-serif;
   }
   #root {
     min-height: 100dvh;
+  }
+  img, video {
+    content-visibility: auto;
+  }
+  /* GPU-accelerated transforms for smoother animations */
+  .will-change-transform {
+    will-change: transform;
   }
 }
 
