@@ -3,14 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable";
+
 export function useLocationPrompt() {
   const { user, refreshProfile } = useAuth();
   const [prompted, setPrompted] = useState(false);
   const [hasLocation, setHasLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
 
   const updateLocation = useCallback(async (lat: number, lng: number) => {
     if (!user) return;
-    // Round to 1 decimal for privacy (~11km precision)
     const latitude = Math.round(lat * 10) / 10;
     const longitude = Math.round(lng * 10) / 10;
     await supabase
@@ -18,24 +20,75 @@ export function useLocationPrompt() {
       .update({ latitude, longitude })
       .eq("user_id", user.id);
     setHasLocation(true);
+    setLocationStatus("granted");
     await refreshProfile();
     toast.success("Location updated — distances are now live!");
-  }, [user]);
+  }, [user, refreshProfile]);
 
   const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
-      () => {}, // silently fail
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-    );
+    if (!navigator.geolocation) {
+      setLocationStatus("unavailable");
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setLocationStatus("requesting");
+
+    // Check permission state first if available
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        if (result.state === "denied") {
+          setLocationStatus("denied");
+          return;
+        }
+        // prompt or granted — proceed
+        navigator.geolocation.getCurrentPosition(
+          (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+          (err) => {
+            if (err.code === err.PERMISSION_DENIED) {
+              setLocationStatus("denied");
+            } else {
+              setLocationStatus("idle");
+              toast.error("Could not get your location. Please try again.");
+            }
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
+      }).catch(() => {
+        // Fallback if permissions API fails
+        navigator.geolocation.getCurrentPosition(
+          (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+          (err) => {
+            if (err.code === err.PERMISSION_DENIED) {
+              setLocationStatus("denied");
+            } else {
+              setLocationStatus("idle");
+              toast.error("Could not get your location. Please try again.");
+            }
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
+      });
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+        (err) => {
+          if (err.code === err.PERMISSION_DENIED) {
+            setLocationStatus("denied");
+          } else {
+            setLocationStatus("idle");
+            toast.error("Could not get your location. Please try again.");
+          }
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    }
   }, [updateLocation]);
 
   useEffect(() => {
     if (!user || prompted) return;
     setPrompted(true);
 
-    // Check if user already has location
     const check = async () => {
       const { data } = await supabase
         .from("profiles")
@@ -45,15 +98,17 @@ export function useLocationPrompt() {
       
       if (data?.latitude && data?.longitude) {
         setHasLocation(true);
-        // Silently refresh location in background
-        requestLocation();
-      } else {
-        // Will trigger browser permission prompt
-        requestLocation();
+        setLocationStatus("granted");
+        // Silently refresh in background
+        navigator.geolocation?.getCurrentPosition(
+          (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+          () => {},
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
       }
     };
     check();
-  }, [user, prompted, requestLocation]);
+  }, [user, prompted, updateLocation]);
 
-  return { hasLocation, requestLocation };
+  return { hasLocation, requestLocation, locationStatus };
 }
