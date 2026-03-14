@@ -57,6 +57,8 @@ const App = () => (
             <Route path="/support" element={<SupportPage />} />
             <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="/install" element={<InstallPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/faq" element={<FaqPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
