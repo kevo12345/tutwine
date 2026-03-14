@@ -42,7 +42,7 @@ export default function LoginPage() {
     checkAndRedirect();
   }, [user, profile, navigate]);
 
-  if (user) return null;
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
