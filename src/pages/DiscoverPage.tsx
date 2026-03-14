@@ -272,7 +272,7 @@ export default function DiscoverPage() {
                 </AnimatePresence>
               </div>
 
-              <div className="shrink-0 py-3 flex items-center justify-center gap-3 sm:gap-4">
+              <div className="shrink-0 py-2 pb-3 flex items-center justify-center gap-2 sm:gap-4">
                 <Button variant="outline" size="icon" className="h-11 w-11 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
                   <X className="h-5 w-5 sm:h-7 sm:w-7" />
                 </Button>
