@@ -67,6 +67,20 @@ export default function DiscoverPage() {
         (p) => p.photos && p.photos.length > 0 && p.display_name
       );
       setProfiles(validProfiles);
+
+      // Fetch subscription tiers for these profiles
+      if (validProfiles.length > 0) {
+        const userIds = validProfiles.map(p => p.user_id);
+        const { data: subs } = await supabase
+          .from("subscriptions")
+          .select("user_id, tier")
+          .in("user_id", userIds)
+          .eq("status", "active");
+        const tierMap: Record<string, string> = {};
+        subs?.forEach(s => { tierMap[s.user_id] = s.tier; });
+        setProfileTiers(tierMap);
+      }
+
       setLoading(false);
     };
     fetchProfiles();
