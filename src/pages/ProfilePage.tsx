@@ -101,7 +101,7 @@ export default function ProfilePage() {
             )}
           </div>
           {(profile?.city || profile?.state) && (
-79:             <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+<div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
               <span>{[profile?.city, profile?.state].filter(Boolean).join(", ")}</span>
             </div>
