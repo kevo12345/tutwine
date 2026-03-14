@@ -200,7 +200,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background p-4">
-      <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+      <input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/webp,image/heic" capture={undefined} className="hidden" onChange={handlePhotoUpload} />
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
           <button onClick={() => step > 0 ? setStep(step - 1) : navigate(isEditing ? "/profile" : "/signup")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
