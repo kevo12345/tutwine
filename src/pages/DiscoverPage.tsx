@@ -245,40 +245,15 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                <AnimatePresence>
-                  {profileForCard && !direction && (
-                    <motion.div
-                      key={currentProfile.user_id}
-                      style={{ x, rotate }}
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      dragElastic={0.25}
-                      dragMomentum={false}
-                      dragTransition={{ bounceStiffness: 600, bounceDamping: 35 }}
-                      onDragEnd={(_, info) => {
-                        if (info.offset.x > 45 || info.velocity.x > 220) handleSwipe("like");
-                        else if (info.offset.x < -45 || info.velocity.x < -220) handleSwipe("pass");
-                        else x.set(0);
-                      }}
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none select-none will-change-transform"
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div onClick={() => setViewProfile(true)} className="h-full w-full">
-                        <ProfileCard profile={profileForCard} />
-                      </div>
-                      <motion.div style={{ opacity: likeOpacity }} className="absolute left-4 top-6 rounded-lg border-4 border-success bg-success/10 px-4 py-1 text-2xl font-bold text-success -rotate-12 backdrop-blur-sm">
-                        LIKE
-                      </motion.div>
-                      <motion.div style={{ opacity: passOpacity }} className="absolute right-4 top-6 rounded-lg border-4 border-destructive bg-destructive/10 px-4 py-1 text-2xl font-bold text-destructive rotate-12 backdrop-blur-sm">
-                        NOPE
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {profileForCard && !direction && (
+                  <div
+                    className="absolute inset-0 touch-none select-none"
+                  >
+                    <div onClick={() => setViewProfile(true)} className="h-full w-full">
+                      <ProfileCard profile={profileForCard} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
