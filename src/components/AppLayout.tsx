@@ -95,7 +95,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-background">
+    <div className="flex flex-col h-[100dvh] bg-background">
       {showBanner && (
         <div className={`flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 text-primary-foreground shrink-0 ${isDenied ? "bg-destructive" : "bg-primary"}`}>
           {isDenied ? (
