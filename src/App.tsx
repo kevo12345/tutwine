@@ -21,6 +21,7 @@ import PricingPage from "./pages/PricingPage";
 import AdminPage from "./pages/AdminPage";
 import SupportPage from "./pages/SupportPage";
 import LikesPage from "./pages/LikesPage";
+import InstallPage from "./pages/InstallPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="/install" element={<InstallPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
