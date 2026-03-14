@@ -203,12 +203,38 @@ export default function LikesPage() {
                       </div>
                     </div>
                   </div>
+                  <div className="flex gap-1 p-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                      onClick={(e) => handlePass(e, liker)}
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" /> Pass
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 h-8 text-xs gradient-warm border-0 text-primary-foreground"
+                      disabled={likingBack === liker.user_id}
+                      onClick={(e) => handleLikeBack(e, liker)}
+                    >
+                      <Heart className="h-3.5 w-3.5 mr-1 fill-current" />
+                      {likingBack === liker.user_id ? "..." : "Like Back"}
+                    </Button>
+                  </div>
                 </Card>
               );
             })}
           </div>
         )}
       </div>
+
+      <MatchAnimation
+        show={showMatch}
+        matchName={matchName}
+        onSendMessage={() => { setShowMatch(false); navigate(`/chat/${matchId}`); }}
+        onKeepSwiping={() => setShowMatch(false)}
+      />
 
       <ProfileDetailSheet
         open={!!selectedProfile}
