@@ -2,10 +2,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useLocation } from "react-router-dom";
 import { ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading, suspended, signOut } = useAuth();
   const location = useLocation();
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user,
+  });
 
   if (loading) {
     return (
@@ -33,8 +50,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Redirect to onboarding if profile is not complete (except when already on onboarding)
-  if (profile && !profile.onboarding_complete && location.pathname !== "/onboarding") {
+  // Skip onboarding redirect for admin users
+  if (profile && !profile.onboarding_complete && !isAdmin && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
 
