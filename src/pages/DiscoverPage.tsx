@@ -53,19 +53,37 @@ export default function DiscoverPage() {
 
       const excludeIds = [user.id, ...(swipedIds?.map(s => s.target_id) ?? [])];
 
-      const { data } = await supabase
+      let { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("onboarding_complete", true)
         .eq("suspended", false)
         .not("user_id", "in", `(${excludeIds.join(",")})`)
         .not("display_name", "is", null)
+        .order("created_at", { ascending: false })
         .limit(50);
 
-      // Filter out profiles with no photos
-      const validProfiles = (data ?? []).filter(
+      let validProfiles = (data ?? []).filter(
         (p) => p.photos && p.photos.length > 0 && p.display_name
       );
+
+      // If no unswiped profiles, show all profiles (excluding self), newest first
+      if (validProfiles.length === 0) {
+        const { data: allData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("onboarding_complete", true)
+          .eq("suspended", false)
+          .neq("user_id", user.id)
+          .not("display_name", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        validProfiles = (allData ?? []).filter(
+          (p) => p.photos && p.photos.length > 0 && p.display_name
+        );
+      }
+
       setProfiles(validProfiles);
 
       // Fetch subscription tiers for these profiles
