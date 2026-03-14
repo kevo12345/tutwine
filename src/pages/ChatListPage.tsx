@@ -101,8 +101,8 @@ export default function ChatListPage() {
 
   return (
     <AppLayout>
-      <div className="px-4 pt-4">
-        <h1 className="mb-6 font-display text-2xl font-bold">Chat</h1>
+      <div className="px-3 pt-3 sm:px-4 sm:pt-4">
+        <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
         {chats.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
             <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
@@ -115,26 +115,26 @@ export default function ChatListPage() {
               <button
                 key={c.matchId}
                 onClick={() => navigate(`/chat/${c.matchId}`)}
-                className="flex w-full items-center gap-3 rounded-2xl p-3 hover:bg-secondary transition-colors"
+                className="flex w-full items-center gap-2.5 sm:gap-3 rounded-2xl p-2.5 sm:p-3 hover:bg-secondary transition-colors overflow-hidden"
               >
-                <Avatar className="h-14 w-14">
+                <Avatar className="h-11 w-11 sm:h-14 sm:w-14 shrink-0">
                   <AvatarImage src={c.profile.photos?.[0] ?? ""} alt={c.profile.display_name ?? ""} />
                   <AvatarFallback>{c.profile.display_name?.[0] ?? "?"}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 text-left">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">{c.profile.display_name}</span>
-                      {c.profile.verified && <BadgeCheck className="h-4 w-4 text-info" />}
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="font-medium text-sm sm:text-base truncate">{c.profile.display_name}</span>
+                      {c.profile.verified && <BadgeCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-info shrink-0" />}
                     </div>
-                    <span className="text-xs text-muted-foreground">{c.lastMessageAt}</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{c.lastMessageAt}</span>
                   </div>
-                  <p className={`text-sm line-clamp-1 ${c.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                  <p className={`text-xs sm:text-sm line-clamp-1 ${c.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
                     {c.lastMessage ?? "Say hello! 👋"}
                   </p>
                 </div>
                 {c.unread > 0 && (
-                  <Badge className="gradient-warm border-0 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full flex items-center justify-center p-0">
+                  <Badge className="gradient-warm border-0 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full flex items-center justify-center p-0 shrink-0">
                     {c.unread}
                   </Badge>
                 )}
