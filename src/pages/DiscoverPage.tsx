@@ -39,10 +39,6 @@ export default function DiscoverPage() {
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-  const likesUsed = usage?.likes_count ?? 0;
-  const viewsUsed = usage?.profile_views ?? 0;
-  const likesLeft = limits.likes === Infinity ? "∞" : Math.max(0, limits.likes - likesUsed);
-  const viewsLeft = limits.profileViews === Infinity ? "∞" : Math.max(0, limits.profileViews - viewsUsed);
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
