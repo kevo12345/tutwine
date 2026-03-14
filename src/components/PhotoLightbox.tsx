@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -11,14 +11,48 @@ interface PhotoLightboxProps {
 
 export function PhotoLightbox({ photos, initialIndex = 0, open, onClose }: PhotoLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const touchStartX = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
+
+  // Sync index when opening with a different photo
+  useEffect(() => {
+    if (open) setCurrentIndex(initialIndex);
+  }, [open, initialIndex]);
 
   const goNext = () => setCurrentIndex((i) => (i + 1) % photos.length);
   const goPrev = () => setCurrentIndex((i) => (i - 1 + photos.length) % photos.length);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null) return;
+    const threshold = 50;
+    if (touchDeltaX.current < -threshold) {
+      goNext();
+    } else if (touchDeltaX.current > threshold) {
+      goPrev();
+    }
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 border-0 bg-black/95 backdrop-blur-xl sm:max-w-3xl overflow-hidden [&>button]:hidden">
-        <div className="relative flex items-center justify-center w-full h-[80vh]">
+        <div
+          className="relative flex items-center justify-center w-full h-[80vh] touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Close button */}
           <button
             onClick={onClose}
@@ -49,7 +83,8 @@ export function PhotoLightbox({ photos, initialIndex = 0, open, onClose }: Photo
           <img
             src={photos[currentIndex]}
             alt={`Photo ${currentIndex + 1}`}
-            className="max-w-full max-h-full object-contain select-none"
+            className="max-w-full max-h-full object-contain select-none pointer-events-none"
+            draggable={false}
           />
 
           {/* Dots indicator */}
