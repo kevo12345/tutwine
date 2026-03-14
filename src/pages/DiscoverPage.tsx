@@ -261,7 +261,7 @@ export default function DiscoverPage() {
             </div>
 
             <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
-              <Button variant="outline" size="icon" className="h-14 w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
+              <Button variant="outline" size="icon" className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
                 <X className="h-7 w-7" />
               </Button>
               {limits.undoSwipe && (
