@@ -25,8 +25,31 @@ const TIER_COLORS: Record<string, string> = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { profile, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { tier, subscription } = useSubscription();
+  const [likesCount, setLikesCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchLikes = async () => {
+      const { count } = await supabase
+        .from("swipes")
+        .select("*", { count: "exact", head: true })
+        .eq("target_id", user.id)
+        .eq("action", "like");
+      setLikesCount(count ?? 0);
+    };
+    fetchLikes();
+
+    const channel = supabase
+      .channel(`my-likes-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "swipes", filter: `target_id=eq.${user.id}` }, (payload: any) => {
+        if (payload.new?.action === "like") setLikesCount(c => c + 1);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   if (loading) {
     return (
