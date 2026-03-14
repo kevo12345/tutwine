@@ -126,18 +126,20 @@ export default function ChatThreadPage() {
     <div className="flex h-[100dvh] flex-col bg-background lg:items-center lg:justify-center lg:p-8">
       <div className="flex h-full w-full flex-col lg:h-[calc(100dvh-4rem)] lg:max-w-2xl lg:rounded-2xl lg:border lg:border-border lg:shadow-card lg:overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border bg-card px-3 py-2.5 shrink-0 sm:px-4 sm:py-3 lg:rounded-t-2xl">
+        <div className="flex items-center gap-3 border-b border-border bg-card px-3 py-2.5 shrink-0 sm:px-4 sm:py-3 lg:rounded-t-2xl sticky top-0 z-10">
           <button onClick={() => navigate("/chat")} className="text-muted-foreground hover:text-foreground p-1">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0">
-            <AvatarImage src={otherProfile?.photos?.[0] ?? ""} />
-            <AvatarFallback>{otherProfile?.display_name?.[0] ?? "?"}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-medium text-sm sm:text-base truncate">{otherProfile?.display_name ?? "User"}</h2>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Active now</p>
-          </div>
+          <button onClick={() => setShowProfile(true)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+            <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0">
+              <AvatarImage src={otherProfile?.photos?.[0] ?? ""} />
+              <AvatarFallback>{otherProfile?.display_name?.[0] ?? "?"}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-medium text-sm sm:text-base truncate">{otherProfile?.display_name ?? "User"}</h2>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Active now</p>
+            </div>
+          </button>
           <VideoCall matchId={matchId!} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
