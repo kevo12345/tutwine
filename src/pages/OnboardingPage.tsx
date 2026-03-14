@@ -288,9 +288,9 @@ export default function OnboardingPage() {
                           {i === 0 && <Badge className="absolute bottom-1 left-1 text-[10px] gradient-warm border-0 text-primary-foreground">Main</Badge>}
                         </>
                       ) : (
-                        <button onClick={() => fileInputRef.current?.click()} className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
-                          <Plus className="h-6 w-6" />
-                          <span className="text-xs">Add</span>
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-50">
+                          {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-6 w-6" />}
+                          <span className="text-xs">{uploading ? "Uploading..." : "Add"}</span>
                         </button>
                       )}
                     </div>
