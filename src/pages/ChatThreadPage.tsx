@@ -18,6 +18,7 @@ export default function ChatThreadPage() {
   const navigate = useNavigate();
   const { matchId } = useParams();
   const { user } = useAuth();
+  const { tier } = useSubscription();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [otherProfile, setOtherProfile] = useState<Tables<"profiles"> | null>(null);
