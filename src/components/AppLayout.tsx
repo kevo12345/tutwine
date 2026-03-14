@@ -95,7 +95,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-background">
+    <div className="flex flex-col h-[100dvh] bg-background">
       {showBanner && (
         <div className={`flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 text-primary-foreground shrink-0 ${isDenied ? "bg-destructive" : "bg-primary"}`}>
           {isDenied ? (
@@ -134,7 +134,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       )}
-      <main className="flex-1 relative overflow-y-auto mx-auto w-full max-w-lg pb-20 -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
+      <main className="flex-1 min-h-0 relative overflow-y-auto mx-auto w-full max-w-lg pb-0 -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
       <BottomNav />
 
       {/* Location Settings Guide Dialog */}
