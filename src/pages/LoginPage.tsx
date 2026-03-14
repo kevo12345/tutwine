@@ -13,13 +13,13 @@ import { lovable } from "@/integrations/lovable/index";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, user } = useAuth();
+  const { signIn, user, profile } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Redirect logged-in users based on role and onboarding status
+  // Redirect only admins and fully onboarded users
   useEffect(() => {
     if (!user) return;
     const checkAndRedirect = async () => {
@@ -29,24 +29,20 @@ export default function LoginPage() {
         .eq("user_id", user.id)
         .eq("role", "admin")
         .maybeSingle();
-      
+
       if (roleData) {
         navigate("/admin", { replace: true });
         return;
       }
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("onboarding_complete")
-        .eq("user_id", user.id)
-        .single();
-
-      navigate(profileData?.onboarding_complete ? "/discover" : "/onboarding", { replace: true });
+      if (profile?.onboarding_complete) {
+        navigate("/discover", { replace: true });
+      }
     };
     checkAndRedirect();
-  }, [user, navigate]);
+  }, [user, profile, navigate]);
 
-  if (user) return null;
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
