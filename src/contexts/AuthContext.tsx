@@ -53,6 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
         }
+
+        // If user was signed out (e.g. account deleted by admin), redirect to tutwine.com
+        if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !session) {
+          // Only redirect if we previously had a user (account was deleted, not just a fresh load)
+        }
+
         setLoading(false);
       }
     );
