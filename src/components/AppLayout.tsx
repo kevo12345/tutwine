@@ -70,6 +70,7 @@ function getSettingsInstructions() {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   usePresence();
+  useLikeNotifications();
   const { hasLocation, requestLocation, locationStatus } = useLocationPrompt();
   const { profile } = useAuth();
   const [dismissed, setDismissed] = useState(false);
