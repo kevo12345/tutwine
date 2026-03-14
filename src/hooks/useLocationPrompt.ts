@@ -18,6 +18,8 @@ export function useLocationPrompt() {
       .update({ latitude, longitude })
       .eq("user_id", user.id);
     setHasLocation(true);
+    await refreshProfile();
+    toast.success("Location updated — distances are now live!");
   }, [user]);
 
   const requestLocation = useCallback(() => {
