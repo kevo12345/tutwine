@@ -126,7 +126,7 @@ export default function DiscoverPage() {
       x.set(0);
       setCurrentIndex((i) => i + 1);
       isSwiping.current = false;
-    }, 250);
+    }, 180);
 
     // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
