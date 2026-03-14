@@ -39,7 +39,10 @@ export function BottomNav() {
               <div className="relative">
                 <Icon className={cn("h-5 w-5", active && "fill-primary/20")} strokeWidth={active ? 2.5 : 2} />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                  <span className={cn(
+                    "absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground transition-transform",
+                    hasNewLike && "animate-[pulse_0.6s_cubic-bezier(0.4,0,0.6,1)_3] scale-110"
+                  )}>
                     {likesCount > 99 ? "99+" : likesCount}
                   </span>
                 )}
