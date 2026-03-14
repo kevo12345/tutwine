@@ -137,7 +137,7 @@ export default function UserProfilePage() {
 
   return (
     <AppLayout>
-      <div className="pb-6">
+      <div className="pb-24">
         {/* Hero photo */}
         <div className="relative aspect-[4/3] w-full">
           <button className="w-full h-full" onClick={() => photos.length > 0 && openPhoto(0)}>
