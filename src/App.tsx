@@ -22,6 +22,7 @@ import AdminPage from "./pages/AdminPage";
 import SupportPage from "./pages/SupportPage";
 import LikesPage from "./pages/LikesPage";
 import InstallPage from "./pages/InstallPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
