@@ -261,10 +261,13 @@ export default function DiscoverPage() {
                       onDragEnd={(_, info) => {
                         if (info.offset.x > 60 || info.velocity.x > 300) handleSwipe("like");
                         else if (info.offset.x < -60 || info.velocity.x < -300) handleSwipe("pass");
+                        else x.set(0);
                       }}
-                      animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : {}}
-                      transition={{ duration: 0.3 }}
-                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : { scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y will-change-transform"
                       whileTap={{ scale: 0.98 }}
                     >
                       <div onClick={() => setViewProfile(true)} className="h-full w-full">
