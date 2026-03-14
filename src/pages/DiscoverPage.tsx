@@ -305,7 +305,7 @@ export default function DiscoverPage() {
           )}
 
         </div>
-      </PullToRefresh>
+      </div>
 
       <MatchAnimation
         show={showMatch}
