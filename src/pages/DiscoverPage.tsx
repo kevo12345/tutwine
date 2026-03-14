@@ -109,10 +109,6 @@ export default function DiscoverPage() {
 
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
 
-  const handleRefresh = useCallback(async () => {
-    await fetchProfiles();
-    toast.success("Profiles refreshed!");
-  }, [fetchProfiles]);
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
