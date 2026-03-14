@@ -31,7 +31,6 @@ export function ProfileCard({ profile, style, className }: ProfileCardProps) {
         decoding="async"
         style={{ imageRendering: "auto" }}
       />
-      />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
 
       {tier && (
