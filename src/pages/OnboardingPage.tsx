@@ -17,14 +17,34 @@ const STEPS = ["Profile", "Photos", "Interests", "Location"];
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile: existingProfile, refreshProfile } = useAuth();
+  const isEditing = existingProfile?.onboarding_complete === true;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Compute age from date_of_birth
+  const existingAge = existingProfile?.date_of_birth
+    ? String(Math.floor((Date.now() - new Date(existingProfile.date_of_birth).getTime()) / 31557600000))
+    : "";
+
+  const genderDisplayMap: Record<string, string> = { man: "Man", woman: "Woman", "non-binary": "Non-binary", other: "Other" };
+  const existingGender = existingProfile?.gender ? genderDisplayMap[existingProfile.gender] ?? "" : "";
+  const existingInterestedIn = existingProfile?.interested_in
+    ? existingProfile.interested_in.length >= 4 ? "Everyone" : genderDisplayMap[existingProfile.interested_in[0]] ?? ""
+    : "";
+
   const [profile, setProfile] = useState({
-    displayName: "", age: "", gender: "", interestedIn: "", bio: "", phone: "",
-    photos: [] as string[], interests: [] as string[],
-    state: "", city: "",
+    displayName: existingProfile?.display_name ?? "",
+    age: existingAge,
+    gender: existingGender,
+    interestedIn: existingInterestedIn,
+    bio: existingProfile?.bio ?? "",
+    phone: existingProfile?.phone ?? "",
+    photos: (existingProfile?.photos as string[]) ?? [],
+    interests: (existingProfile?.interests as string[]) ?? [],
+    state: existingProfile?.state ?? "",
+    city: existingProfile?.city ?? "",
   });
 
   const nextStep = async () => {
