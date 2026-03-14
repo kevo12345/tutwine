@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { TIER_PRICES } from "@/lib/constants";
 import { useState, useEffect } from "react";
@@ -67,9 +68,21 @@ function useCounter(target: number, duration = 2000) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const matchCounter = useCounter(52000);
   const activeCounter = useCounter(8400);
   const ratingCounter = useCounter(48);
+
+  // Redirect logged-in users away from landing
+  useEffect(() => {
+    if (!user) return;
+    if (profile === null) return; // still loading
+    if (profile?.onboarding_complete) {
+      navigate("/discover", { replace: true });
+    } else {
+      navigate("/onboarding", { replace: true });
+    }
+  }, [user, profile, navigate]);
 
   // Simulated "live" activity for social proof
   const [liveSignups, setLiveSignups] = useState(0);
