@@ -5,7 +5,7 @@ import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, MessageCircle, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, X, MessageCircle, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -29,7 +29,7 @@ function formatLastSeen(lastSeen: string | null): string {
 export default function UserProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { profile: myProfile } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { tier } = useSubscription();
   const isFree = tier === "free";
 
@@ -244,26 +244,67 @@ export default function UserProfilePage() {
             </Card>
           )}
 
-          {/* Chat button */}
-          <Button
-            onClick={handleChat}
-            className={`w-full gap-2 ${
-              isFree
-                ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                : "gradient-warm border-0 text-primary-foreground shadow-glow"
-            }`}
-            size="lg"
-          >
-            {isFree ? (
-              <>
-                <Lock className="h-4 w-4" /> Upgrade to Chat
-              </>
-            ) : (
-              <>
-                <MessageCircle className="h-4 w-4" /> Send Message
-              </>
-            )}
-          </Button>
+          {/* Like / Pass / Chat buttons */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-14 w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive shrink-0"
+              onClick={async () => {
+                if (!userId || !user) return;
+                await supabase.from("swipes").insert({ swiper_id: user.id, target_id: userId, action: "pass" });
+                toast("Passed");
+                navigate(-1);
+              }}
+            >
+              <X className="h-7 w-7" />
+            </Button>
+
+            <Button
+              size="icon"
+              className="h-16 w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow shrink-0"
+              onClick={async () => {
+                if (!userId || !user) return;
+                const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: userId, action: "like" });
+                if (error) { console.error(error); return; }
+                // Check for match
+                const { data: match } = await supabase
+                  .from("matches")
+                  .select("id")
+                  .or(`and(user_a.eq.${user.id},user_b.eq.${userId}),and(user_a.eq.${userId},user_b.eq.${user.id})`)
+                  .maybeSingle();
+                if (match) {
+                  toast.success(`It's a match with ${profile?.display_name}! 🎉`);
+                  navigate(`/chat/${match.id}`);
+                } else {
+                  toast.success("Liked! ❤️");
+                  navigate(-1);
+                }
+              }}
+            >
+              <Heart className="h-8 w-8 fill-current" />
+            </Button>
+
+            <Button
+              onClick={handleChat}
+              className={`flex-1 gap-2 ${
+                isFree
+                  ? "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "gradient-warm border-0 text-primary-foreground shadow-glow"
+              }`}
+              size="lg"
+            >
+              {isFree ? (
+                <>
+                  <Lock className="h-4 w-4" /> Upgrade
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="h-4 w-4" /> Message
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
