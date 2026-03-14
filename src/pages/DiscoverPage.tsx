@@ -197,7 +197,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <PullToRefresh onRefresh={handleRefresh} className="h-full">
+      <div className="h-full overflow-y-auto overscroll-contain">
         <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>

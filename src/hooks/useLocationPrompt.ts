@@ -22,7 +22,7 @@ export function useLocationPrompt() {
     setHasLocation(true);
     setLocationStatus("granted");
     await refreshProfile();
-    toast.success("Location updated — distances are now live!");
+    
   }, [user, refreshProfile]);
 
   const requestLocation = useCallback(() => {
