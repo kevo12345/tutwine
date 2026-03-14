@@ -9,7 +9,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading, suspended, signOut } = useAuth();
   const location = useLocation();
 
-  const { data: isAdmin } = useQuery({
+  const { data: isAdmin, isLoading: isAdminLoading } = useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
       if (!user) return false;
@@ -24,7 +24,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     enabled: !!user,
   });
 
-  if (loading) {
+  if (loading || isAdminLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
