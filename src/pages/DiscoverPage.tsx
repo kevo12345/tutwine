@@ -113,20 +113,22 @@ export default function DiscoverPage() {
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
 
-
     isSwiping.current = true;
 
-    // Advance UI immediately — don't wait for DB
-    setDirection(action === "like" ? "right" : "left");
-    
     const swipedProfile = currentProfile;
 
-    setTimeout(() => {
-      setDirection(null);
-      x.set(0);
-      setCurrentIndex((i) => i + 1);
-      isSwiping.current = false;
-    }, 180);
+    // Set direction to hide current card, then advance index
+    setDirection(action === "like" ? "right" : "left");
+
+    // Use requestAnimationFrame to ensure the card unmounts before showing the next
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setCurrentIndex((i) => i + 1);
+        x.set(0);
+        setDirection(null);
+        isSwiping.current = false;
+      }, 50);
+    });
 
     // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
@@ -243,8 +245,8 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                <AnimatePresence mode="wait">
-                  {profileForCard && (
+                <AnimatePresence>
+                  {profileForCard && !direction && (
                     <motion.div
                       key={currentProfile.user_id}
                       style={{ x, rotate }}
@@ -259,9 +261,9 @@ export default function DiscoverPage() {
                         else x.set(0);
                       }}
                       initial={{ scale: 0.95, opacity: 0 }}
-                      animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : { scale: 1, opacity: 1 }}
+                      animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
                       className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none select-none will-change-transform"
                       whileTap={{ scale: 0.98 }}
                     >
