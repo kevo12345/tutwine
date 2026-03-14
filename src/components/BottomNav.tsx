@@ -28,7 +28,10 @@ export function BottomNav() {
       <div className="mx-auto flex max-w-lg items-center justify-around px-1 py-1.5 sm:px-2 sm:py-2">
         {navItems.map(({ icon: Icon, label, path, badge }) => {
           const active = location.pathname === path;
-          const showBadge = badge && likesCount > 0;
+          const showLikesBadge = badge === "likes" && likesCount > 0;
+          const showChatBadge = badge === "chat" && unreadCount > 0;
+          const badgeCount = badge === "likes" ? likesCount : badge === "chat" ? unreadCount : 0;
+          const showBadge = showLikesBadge || showChatBadge;
           return (
             <button
               key={path}
