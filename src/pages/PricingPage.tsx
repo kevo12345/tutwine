@@ -127,12 +127,16 @@ export default function PricingPage() {
             const info = TIER_PRICES[tier.key];
             const kesPrice = KES_PRICES[tier.key];
             return (
-              <Card key={tier.key} className={`relative border-0 shadow-card overflow-hidden ${tier.popular ? "ring-2 ring-primary" : ""}`}>
-                {tier.popular && (
+              <Card key={tier.key} className={`relative border-0 shadow-card overflow-hidden ${currentTier === tier.key ? "ring-2 ring-success" : tier.popular ? "ring-2 ring-primary" : ""}`}>
+                {currentTier === tier.key ? (
+                  <div className="absolute right-0 top-0 bg-success px-3 py-1 text-[10px] font-bold text-success-foreground rounded-bl-xl uppercase tracking-wider">
+                    Current Plan
+                  </div>
+                ) : tier.popular ? (
                   <div className="absolute right-0 top-0 gradient-warm px-3 py-1 text-[10px] font-bold text-primary-foreground rounded-bl-xl uppercase tracking-wider">
                     Most Popular
                   </div>
-                )}
+                ) : null}
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div className={`rounded-xl p-2 ${tier.color}`}>
