@@ -28,7 +28,7 @@ export function useLocationPrompt() {
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationStatus("unavailable");
-      toast.error("Geolocation is not supported by your browser.");
+      return;
       return;
     }
 
