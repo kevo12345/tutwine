@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
-import { Heart, Loader2, MapPin, BadgeCheck } from "lucide-react";
+import { MatchAnimation } from "@/components/MatchAnimation";
+import { Heart, Loader2, MapPin, BadgeCheck, X } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 type Profile = Tables<"profiles">;
 
