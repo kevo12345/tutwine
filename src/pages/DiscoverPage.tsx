@@ -254,6 +254,12 @@ export default function DiscoverPage() {
         onSendMessage={() => { setShowMatch(false); navigate(`/chat/${matchId}`); }}
         onKeepSwiping={() => setShowMatch(false)}
       />
+
+      <ProfileDetailSheet
+        open={viewProfile}
+        onClose={() => setViewProfile(false)}
+        profile={profileForCard}
+      />
     </AppLayout>
   );
 }
