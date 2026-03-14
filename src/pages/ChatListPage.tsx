@@ -21,8 +21,10 @@ interface ChatItem {
 export default function ChatListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tier } = useSubscription();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const isFree = tier === "free";
 
   useEffect(() => {
     if (!user) return;
