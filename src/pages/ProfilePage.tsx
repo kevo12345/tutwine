@@ -101,9 +101,15 @@ export default function ProfilePage() {
             )}
           </div>
           {(profile?.city || profile?.state) && (
-            <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+79:             <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
               <span>{[profile?.city, profile?.state].filter(Boolean).join(", ")}</span>
+            </div>
+          )}
+          {likesCount > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm text-primary font-medium">
+              <Heart className="h-4 w-4 fill-current" />
+              <span>{likesCount} {likesCount === 1 ? "like" : "likes"} received</span>
             </div>
           )}
           <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={() => navigate("/onboarding")}>
