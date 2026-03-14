@@ -193,7 +193,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <div className="h-full flex flex-col overflow-hidden overscroll-none" style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}>
+      <div className="flex flex-col overflow-hidden overscroll-none" style={{ height: 'calc(100dvh - 4.5rem)', overscrollBehavior: 'none', touchAction: 'pan-x' }}>
         <div className="px-3 pt-3 sm:px-4 sm:pt-4 shrink-0">
           <div className="mb-3 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
@@ -206,7 +206,7 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 px-3 sm:px-4 flex flex-col max-h-[calc(100dvh-10rem)] md:max-h-[calc(100dvh-8rem)]">
+        <div className="flex-1 min-h-0 px-3 sm:px-4 flex flex-col">
           {noMoreProfiles ? (
             <div className="flex flex-col items-center justify-center flex-1 text-center">
               <Heart className="h-16 w-16 text-muted-foreground/30" />
