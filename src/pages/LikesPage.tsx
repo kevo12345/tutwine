@@ -48,9 +48,18 @@ export default function LikesPage() {
         (matches ?? []).map((m) => (m.user_a === user.id ? m.user_b : m.user_a))
       );
 
+      // Exclude users I already passed on
+      const { data: mySwipes } = await supabase
+        .from("swipes")
+        .select("target_id")
+        .eq("swiper_id", user.id)
+        .eq("action", "pass");
+
+      const passedIds = new Set((mySwipes ?? []).map((s) => s.target_id));
+
       const likerIds = swipes
         .map((s) => s.swiper_id)
-        .filter((id) => !matchedIds.has(id));
+        .filter((id) => !matchedIds.has(id) && !passedIds.has(id));
 
       if (!likerIds.length) return [];
 
