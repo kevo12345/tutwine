@@ -200,7 +200,7 @@ export default function DiscoverPage() {
     <AppLayout>
       <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="font-display text-2xl font-bold">Discover</h1>
+          <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{viewsLeft} views · {likesLeft} likes left</span>
             <Button variant="ghost" size="icon" className="h-9 w-9">
