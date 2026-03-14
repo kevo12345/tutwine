@@ -50,6 +50,7 @@ const KES_PRICES: Record<string, number> = {
 export default function PricingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tier: currentTier } = useSubscription();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
