@@ -21,8 +21,9 @@ export function ProfileCard({ profile, style, className, onTap }: ProfileCardPro
 
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-2xl bg-card shadow-card ${className ?? ""}`}
+      className={`relative h-full w-full overflow-hidden rounded-2xl bg-card shadow-card cursor-pointer ${className ?? ""}`}
       style={style}
+      onClick={onTap}
     >
       <img
         src={photoUrl}
