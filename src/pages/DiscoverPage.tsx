@@ -109,7 +109,7 @@ export default function DiscoverPage() {
   }, [fetchProfiles]);
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
-    if (!currentProfile || !user) return;
+    if (!currentProfile || !user || isSwiping.current) return;
 
     if (action === "like") {
       if (typeof likesLeft === "number" && likesLeft <= 0) {
@@ -118,13 +118,28 @@ export default function DiscoverPage() {
       }
     }
 
-    const { error } = await supabase.from("swipes").insert({
-      swiper_id: user.id,
-      target_id: currentProfile.user_id,
-      action: action,
-    });
+    isSwiping.current = true;
 
-    if (error) { console.error(error); }
+    // Advance UI immediately — don't wait for DB
+    setDirection(action === "like" ? "right" : "left");
+    
+    const swipedProfile = currentProfile;
+
+    setTimeout(() => {
+      setDirection(null);
+      x.set(0);
+      setCurrentIndex((i) => i + 1);
+      isSwiping.current = false;
+    }, 250);
+
+    // Fire DB calls in the background (non-blocking)
+    supabase.from("swipes").insert({
+      swiper_id: user.id,
+      target_id: swipedProfile.user_id,
+      action: action,
+    }).then(({ error }) => {
+      if (error) console.error(error);
+    });
 
     if (action === "like") {
       increment.mutate("likes_count");
@@ -132,25 +147,20 @@ export default function DiscoverPage() {
     increment.mutate("profile_views");
 
     if (action === "like") {
-      const { data: match } = await supabase
+      supabase
         .from("matches")
         .select("id")
-        .or(`and(user_a.eq.${user.id},user_b.eq.${currentProfile.user_id}),and(user_a.eq.${currentProfile.user_id},user_b.eq.${user.id})`)
-        .maybeSingle();
-
-      if (match) {
-        setMatchName(currentProfile.display_name ?? "Someone");
-        setMatchId(match.id);
-        setShowMatch(true);
-      }
+        .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
+        .maybeSingle()
+        .then(({ data: match }) => {
+          if (match) {
+            setMatchName(swipedProfile.display_name ?? "Someone");
+            setMatchId(match.id);
+            setShowMatch(true);
+          }
+        });
     }
-
-    setDirection(action === "like" ? "right" : "left");
-    setTimeout(() => {
-      setDirection(null);
-      setCurrentIndex((i) => i + 1);
-    }, 300);
-  }, [currentProfile, user, likesLeft, navigate, increment]);
+  }, [currentProfile, user, likesLeft, navigate, increment, x]);
 
   if (loading) {
     return (
