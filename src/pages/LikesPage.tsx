@@ -68,6 +68,56 @@ export default function LikesPage() {
   const calcAge = (dob: string | null) =>
     dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null;
 
+  const handleLikeBack = async (e: React.MouseEvent, liker: Profile) => {
+    e.stopPropagation();
+    if (!user || likingBack) return;
+    setLikingBack(liker.user_id);
+
+    const { error } = await supabase.from("swipes").insert({
+      swiper_id: user.id,
+      target_id: liker.user_id,
+      action: "like",
+    });
+
+    if (error) {
+      toast.error("Failed to like back");
+      setLikingBack(null);
+      return;
+    }
+
+    // Check for match (the trigger should have created one)
+    const { data: match } = await supabase
+      .from("matches")
+      .select("id")
+      .or(`and(user_a.eq.${user.id},user_b.eq.${liker.user_id}),and(user_a.eq.${liker.user_id},user_b.eq.${user.id})`)
+      .maybeSingle();
+
+    if (match) {
+      setMatchName(liker.display_name ?? "Someone");
+      setMatchId(match.id);
+      setShowMatch(true);
+    } else {
+      toast.success("💕 Liked back!");
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
+    setLikingBack(null);
+  };
+
+  const handlePass = async (e: React.MouseEvent, liker: Profile) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    await supabase.from("swipes").insert({
+      swiper_id: user.id,
+      target_id: liker.user_id,
+      action: "pass",
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
+    toast("Passed");
+  };
+
   if (isLoading) {
     return (
       <AppLayout>
