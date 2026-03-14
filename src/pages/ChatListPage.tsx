@@ -150,7 +150,7 @@ export default function ChatListPage() {
             </div>
           )}
         </div>
-      </PullToRefresh>
+      </div>
     </AppLayout>
   );
 }
