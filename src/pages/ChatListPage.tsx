@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { PullToRefresh } from "@/components/PullToRefresh";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ export default function ChatListPage() {
 
   return (
     <AppLayout>
-      <PullToRefresh onRefresh={handleRefresh} className="h-full">
+      <div className="h-full overflow-y-auto">
         <div className="px-3 pt-3 sm:px-4 sm:pt-4">
           <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
           {chats.length === 0 ? (
@@ -150,7 +150,7 @@ export default function ChatListPage() {
             </div>
           )}
         </div>
-      </PullToRefresh>
+      </div>
     </AppLayout>
   );
 }
