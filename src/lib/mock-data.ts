@@ -11,6 +11,7 @@ export interface MockProfile {
   state: string;
   verified: boolean;
   tier?: string;
+  likesCount?: number;
 }
 
 export const MOCK_PROFILES: MockProfile[] = [

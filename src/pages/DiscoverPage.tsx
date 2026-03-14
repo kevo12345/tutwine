@@ -24,6 +24,7 @@ export default function DiscoverPage() {
   const { usage, increment } = useDailyUsage();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
+  const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [showMatch, setShowMatch] = useState(false);
@@ -96,6 +97,16 @@ export default function DiscoverPage() {
       const tierMap: Record<string, string> = {};
       subs?.forEach(s => { tierMap[s.user_id] = s.tier; });
       setProfileTiers(tierMap);
+
+      // Fetch like counts for each profile
+      const { data: likeCounts } = await supabase
+        .from("swipes")
+        .select("target_id")
+        .in("target_id", userIds)
+        .eq("action", "like");
+      const likeMap: Record<string, number> = {};
+      likeCounts?.forEach(s => { likeMap[s.target_id] = (likeMap[s.target_id] ?? 0) + 1; });
+      setProfileLikes(likeMap);
     }
 
     setLoading(false);
@@ -197,6 +208,7 @@ export default function DiscoverPage() {
     state: currentProfile.state ?? "",
     verified: currentProfile.verified ?? false,
     tier: profileTiers[currentProfile.user_id] ?? "free",
+    likesCount: profileLikes[currentProfile.user_id] ?? 0,
   } : null;
 
   const noMoreProfiles = profiles.length === 0;
@@ -244,6 +256,7 @@ export default function DiscoverPage() {
                         state: nextP.state ?? "",
                         verified: nextP.verified ?? false,
                         tier: profileTiers[nextP.user_id] ?? "free",
+                        likesCount: profileLikes[nextP.user_id] ?? 0,
                       }} />
                     </div>
                   );
