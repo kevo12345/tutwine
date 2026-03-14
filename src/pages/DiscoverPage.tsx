@@ -24,6 +24,7 @@ export default function DiscoverPage() {
   const { usage, increment } = useDailyUsage();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
+  const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [showMatch, setShowMatch] = useState(false);
