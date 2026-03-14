@@ -267,6 +267,8 @@ export default function UserProfilePage() {
               className="h-16 w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow shrink-0"
               onClick={async () => {
                 if (!userId || !user) return;
+                // Delete any existing swipe first, then insert like
+                await supabase.from("swipes").delete().eq("swiper_id", user.id).eq("target_id", userId);
                 const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: userId, action: "like" });
                 if (error) { console.error(error); return; }
                 // Check for match
