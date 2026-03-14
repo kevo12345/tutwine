@@ -197,7 +197,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <div className="h-full overscroll-none">
+      <div className="h-full overscroll-none overflow-hidden fixed inset-0 pt-0 touch-none" style={{ overscrollBehavior: 'none' }}>
         <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
