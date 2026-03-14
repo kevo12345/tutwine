@@ -10,6 +10,7 @@ export interface MockProfile {
   city: string;
   state: string;
   verified: boolean;
+  tier?: string;
 }
 
 export const MOCK_PROFILES: MockProfile[] = [
