@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { ProfileCard } from "@/components/ProfileCard";
