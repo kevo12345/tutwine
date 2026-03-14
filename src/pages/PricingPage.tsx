@@ -160,11 +160,12 @@ export default function PricingPage() {
                     ))}
                   </ul>
                   <Button
-                    className={`mt-4 w-full ${tier.popular ? "gradient-warm border-0 text-primary-foreground shadow-glow" : ""}`}
-                    variant={tier.popular ? "default" : "outline"}
+                    className={`mt-4 w-full ${currentTier === tier.key ? "" : tier.popular ? "gradient-warm border-0 text-primary-foreground shadow-glow" : ""}`}
+                    variant={currentTier === tier.key ? "secondary" : tier.popular ? "default" : "outline"}
+                    disabled={currentTier === tier.key}
                     onClick={() => handleSelectPlan(tier.key)}
                   >
-                    Get {info.label}
+                    {currentTier === tier.key ? "Current Plan" : `Get ${info.label}`}
                   </Button>
                 </CardContent>
               </Card>
