@@ -50,6 +50,7 @@ const App = () => (
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="/install" element={<InstallPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
