@@ -114,21 +114,15 @@ export default function DiscoverPage() {
     if (!currentProfile || !user || isSwiping.current) return;
 
     isSwiping.current = true;
-
     const swipedProfile = currentProfile;
 
-    // Set direction to hide current card, then advance index
     setDirection(action === "like" ? "right" : "left");
+    setCurrentIndex((i) => i + 1);
 
-    // Use requestAnimationFrame to ensure the card unmounts before showing the next
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        setCurrentIndex((i) => i + 1);
-        x.set(0);
-        setDirection(null);
-        isSwiping.current = false;
-      }, 50);
-    });
+    // Unlock swiping quickly for rapid taps
+    setTimeout(() => {
+      isSwiping.current = false;
+    }, 250);
 
     // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
