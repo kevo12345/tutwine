@@ -4,12 +4,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLikesCount } from "@/hooks/useLikesCount";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 const navItems = [
   { icon: Search, label: "Discover", path: "/discover" },
   { icon: Heart, label: "Matches", path: "/matches" },
-  { icon: Eye, label: "Likes", path: "/likes", badge: true },
-  { icon: MessageCircle, label: "Chat", path: "/chat" },
+  { icon: Eye, label: "Likes", path: "/likes", badge: "likes" },
+  { icon: MessageCircle, label: "Chat", path: "/chat", badge: "chat" },
   { icon: Sparkles, label: "Boost", path: "/pricing" },
 ];
 
