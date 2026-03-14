@@ -17,8 +17,7 @@ export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const likesCount = useLikesCount();
-
+  const { count: likesCount, hasNewLike } = useLikesCount();
   const profilePhoto = profile?.photos?.[0];
   const profileActive = location.pathname === "/profile";
 
