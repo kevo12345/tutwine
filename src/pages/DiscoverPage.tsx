@@ -245,36 +245,17 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                <AnimatePresence initial={false} custom={direction}>
+                <AnimatePresence initial={false} mode="popLayout">
                   {profileForCard && (
                     <motion.div
                       key={currentProfile.user_id}
-                      custom={direction}
-                      initial={(d: string | null) => ({
-                        x: d === "right" ? 300 : d === "left" ? -300 : 0,
-                        opacity: 0,
-                      })}
+                      initial={{ x: direction === "right" ? 300 : direction === "left" ? -300 : 0, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
-                      exit={(d: string | null) => ({
-                        x: d === "right" ? -300 : 300,
-                        opacity: 0,
-                      })}
-                      variants={{
-                        enter: (d: string | null) => ({
-                          x: d === "right" ? 300 : d === "left" ? -300 : 0,
-                          opacity: 0,
-                        }),
-                        center: { x: 0, opacity: 1 },
-                        exit: (d: string | null) => ({
-                          x: d === "right" ? -300 : 300,
-                          opacity: 0,
-                        }),
-                      }}
+                      exit={{ x: direction === "right" ? -300 : 300, opacity: 0 }}
                       transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
                       className="absolute inset-0 touch-none select-none"
                     >
                       <div className="h-full w-full relative">
-                        {/* Tap left half = pass, tap right half = like */}
                         <div className="absolute inset-0 z-10 flex">
                           <div className="w-1/2 h-full" onClick={() => handleSwipe("pass")} />
                           <div className="w-1/2 h-full" onClick={() => handleSwipe("like")} />
