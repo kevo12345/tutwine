@@ -114,21 +114,15 @@ export default function DiscoverPage() {
     if (!currentProfile || !user || isSwiping.current) return;
 
     isSwiping.current = true;
-
     const swipedProfile = currentProfile;
 
-    // Set direction to hide current card, then advance index
     setDirection(action === "like" ? "right" : "left");
+    setCurrentIndex((i) => i + 1);
 
-    // Use requestAnimationFrame to ensure the card unmounts before showing the next
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        setCurrentIndex((i) => i + 1);
-        x.set(0);
-        setDirection(null);
-        isSwiping.current = false;
-      }, 50);
-    });
+    // Unlock swiping quickly for rapid taps
+    setTimeout(() => {
+      isSwiping.current = false;
+    }, 250);
 
     // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
@@ -245,15 +239,26 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                {profileForCard && !direction && (
-                  <div
-                    className="absolute inset-0 touch-none select-none"
-                  >
-                    <div onClick={() => setViewProfile(true)} className="h-full w-full">
-                      <ProfileCard profile={profileForCard} />
-                    </div>
-                  </div>
-                )}
+                <AnimatePresence initial={false} mode="popLayout">
+                  {profileForCard && (
+                    <motion.div
+                      key={currentProfile.user_id}
+                      initial={{ x: direction === "right" ? 300 : direction === "left" ? -300 : 0, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={{ x: direction === "right" ? -300 : 300, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                      className="absolute inset-0 touch-none select-none"
+                    >
+                      <div className="h-full w-full relative">
+                        <div className="absolute inset-0 z-10 flex">
+                          <div className="w-1/2 h-full" onClick={() => handleSwipe("pass")} />
+                          <div className="w-1/2 h-full" onClick={() => handleSwipe("like")} />
+                        </div>
+                        <ProfileCard profile={profileForCard} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
