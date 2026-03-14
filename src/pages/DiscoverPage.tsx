@@ -170,6 +170,7 @@ export default function DiscoverPage() {
     city: currentProfile.city ?? "",
     state: currentProfile.state ?? "",
     verified: currentProfile.verified ?? false,
+    tier: profileTiers[currentProfile.user_id] ?? "free",
   } : null;
 
   const noMoreProfiles = profiles.length === 0;
