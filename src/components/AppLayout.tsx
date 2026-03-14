@@ -95,13 +95,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col h-[100dvh] bg-background overflow-hidden">
       {showBanner && (
-        <div className={`flex items-center gap-3 px-4 py-3 text-primary-foreground shrink-0 ${isDenied ? "bg-destructive" : "bg-primary"}`}>
+        <div className={`flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 text-primary-foreground shrink-0 ${isDenied ? "bg-destructive" : "bg-primary"}`}>
           {isDenied ? (
-            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
           ) : (
-            <MapPin className="h-5 w-5 shrink-0" />
+            <MapPin className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
           )}
-          <p className="flex-1 text-sm font-medium">
+          <p className="flex-1 text-xs sm:text-sm font-medium">
             {isDenied
               ? "Location blocked — tap to fix"
               : "Enable location to see who's nearby"}
@@ -109,14 +109,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <Button
             size="sm"
             variant="secondary"
-            className="shrink-0 text-xs gap-1"
+            className="shrink-0 text-[10px] sm:text-xs gap-1 h-7 sm:h-8 px-2 sm:px-3"
             onClick={handleTurnOn}
             disabled={isRequesting}
           >
             {isRequesting ? (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Requesting...
+                <span className="hidden sm:inline">Requesting...</span>
               </>
             ) : isDenied ? (
               <>
@@ -128,16 +128,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
             )}
           </Button>
           <button onClick={() => setDismissed(true)} className="shrink-0 opacity-70 hover:opacity-100">
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
         </div>
       )}
-      <main className="flex-1 overflow-y-auto mx-auto w-full max-w-lg pb-20">{children}</main>
+      <main className="flex-1 overflow-y-auto mx-auto w-full max-w-lg overscroll-contain">{children}</main>
       <BottomNav />
 
       {/* Location Settings Guide Dialog */}
       <Dialog open={showGuide} onOpenChange={setShowGuide}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <MapPin className="h-5 w-5 text-primary" />
