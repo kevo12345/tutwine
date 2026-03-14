@@ -141,10 +141,6 @@ export default function DiscoverPage() {
       if (error) console.error(error);
     });
 
-    if (action === "like") {
-      increment.mutate("likes_count");
-    }
-    increment.mutate("profile_views");
 
     if (action === "like") {
       supabase
