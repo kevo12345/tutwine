@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { TIER_PRICES } from "@/lib/constants";
 import { useState, useEffect } from "react";
