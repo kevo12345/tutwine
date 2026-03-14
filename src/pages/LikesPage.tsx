@@ -1,19 +1,29 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
-import { Heart, Loader2, MapPin, BadgeCheck } from "lucide-react";
+import { MatchAnimation } from "@/components/MatchAnimation";
+import { Heart, Loader2, MapPin, BadgeCheck, X } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 type Profile = Tables<"profiles">;
 
 export default function LikesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [showMatch, setShowMatch] = useState(false);
+  const [matchName, setMatchName] = useState("");
+  const [matchId, setMatchId] = useState("");
+  const [likingBack, setLikingBack] = useState<string | null>(null);
 
   const { data: likers = [], isLoading } = useQuery({
     queryKey: ["who-liked-me", user?.id],
@@ -57,6 +67,56 @@ export default function LikesPage() {
 
   const calcAge = (dob: string | null) =>
     dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null;
+
+  const handleLikeBack = async (e: React.MouseEvent, liker: Profile) => {
+    e.stopPropagation();
+    if (!user || likingBack) return;
+    setLikingBack(liker.user_id);
+
+    const { error } = await supabase.from("swipes").insert({
+      swiper_id: user.id,
+      target_id: liker.user_id,
+      action: "like",
+    });
+
+    if (error) {
+      toast.error("Failed to like back");
+      setLikingBack(null);
+      return;
+    }
+
+    // Check for match (the trigger should have created one)
+    const { data: match } = await supabase
+      .from("matches")
+      .select("id")
+      .or(`and(user_a.eq.${user.id},user_b.eq.${liker.user_id}),and(user_a.eq.${liker.user_id},user_b.eq.${user.id})`)
+      .maybeSingle();
+
+    if (match) {
+      setMatchName(liker.display_name ?? "Someone");
+      setMatchId(match.id);
+      setShowMatch(true);
+    } else {
+      toast.success("💕 Liked back!");
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
+    setLikingBack(null);
+  };
+
+  const handlePass = async (e: React.MouseEvent, liker: Profile) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    await supabase.from("swipes").insert({
+      swiper_id: user.id,
+      target_id: liker.user_id,
+      action: "pass",
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
+    toast("Passed");
+  };
 
   if (isLoading) {
     return (
@@ -143,12 +203,38 @@ export default function LikesPage() {
                       </div>
                     </div>
                   </div>
+                  <div className="flex gap-1 p-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                      onClick={(e) => handlePass(e, liker)}
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" /> Pass
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 h-8 text-xs gradient-warm border-0 text-primary-foreground"
+                      disabled={likingBack === liker.user_id}
+                      onClick={(e) => handleLikeBack(e, liker)}
+                    >
+                      <Heart className="h-3.5 w-3.5 mr-1 fill-current" />
+                      {likingBack === liker.user_id ? "..." : "Like Back"}
+                    </Button>
+                  </div>
                 </Card>
               );
             })}
           </div>
         )}
       </div>
+
+      <MatchAnimation
+        show={showMatch}
+        matchName={matchName}
+        onSendMessage={() => { setShowMatch(false); navigate(`/chat/${matchId}`); }}
+        onKeepSwiping={() => setShowMatch(false)}
+      />
 
       <ProfileDetailSheet
         open={!!selectedProfile}
