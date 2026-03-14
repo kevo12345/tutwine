@@ -126,7 +126,7 @@ export default function DiscoverPage() {
       x.set(0);
       setCurrentIndex((i) => i + 1);
       isSwiping.current = false;
-    }, 250);
+    }, 180);
 
     // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
@@ -197,7 +197,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <div className="h-full overflow-y-auto overscroll-contain">
+      <div className="h-full overscroll-none">
         <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
@@ -250,18 +250,19 @@ export default function DiscoverPage() {
                       style={{ x, rotate }}
                       drag="x"
                       dragConstraints={{ left: 0, right: 0 }}
-                      dragElastic={0.9}
-                      dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
+                      dragElastic={0.25}
+                      dragMomentum={false}
+                      dragTransition={{ bounceStiffness: 600, bounceDamping: 35 }}
                       onDragEnd={(_, info) => {
-                        if (info.offset.x > 60 || info.velocity.x > 300) handleSwipe("like");
-                        else if (info.offset.x < -60 || info.velocity.x < -300) handleSwipe("pass");
+                        if (info.offset.x > 45 || info.velocity.x > 220) handleSwipe("like");
+                        else if (info.offset.x < -45 || info.velocity.x < -220) handleSwipe("pass");
                         else x.set(0);
                       }}
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : { scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
-                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y will-change-transform"
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none select-none will-change-transform"
                       whileTap={{ scale: 0.98 }}
                     >
                       <div onClick={() => setViewProfile(true)} className="h-full w-full">
