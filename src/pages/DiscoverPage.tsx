@@ -156,7 +156,7 @@ export default function DiscoverPage() {
           }
         });
     }
-  }, [currentProfile, user, likesLeft, navigate, increment, x]);
+  }, [currentProfile, user, navigate, x]);
 
   if (loading) {
     return (
