@@ -262,7 +262,7 @@ export default function DiscoverPage() {
 
             <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
               <Button variant="outline" size="icon" className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
-                <X className="h-7 w-7" />
+                <X className="h-6 w-6 sm:h-7 sm:w-7" />
               </Button>
               {limits.undoSwipe && (
                 <Button variant="outline" size="icon" className="h-10 w-10 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
