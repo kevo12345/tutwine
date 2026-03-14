@@ -221,7 +221,7 @@ export default function DiscoverPage() {
           <div className="mb-4 flex items-center justify-between">
             <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{viewsLeft} views · {likesLeft} likes left</span>
+              
               <Button variant="ghost" size="icon" className="h-9 w-9">
                 <SlidersHorizontal className="h-4 w-4" />
               </Button>
@@ -323,14 +323,6 @@ export default function DiscoverPage() {
             </>
           )}
 
-          <div className="mt-4 sm:mt-6 rounded-2xl bg-secondary p-3 sm:p-4 text-center">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              🔒 {likesLeft} likes & {viewsLeft} views remaining today
-            </p>
-            <Button variant="link" className="text-primary text-xs sm:text-sm" onClick={() => navigate("/pricing")}>
-              Upgrade for unlimited access →
-            </Button>
-          </div>
         </div>
       </PullToRefresh>
 
