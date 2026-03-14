@@ -1,12 +1,14 @@
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star, Check } from "lucide-react";
+import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star, Check, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
 
 const TIER_FEATURES: Record<string, string[]> = {
   basic: ["100 profile views/day", "50 likes/day", "Ad-free experience"],
@@ -23,8 +25,31 @@ const TIER_COLORS: Record<string, string> = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { profile, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { tier, subscription } = useSubscription();
+  const [likesCount, setLikesCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchLikes = async () => {
+      const { count } = await supabase
+        .from("swipes")
+        .select("*", { count: "exact", head: true })
+        .eq("target_id", user.id)
+        .eq("action", "like");
+      setLikesCount(count ?? 0);
+    };
+    fetchLikes();
+
+    const channel = supabase
+      .channel(`my-likes-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "swipes", filter: `target_id=eq.${user.id}` }, (payload: any) => {
+        if (payload.new?.action === "like") setLikesCount(c => c + 1);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   if (loading) {
     return (
@@ -76,9 +101,15 @@ export default function ProfilePage() {
             )}
           </div>
           {(profile?.city || profile?.state) && (
-            <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+<div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
               <span>{[profile?.city, profile?.state].filter(Boolean).join(", ")}</span>
+            </div>
+          )}
+          {likesCount > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm text-primary font-medium">
+              <Heart className="h-4 w-4 fill-current" />
+              <span>{likesCount} {likesCount === 1 ? "like" : "likes"} received</span>
             </div>
           )}
           <Button variant="outline" size="sm" className="mt-3 gap-1.5" onClick={() => navigate("/onboarding")}>
