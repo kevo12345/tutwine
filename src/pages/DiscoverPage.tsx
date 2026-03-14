@@ -273,18 +273,18 @@ export default function DiscoverPage() {
               </div>
 
               <div className="shrink-0 py-2 pb-3 flex items-center justify-center gap-2 sm:gap-4">
-                <Button variant="outline" size="icon" className="h-11 w-11 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
-                  <X className="h-5 w-5 sm:h-7 sm:w-7" />
+                <Button variant="outline" size="icon" className="h-9 w-9 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
+                  <X className="h-4 w-4 sm:h-7 sm:w-7" />
                 </Button>
                 {limits.undoSwipe && (
-                  <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                  <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                   </Button>
                 )}
-                <Button size="icon" className="h-13 w-13 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
-                  <Heart className="h-6 w-6 sm:h-8 sm:w-8 fill-current" />
+                <Button size="icon" className="h-11 w-11 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
+                  <Heart className="h-5 w-5 sm:h-8 sm:w-8 fill-current" />
                 </Button>
-                <Button variant="outline" size="icon" className={`h-11 w-11 sm:h-14 sm:w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
+                <Button variant="outline" size="icon" className={`h-9 w-9 sm:h-14 sm:w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
                   if (!limits.superLike) {
                     toast("⭐ Super Like is a Pro feature", { description: "Upgrade to Pro to send Super Likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
                   } else {
@@ -292,7 +292,7 @@ export default function DiscoverPage() {
                     handleSwipe("like");
                   }
                 }}>
-                  <Star className="h-5 w-5 sm:h-7 sm:w-7" />
+                  <Star className="h-4 w-4 sm:h-7 sm:w-7" />
                 </Button>
               </div>
             </>
