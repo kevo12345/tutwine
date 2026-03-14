@@ -28,7 +28,8 @@ export default function DiscoverPage() {
   const [matchId, setMatchId] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const currentProfile = profiles[currentIndex];
+  const effectiveIndex = profiles.length > 0 ? currentIndex % profiles.length : 0;
+  const currentProfile = profiles.length > 0 ? profiles[effectiveIndex] : undefined;
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
