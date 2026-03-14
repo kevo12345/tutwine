@@ -70,7 +70,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-4 pb-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold">Profile</h1>
           <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
