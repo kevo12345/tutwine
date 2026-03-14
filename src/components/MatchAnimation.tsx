@@ -48,7 +48,7 @@ export function MatchAnimation({ show, matchName, onSendMessage, onKeepSwiping }
               <Button onClick={onSendMessage} className="gradient-warm border-0 text-primary-foreground shadow-glow">
                 Send a Message
               </Button>
-              <Button variant="outline" onClick={onKeepSwiping} className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Button variant="outline" onClick={onKeepSwiping} className="border-primary-foreground/30 text-primary-foreground bg-transparent hover:bg-primary-foreground/10">
                 Keep Swiping
               </Button>
             </div>
