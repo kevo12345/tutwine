@@ -208,6 +208,7 @@ export default function DiscoverPage() {
     state: currentProfile.state ?? "",
     verified: currentProfile.verified ?? false,
     tier: profileTiers[currentProfile.user_id] ?? "free",
+    likesCount: profileLikes[currentProfile.user_id] ?? 0,
   } : null;
 
   const noMoreProfiles = profiles.length === 0;
