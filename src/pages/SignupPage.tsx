@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { MailCheck, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", confirmPassword: "", displayName: "" });
 
   // Redirect if already logged in
@@ -35,9 +36,37 @@ export default function SignupPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Account created! Let's set up your profile.");
-    navigate("/onboarding");
+    setEmailSent(true);
   };
+
+  if (emailSent) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm border-0 shadow-card text-center">
+          <CardHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <MailCheck className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="font-display text-2xl">Check your email</CardTitle>
+            <CardDescription className="mt-2">
+              We've sent a verification link to <strong>{form.email}</strong>. Click the link to activate your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Didn't receive it? Check your spam folder or try again.
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => setEmailSent(false)}>
+              Back to Sign Up
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => navigate("/login")}>
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
