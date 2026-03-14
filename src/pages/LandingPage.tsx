@@ -367,12 +367,11 @@ export default function LandingPage() {
             <img src="/logo.jpeg" alt="Tutwine" className="h-7 w-7 rounded-lg object-cover" />
             <span className="font-display font-bold">tutwine</span>
           </div>
-          <nav className="flex gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
-            <a href="/terms" className="hover:text-foreground">Terms</a>
-            <a href="/faq" className="hover:text-foreground">FAQs</a>
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Safety</a>
-            <a href="#" className="hover:text-foreground">Support</a>
+          <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
+            <a href="/terms" className="hover:text-foreground transition-colors">Terms & Conditions</a>
+            <a href="/faq" className="hover:text-foreground transition-colors">FAQs</a>
+            <a href="/pricing" className="hover:text-foreground transition-colors">Pricing</a>
+            <a href="/support" className="hover:text-foreground transition-colors">Support</a>
           </nav>
           <p className="text-sm text-muted-foreground">© 2026 tutwine. All rights reserved.</p>
         </div>
