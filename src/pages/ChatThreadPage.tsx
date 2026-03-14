@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { Tables } from "@/integrations/supabase/types";
 import VideoCall from "@/components/VideoCall";
 
