@@ -39,6 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Check if URL has auth callback tokens (email verification redirect)
+    const hasAuthCallback = window.location.hash.includes("access_token") || 
+      window.location.search.includes("code=");
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
@@ -53,14 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
+    // If there's an auth callback in the URL, let onAuthStateChange handle it
+    // to avoid a race condition where getSession returns null before tokens are processed
+    if (!hasAuthCallback) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        }
+        setLoading(false);
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, []);
