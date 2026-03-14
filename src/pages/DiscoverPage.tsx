@@ -5,7 +5,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
 import { Button } from "@/components/ui/button";
-import { Heart, X, Star, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Heart, X, Star, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
