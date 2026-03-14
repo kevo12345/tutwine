@@ -1,10 +1,11 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, suspended, signOut } = useAuth();
+  const { user, profile, loading, suspended, signOut } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -30,6 +31,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         </Button>
       </div>
     );
+  }
+
+  // Redirect to onboarding if profile is not complete (except when already on onboarding)
+  if (profile && !profile.onboarding_complete && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;

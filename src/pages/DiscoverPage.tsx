@@ -155,7 +155,12 @@ export default function DiscoverPage() {
     verified: currentProfile.verified ?? false,
   } : null;
 
-  const noMoreProfiles = currentIndex >= profiles.length;
+  // Loop back to start when all profiles have been viewed
+  if (currentIndex >= profiles.length && profiles.length > 0) {
+    setCurrentIndex(0);
+  }
+
+  const noMoreProfiles = profiles.length === 0;
 
   return (
     <AppLayout>
