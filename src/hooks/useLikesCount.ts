@@ -54,7 +54,13 @@ export function useLikesCount() {
           table: "swipes",
           filter: `target_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          const swipe = payload.new as { action: string };
+          if (swipe.action === "like") {
+            setHasNewLike(true);
+            // Auto-clear pulse after 3 seconds
+            setTimeout(() => setHasNewLike(false), 3000);
+          }
           queryClient.invalidateQueries({ queryKey: ["likes-count", user.id] });
           queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
         }
@@ -66,5 +72,5 @@ export function useLikesCount() {
     };
   }, [user, queryClient]);
 
-  return count;
+  return { count, hasNewLike, clearNewLike };
 }
