@@ -25,6 +25,7 @@ export default function ChatThreadPage() {
   const [otherProfile, setOtherProfile] = useState<Tables<"profiles"> | null>(null);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     if (!matchId || !user) return;
