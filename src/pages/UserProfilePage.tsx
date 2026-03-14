@@ -5,7 +5,7 @@ import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, MessageCircle, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, X, MessageCircle, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
