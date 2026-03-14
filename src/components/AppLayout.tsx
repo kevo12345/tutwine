@@ -134,7 +134,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       )}
-      <main className="flex-1 overflow-y-auto mx-auto w-full max-w-lg overscroll-contain">{children}</main>
+      <main className="flex-1 min-h-0 relative overflow-y-auto mx-auto w-full max-w-lg overscroll-contain">{children}</main>
       <BottomNav />
 
       {/* Location Settings Guide Dialog */}
