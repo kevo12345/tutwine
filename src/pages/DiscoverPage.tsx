@@ -217,22 +217,24 @@ export default function DiscoverPage() {
                     style={{ x, rotate }}
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.7}
+                    dragElastic={0.9}
+                    dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
                     onDragEnd={(_, info) => {
-                      if (info.offset.x > 100) handleSwipe("like");
-                      else if (info.offset.x < -100) handleSwipe("pass");
+                      if (info.offset.x > 60 || info.velocity.x > 300) handleSwipe("like");
+                      else if (info.offset.x < -60 || info.velocity.x < -300) handleSwipe("pass");
                     }}
                     animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : {}}
                     transition={{ duration: 0.3 }}
-                    className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                    className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <div onClick={() => setViewProfile(true)}>
+                    <div onClick={() => setViewProfile(true)} className="h-full w-full">
                       <ProfileCard profile={profileForCard} />
                     </div>
-                    <motion.div style={{ opacity: likeOpacity }} className="absolute left-4 top-6 rounded-lg border-4 border-success px-4 py-1 text-2xl font-bold text-success -rotate-12">
+                    <motion.div style={{ opacity: likeOpacity }} className="absolute left-4 top-6 rounded-lg border-4 border-success bg-success/10 px-4 py-1 text-2xl font-bold text-success -rotate-12 backdrop-blur-sm">
                       LIKE
                     </motion.div>
-                    <motion.div style={{ opacity: passOpacity }} className="absolute right-4 top-6 rounded-lg border-4 border-destructive px-4 py-1 text-2xl font-bold text-destructive rotate-12">
+                    <motion.div style={{ opacity: passOpacity }} className="absolute right-4 top-6 rounded-lg border-4 border-destructive bg-destructive/10 px-4 py-1 text-2xl font-bold text-destructive rotate-12 backdrop-blur-sm">
                       NOPE
                     </motion.div>
                   </motion.div>
