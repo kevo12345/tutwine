@@ -210,7 +210,9 @@ export default function DiscoverPage() {
                     transition={{ duration: 0.3 }}
                     className="absolute inset-0 cursor-grab active:cursor-grabbing"
                   >
-                    <ProfileCard profile={profileForCard} />
+                    <div onClick={() => setViewProfile(true)}>
+                      <ProfileCard profile={profileForCard} />
+                    </div>
                     <motion.div style={{ opacity: likeOpacity }} className="absolute left-4 top-6 rounded-lg border-4 border-success px-4 py-1 text-2xl font-bold text-success -rotate-12">
                       LIKE
                     </motion.div>
