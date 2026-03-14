@@ -299,7 +299,6 @@ export default function DiscoverPage() {
           )}
         </div>
       </div>
-      </div>
 
       <MatchAnimation
         show={showMatch}
