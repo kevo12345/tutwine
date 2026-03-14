@@ -117,12 +117,6 @@ export default function DiscoverPage() {
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
 
-    if (action === "like") {
-      if (typeof likesLeft === "number" && likesLeft <= 0) {
-        toast.error("Daily like limit reached!", { description: "Upgrade for more likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
-        return;
-      }
-    }
 
     isSwiping.current = true;
 
