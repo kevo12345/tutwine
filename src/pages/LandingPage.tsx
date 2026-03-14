@@ -85,7 +85,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <img src="/logo-transparent.png" alt="Tutwine" className="h-9 w-9 rounded-xl object-cover" />
+            <img src="/logo.jpeg" alt="Tutwine" className="h-9 w-9 rounded-xl object-cover" />
             <span className="font-display text-xl font-bold">tutwine</span>
           </div>
           {/* Desktop nav */}
