@@ -29,7 +29,6 @@ export default function ChatThreadPage() {
     if (!matchId || !user) return;
 
     const loadData = async () => {
-      // Get the match to find the other user
       const { data: match } = await supabase
         .from("matches")
         .select("*")
@@ -40,7 +39,6 @@ export default function ChatThreadPage() {
 
       const otherUserId = match.user_a === user.id ? match.user_b : match.user_a;
 
-      // Fetch other user's profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("*")
@@ -48,7 +46,6 @@ export default function ChatThreadPage() {
         .single();
       setOtherProfile(profile);
 
-      // Fetch messages
       const { data: msgs } = await supabase
         .from("messages")
         .select("*")
@@ -59,7 +56,6 @@ export default function ChatThreadPage() {
     };
     loadData();
 
-    // Subscribe to realtime messages
     const channel = supabase
       .channel(`messages:${matchId}`)
       .on(
@@ -113,7 +109,7 @@ export default function ChatThreadPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex h-[100dvh] items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -125,25 +121,25 @@ export default function ChatThreadPage() {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-background">
-      <div className="flex h-full w-full flex-col lg:mx-auto lg:my-8 lg:h-[calc(100vh-4rem)] lg:max-w-2xl lg:rounded-2xl lg:border lg:border-border lg:shadow-card">
+    <div className="flex h-[100dvh] flex-col bg-background lg:items-center lg:justify-center lg:p-8">
+      <div className="flex h-full w-full flex-col lg:h-[calc(100dvh-4rem)] lg:max-w-2xl lg:rounded-2xl lg:border lg:border-border lg:shadow-card lg:overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 lg:rounded-t-2xl">
-          <button onClick={() => navigate("/chat")} className="text-muted-foreground hover:text-foreground">
+        <div className="flex items-center gap-3 border-b border-border bg-card px-3 py-2.5 shrink-0 sm:px-4 sm:py-3 lg:rounded-t-2xl">
+          <button onClick={() => navigate("/chat")} className="text-muted-foreground hover:text-foreground p-1">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <Avatar className="h-10 w-10">
+          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0">
             <AvatarImage src={otherProfile?.photos?.[0] ?? ""} />
             <AvatarFallback>{otherProfile?.display_name?.[0] ?? "?"}</AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <h2 className="font-medium">{otherProfile?.display_name ?? "User"}</h2>
-            <p className="text-xs text-muted-foreground">Active now</p>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-medium text-sm sm:text-base truncate">{otherProfile?.display_name ?? "User"}</h2>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Active now</p>
           </div>
           <VideoCall matchId={matchId!} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -159,7 +155,7 @@ export default function ChatThreadPage() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 sm:px-4 sm:py-4 sm:space-y-3 overscroll-contain">
           {messages.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-8">Say hello! 👋</p>
           )}
@@ -167,11 +163,11 @@ export default function ChatThreadPage() {
             const isMe = msg.sender_id === user?.id;
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                <div className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 ${
                   isMe ? "gradient-warm text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
                 }`}>
-                  <p className="text-sm">{msg.content}</p>
-                  <p className={`mt-1 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                  <p className="text-sm break-words">{msg.content}</p>
+                  <p className={`mt-0.5 text-[10px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     {isMe && msg.read_at && " ✓✓"}
                   </p>
@@ -182,19 +178,19 @@ export default function ChatThreadPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input */}
-        <div className="border-t border-border bg-card p-3 safe-bottom lg:rounded-b-2xl">
+        {/* Input - with safe area for mobile */}
+        <div className="border-t border-border bg-card p-2.5 sm:p-3 shrink-0 lg:rounded-b-2xl" style={{ paddingBottom: `max(0.625rem, env(safe-area-inset-bottom, 0px))` }}>
           <div className="flex gap-2">
             <Input
               placeholder="Type a message..."
               value={newMsg}
               onChange={(e) => setNewMsg(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              className="rounded-full"
+              className="rounded-full text-sm"
             />
             <Button
               size="icon"
-              className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground"
+              className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground h-9 w-9 sm:h-10 sm:w-10"
               onClick={sendMessage}
               disabled={!newMsg.trim()}
             >

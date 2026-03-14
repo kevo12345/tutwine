@@ -198,9 +198,9 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
-      <div className="px-4 pt-4">
+      <div className="px-3 pt-3 pb-4 sm:px-4 sm:pt-4">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="font-display text-2xl font-bold">Discover</h1>
+          <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{viewsLeft} views · {likesLeft} likes left</span>
             <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -260,19 +260,19 @@ export default function DiscoverPage() {
               </AnimatePresence>
             </div>
 
-            <div className="mt-6 flex items-center justify-center gap-4">
-              <Button variant="outline" size="icon" className="h-14 w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
-                <X className="h-7 w-7" />
+            <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
+              <Button variant="outline" size="icon" className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
+                <X className="h-6 w-6 sm:h-7 sm:w-7" />
               </Button>
               {limits.undoSwipe && (
                 <Button variant="outline" size="icon" className="h-10 w-10 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                 </Button>
               )}
-              <Button size="icon" className="h-16 w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
-                <Heart className="h-8 w-8 fill-current" />
+              <Button size="icon" className="h-14 w-14 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
+                <Heart className="h-7 w-7 sm:h-8 sm:w-8 fill-current" />
               </Button>
-              <Button variant="outline" size="icon" className={`h-14 w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
+              <Button variant="outline" size="icon" className={`h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
                 if (!limits.superLike) {
                   toast("⭐ Super Like is a Pro feature", { description: "Upgrade to Pro to send Super Likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
                 } else {
@@ -280,17 +280,17 @@ export default function DiscoverPage() {
                   handleSwipe("like");
                 }
               }}>
-                <Star className="h-7 w-7" />
+                <Star className="h-6 w-6 sm:h-7 sm:w-7" />
               </Button>
             </div>
           </>
         )}
 
-        <div className="mt-6 rounded-2xl bg-secondary p-4 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-4 sm:mt-6 rounded-2xl bg-secondary p-3 sm:p-4 text-center">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             🔒 {likesLeft} likes & {viewsLeft} views remaining today
           </p>
-          <Button variant="link" className="text-primary text-sm" onClick={() => navigate("/pricing")}>
+          <Button variant="link" className="text-primary text-xs sm:text-sm" onClick={() => navigate("/pricing")}>
             Upgrade for unlimited access →
           </Button>
         </div>

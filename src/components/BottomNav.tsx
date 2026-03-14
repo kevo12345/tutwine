@@ -21,8 +21,8 @@ export function BottomNav() {
   const profileActive = location.pathname === "/profile";
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-lg safe-bottom">
-      <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
+    <nav className="border-t border-border bg-card/95 backdrop-blur-lg shrink-0" style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}>
+      <div className="mx-auto flex max-w-lg items-center justify-around px-1 py-1.5 sm:px-2 sm:py-2">
         {navItems.map(({ icon: Icon, label, path }) => {
           const active = location.pathname === path;
           return (
@@ -30,20 +30,20 @@ export function BottomNav() {
               key={path}
               onClick={() => navigate(path)}
               className={cn(
-                "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 transition-all",
+                "flex flex-col items-center gap-0.5 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 transition-all min-w-0",
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className={cn("h-5 w-5", active && "fill-primary/20")} strokeWidth={active ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[9px] sm:text-[10px] font-medium truncate">{label}</span>
             </button>
           );
         })}
-        {/* Profile tab with user photo */}
+        {/* Profile tab */}
         <button
           onClick={() => navigate("/profile")}
           className={cn(
-            "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 transition-all",
+            "flex flex-col items-center gap-0.5 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 transition-all min-w-0",
             profileActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
           )}
         >
@@ -55,7 +55,7 @@ export function BottomNav() {
           ) : (
             <User className={cn("h-5 w-5", profileActive && "fill-primary/20")} strokeWidth={profileActive ? 2.5 : 2} />
           )}
-          <span className="text-[10px] font-medium">Profile</span>
+          <span className="text-[9px] sm:text-[10px] font-medium truncate">Profile</span>
         </button>
       </div>
     </nav>
