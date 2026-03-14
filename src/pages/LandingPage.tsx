@@ -371,7 +371,6 @@ export default function LandingPage() {
             <a href="/terms" className="hover:text-foreground transition-colors">Terms & Conditions</a>
             <a href="/faq" className="hover:text-foreground transition-colors">FAQs</a>
             <a href="/pricing" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="/support" className="hover:text-foreground transition-colors">Support</a>
           </nav>
           <p className="text-sm text-muted-foreground">© 2026 tutwine. All rights reserved.</p>
         </div>
