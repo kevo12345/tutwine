@@ -265,7 +265,7 @@ export default function DiscoverPage() {
                         >
                           <ChevronRight className="h-6 w-6" />
                         </button>
-                        <ProfileCard profile={profileForCard} onTap={() => setViewProfile(true)} />
+                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard!.id}`)} />
                       </div>
                     </motion.div>
                   )}
