@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { BadgeCheck, Loader2, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BadgeCheck, Loader2, Lock, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Tables } from "@/integrations/supabase/types";
 
 interface ChatItem {
