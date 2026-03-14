@@ -97,6 +97,16 @@ export default function DiscoverPage() {
       const tierMap: Record<string, string> = {};
       subs?.forEach(s => { tierMap[s.user_id] = s.tier; });
       setProfileTiers(tierMap);
+
+      // Fetch like counts for each profile
+      const { data: likeCounts } = await supabase
+        .from("swipes")
+        .select("target_id")
+        .in("target_id", userIds)
+        .eq("action", "like");
+      const likeMap: Record<string, number> = {};
+      likeCounts?.forEach(s => { likeMap[s.target_id] = (likeMap[s.target_id] ?? 0) + 1; });
+      setProfileLikes(likeMap);
     }
 
     setLoading(false);
