@@ -24,6 +24,8 @@ import SupportPage from "./pages/SupportPage";
 import LikesPage from "./pages/LikesPage";
 import InstallPage from "./pages/InstallPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import TermsPage from "./pages/TermsPage";
+import FaqPage from "./pages/FaqPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +57,8 @@ const App = () => (
             <Route path="/support" element={<SupportPage />} />
             <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="/install" element={<InstallPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/faq" element={<FaqPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

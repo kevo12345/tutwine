@@ -368,7 +368,8 @@ export default function LandingPage() {
             <span className="font-display font-bold">tutwine</span>
           </div>
           <nav className="flex gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
-            <a href="#" className="hover:text-foreground">Terms</a>
+            <a href="/terms" className="hover:text-foreground">Terms</a>
+            <a href="/faq" className="hover:text-foreground">FAQs</a>
             <a href="#" className="hover:text-foreground">Privacy</a>
             <a href="#" className="hover:text-foreground">Safety</a>
             <a href="#" className="hover:text-foreground">Support</a>
