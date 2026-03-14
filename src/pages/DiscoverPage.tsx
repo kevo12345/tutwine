@@ -28,7 +28,7 @@ export default function DiscoverPage() {
   const [matchName, setMatchName] = useState("");
   const [matchId, setMatchId] = useState("");
   const [loading, setLoading] = useState(true);
-
+  const [viewProfile, setViewProfile] = useState(false);
   const effectiveIndex = profiles.length > 0 ? currentIndex % profiles.length : 0;
   const currentProfile = profiles.length > 0 ? profiles[effectiveIndex] : undefined;
   const x = useMotionValue(0);
