@@ -88,8 +88,8 @@ export default function OnboardingPage() {
       setSaving(false);
       if (error) { toast.error("Failed to save profile"); return; }
       await refreshProfile();
-      toast.success("Profile complete! Start discovering.");
-      navigate("/discover");
+      toast.success(isEditing ? "Profile updated!" : "Profile complete! Start discovering.");
+      navigate(isEditing ? "/profile" : "/discover");
     }
   };
 
