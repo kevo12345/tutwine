@@ -28,7 +28,8 @@ export default function DiscoverPage() {
   const [matchId, setMatchId] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const currentProfile = profiles[currentIndex];
+  const effectiveIndex = profiles.length > 0 ? currentIndex % profiles.length : 0;
+  const currentProfile = profiles.length > 0 ? profiles[effectiveIndex] : undefined;
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
@@ -155,7 +156,10 @@ export default function DiscoverPage() {
     verified: currentProfile.verified ?? false,
   } : null;
 
-  const noMoreProfiles = currentIndex >= profiles.length;
+  const noMoreProfiles = profiles.length === 0;
+
+  // Use effectiveIndex for next profile preview too
+  const nextEffectiveIndex = profiles.length > 1 ? (effectiveIndex + 1) % profiles.length : -1;
 
   return (
     <AppLayout>
@@ -173,18 +177,18 @@ export default function DiscoverPage() {
         {noMoreProfiles ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Heart className="h-16 w-16 text-muted-foreground/30" />
-            <h2 className="mt-4 font-display text-xl font-bold">No more profiles</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Check back later for new people!</p>
+            <h2 className="mt-4 font-display text-xl font-bold">No profiles yet</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Be the first! Invite your friends to join.</p>
           </div>
         ) : (
           <>
             <div className="relative mx-auto aspect-[3/4] w-full max-w-sm">
-              {profiles[currentIndex + 1] && (
+              {nextEffectiveIndex >= 0 && profiles[nextEffectiveIndex] && (
                 <div className="absolute inset-0 scale-[0.95] opacity-50">
                   <ProfileCard profile={{
                     ...profileForCard!,
-                    id: profiles[currentIndex + 1].user_id,
-                    displayName: profiles[currentIndex + 1].display_name ?? "",
+                    id: profiles[nextEffectiveIndex].user_id,
+                    displayName: profiles[nextEffectiveIndex].display_name ?? "",
                   }} />
                 </div>
               )}
