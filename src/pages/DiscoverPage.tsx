@@ -245,15 +245,45 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                {profileForCard && !direction && (
-                  <div
-                    className="absolute inset-0 touch-none select-none"
-                  >
-                    <div onClick={() => setViewProfile(true)} className="h-full w-full">
-                      <ProfileCard profile={profileForCard} />
-                    </div>
-                  </div>
-                )}
+                <AnimatePresence initial={false} custom={direction}>
+                  {profileForCard && (
+                    <motion.div
+                      key={currentProfile.user_id}
+                      custom={direction}
+                      initial={(d: string | null) => ({
+                        x: d === "right" ? 300 : d === "left" ? -300 : 0,
+                        opacity: 0,
+                      })}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={(d: string | null) => ({
+                        x: d === "right" ? -300 : 300,
+                        opacity: 0,
+                      })}
+                      variants={{
+                        enter: (d: string | null) => ({
+                          x: d === "right" ? 300 : d === "left" ? -300 : 0,
+                          opacity: 0,
+                        }),
+                        center: { x: 0, opacity: 1 },
+                        exit: (d: string | null) => ({
+                          x: d === "right" ? -300 : 300,
+                          opacity: 0,
+                        }),
+                      }}
+                      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                      className="absolute inset-0 touch-none select-none"
+                    >
+                      <div className="h-full w-full relative">
+                        {/* Tap left half = pass, tap right half = like */}
+                        <div className="absolute inset-0 z-10 flex">
+                          <div className="w-1/2 h-full" onClick={() => handleSwipe("pass")} />
+                          <div className="w-1/2 h-full" onClick={() => handleSwipe("like")} />
+                        </div>
+                        <ProfileCard profile={profileForCard} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
