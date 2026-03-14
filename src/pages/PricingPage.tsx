@@ -86,11 +86,13 @@ export default function PricingPage() {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success("M-Pesa prompt sent!", {
-          description: "Check your phone and enter your M-Pesa PIN to complete payment. Your subscription will activate once payment is confirmed.",
+        toast.success(`${TIER_PRICES[selectedTier as keyof typeof TIER_PRICES]?.label} plan activated!`, {
+          description: "Check your phone and enter your M-Pesa PIN to complete payment. You're now on the " + TIER_PRICES[selectedTier as keyof typeof TIER_PRICES]?.label + " plan.",
+          duration: 6000,
         });
         setDialogOpen(false);
         setPhone("");
+        navigate("/discover");
       } else {
         toast.error(data?.error || "Payment failed. Please try again.");
       }
