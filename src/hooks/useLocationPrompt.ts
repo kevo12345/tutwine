@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export function useLocationPrompt() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [prompted, setPrompted] = useState(false);
   const [hasLocation, setHasLocation] = useState(false);
 
