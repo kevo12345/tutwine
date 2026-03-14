@@ -113,20 +113,22 @@ export default function DiscoverPage() {
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
 
-
     isSwiping.current = true;
 
-    // Advance UI immediately — don't wait for DB
-    setDirection(action === "like" ? "right" : "left");
-    
     const swipedProfile = currentProfile;
 
-    setTimeout(() => {
-      setDirection(null);
-      x.set(0);
-      setCurrentIndex((i) => i + 1);
-      isSwiping.current = false;
-    }, 180);
+    // Set direction to hide current card, then advance index
+    setDirection(action === "like" ? "right" : "left");
+
+    // Use requestAnimationFrame to ensure the card unmounts before showing the next
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setCurrentIndex((i) => i + 1);
+        x.set(0);
+        setDirection(null);
+        isSwiping.current = false;
+      }, 50);
+    });
 
     // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
