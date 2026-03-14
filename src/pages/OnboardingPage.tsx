@@ -301,7 +301,7 @@ export default function OnboardingPage() {
         </AnimatePresence>
 
         <Button onClick={nextStep} className="mt-8 w-full gradient-warm border-0 text-primary-foreground shadow-glow" size="lg" disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < STEPS.length - 1 ? <>Continue <ArrowRight className="ml-1 h-4 w-4" /></> : <>Start Discovering <ArrowRight className="ml-1 h-4 w-4" /></>}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : step < STEPS.length - 1 ? <>Continue <ArrowRight className="ml-1 h-4 w-4" /></> : isEditing ? <>Save Changes <ArrowRight className="ml-1 h-4 w-4" /></> : <>Start Discovering <ArrowRight className="ml-1 h-4 w-4" /></>}
         </Button>
       </div>
     </div>
