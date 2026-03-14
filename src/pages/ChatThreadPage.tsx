@@ -179,14 +179,14 @@ export default function ChatThreadPage() {
         </div>
 
         {/* Input - with safe area for mobile */}
-        <div className="border-t border-border bg-card p-2.5 sm:p-3 shrink-0 lg:rounded-b-2xl" style={{ paddingBottom: `max(0.625rem, env(safe-area-inset-bottom, 0px))` }}>
-          <div className="flex gap-2">
+        <div className="border-t border-border bg-card px-2 py-2 sm:p-3 shrink-0 lg:rounded-b-2xl" style={{ paddingBottom: `max(0.5rem, env(safe-area-inset-bottom, 0px))` }}>
+          <div className="flex gap-1.5 sm:gap-2">
             <Input
               placeholder="Type a message..."
               value={newMsg}
               onChange={(e) => setNewMsg(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              className="rounded-full text-sm"
+              className="rounded-full text-sm h-9 sm:h-10"
             />
             <Button
               size="icon"

@@ -101,8 +101,8 @@ export default function ChatListPage() {
 
   return (
     <AppLayout>
-      <div className="px-4 pt-4">
-        <h1 className="mb-6 font-display text-2xl font-bold">Chat</h1>
+      <div className="px-3 pt-3 sm:px-4 sm:pt-4">
+        <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
         {chats.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
             <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
