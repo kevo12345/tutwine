@@ -6,6 +6,7 @@ interface ProfileCardProps {
   profile: MockProfile;
   style?: React.CSSProperties;
   className?: string;
+  onTap?: () => void;
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; label: string; className: string }> = {
@@ -14,14 +15,15 @@ const tierConfig: Record<string, { icon: React.ElementType; label: string; class
   pro: { icon: Star, label: "Pro", className: "bg-accent/20 text-accent border-accent/30" },
 };
 
-export function ProfileCard({ profile, style, className }: ProfileCardProps) {
+export function ProfileCard({ profile, style, className, onTap }: ProfileCardProps) {
   const tier = profile.tier && profile.tier !== "free" ? tierConfig[profile.tier] : null;
   const photoUrl = profile.photos[0] || "";
 
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-2xl bg-card shadow-card ${className ?? ""}`}
+      className={`relative h-full w-full overflow-hidden rounded-2xl bg-card shadow-card cursor-pointer ${className ?? ""}`}
       style={style}
+      onClick={onTap}
     >
       <img
         src={photoUrl}
