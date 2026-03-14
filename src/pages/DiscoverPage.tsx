@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { ProfileCard } from "@/components/ProfileCard";
@@ -33,6 +33,7 @@ export default function DiscoverPage() {
   const [viewProfile, setViewProfile] = useState(false);
   const effectiveIndex = profiles.length > 0 ? currentIndex % profiles.length : 0;
   const currentProfile = profiles.length > 0 ? profiles[effectiveIndex] : undefined;
+  const isSwiping = useRef(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
@@ -108,7 +109,7 @@ export default function DiscoverPage() {
   }, [fetchProfiles]);
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
-    if (!currentProfile || !user) return;
+    if (!currentProfile || !user || isSwiping.current) return;
 
     if (action === "like") {
       if (typeof likesLeft === "number" && likesLeft <= 0) {
@@ -117,13 +118,28 @@ export default function DiscoverPage() {
       }
     }
 
-    const { error } = await supabase.from("swipes").insert({
-      swiper_id: user.id,
-      target_id: currentProfile.user_id,
-      action: action,
-    });
+    isSwiping.current = true;
 
-    if (error) { console.error(error); }
+    // Advance UI immediately — don't wait for DB
+    setDirection(action === "like" ? "right" : "left");
+    
+    const swipedProfile = currentProfile;
+
+    setTimeout(() => {
+      setDirection(null);
+      x.set(0);
+      setCurrentIndex((i) => i + 1);
+      isSwiping.current = false;
+    }, 250);
+
+    // Fire DB calls in the background (non-blocking)
+    supabase.from("swipes").insert({
+      swiper_id: user.id,
+      target_id: swipedProfile.user_id,
+      action: action,
+    }).then(({ error }) => {
+      if (error) console.error(error);
+    });
 
     if (action === "like") {
       increment.mutate("likes_count");
@@ -131,25 +147,20 @@ export default function DiscoverPage() {
     increment.mutate("profile_views");
 
     if (action === "like") {
-      const { data: match } = await supabase
+      supabase
         .from("matches")
         .select("id")
-        .or(`and(user_a.eq.${user.id},user_b.eq.${currentProfile.user_id}),and(user_a.eq.${currentProfile.user_id},user_b.eq.${user.id})`)
-        .maybeSingle();
-
-      if (match) {
-        setMatchName(currentProfile.display_name ?? "Someone");
-        setMatchId(match.id);
-        setShowMatch(true);
-      }
+        .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
+        .maybeSingle()
+        .then(({ data: match }) => {
+          if (match) {
+            setMatchName(swipedProfile.display_name ?? "Someone");
+            setMatchId(match.id);
+            setShowMatch(true);
+          }
+        });
     }
-
-    setDirection(action === "like" ? "right" : "left");
-    setTimeout(() => {
-      setDirection(null);
-      setCurrentIndex((i) => i + 1);
-    }, 300);
-  }, [currentProfile, user, likesLeft, navigate, increment]);
+  }, [currentProfile, user, likesLeft, navigate, increment, x]);
 
   if (loading) {
     return (
@@ -250,10 +261,13 @@ export default function DiscoverPage() {
                       onDragEnd={(_, info) => {
                         if (info.offset.x > 60 || info.velocity.x > 300) handleSwipe("like");
                         else if (info.offset.x < -60 || info.velocity.x < -300) handleSwipe("pass");
+                        else x.set(0);
                       }}
-                      animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : {}}
-                      transition={{ duration: 0.3 }}
-                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y"
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : { scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="absolute inset-0 cursor-grab active:cursor-grabbing touch-pan-y will-change-transform"
                       whileTap={{ scale: 0.98 }}
                     >
                       <div onClick={() => setViewProfile(true)} className="h-full w-full">
