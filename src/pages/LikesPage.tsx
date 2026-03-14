@@ -73,12 +73,14 @@ export default function LikesPage() {
     if (!user || likingBack) return;
     setLikingBack(liker.user_id);
 
-    // Use upsert to handle cases where a swipe already exists (e.g. previously passed)
-    const { error } = await supabase.from("swipes").upsert({
+    // Delete any existing swipe (e.g. a previous "pass") so INSERT trigger fires for match
+    await supabase.from("swipes").delete().eq("swiper_id", user.id).eq("target_id", liker.user_id);
+
+    const { error } = await supabase.from("swipes").insert({
       swiper_id: user.id,
       target_id: liker.user_id,
       action: "like",
-    }, { onConflict: "swiper_id,target_id" });
+    });
 
     if (error) {
       toast.error("Failed to like back");
@@ -86,33 +88,19 @@ export default function LikesPage() {
       return;
     }
 
-    // Check if match already exists (trigger creates on INSERT, not UPDATE)
-    const { data: existingMatch } = await supabase
+    // The check_mutual_like trigger should have created the match
+    const { data: match } = await supabase
       .from("matches")
       .select("id")
       .or(`and(user_a.eq.${user.id},user_b.eq.${liker.user_id}),and(user_a.eq.${liker.user_id},user_b.eq.${user.id})`)
       .maybeSingle();
 
-    if (existingMatch) {
+    if (match) {
       setMatchName(liker.display_name ?? "Someone");
-      setMatchId(existingMatch.id);
+      setMatchId(match.id);
       setShowMatch(true);
     } else {
-      // Mutual like exists but no match yet — create it
-      const userA = user.id < liker.user_id ? user.id : liker.user_id;
-      const userB = user.id < liker.user_id ? liker.user_id : user.id;
-      const { data: newMatch } = await supabase
-        .from("matches")
-        .insert({ user_a: userA, user_b: userB })
-        .select("id")
-        .single();
-      if (newMatch) {
-        setMatchName(liker.display_name ?? "Someone");
-        setMatchId(newMatch.id);
-        setShowMatch(true);
-      } else {
-        toast.success("💕 Liked back!");
-      }
+      toast.success("💕 Liked back!");
     }
 
     queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
