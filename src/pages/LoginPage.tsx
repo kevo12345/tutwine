@@ -19,19 +19,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Redirect logged-in users based on role
+  // Redirect logged-in users based on role and onboarding status
   useEffect(() => {
     if (!user) return;
-    const checkRoleAndRedirect = async () => {
-      const { data } = await supabase
+    const checkAndRedirect = async () => {
+      const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .eq("role", "admin")
         .maybeSingle();
-      navigate(data ? "/admin" : "/discover", { replace: true });
+      
+      if (roleData) {
+        navigate("/admin", { replace: true });
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("onboarding_complete")
+        .eq("user_id", user.id)
+        .single();
+
+      navigate(profileData?.onboarding_complete ? "/discover" : "/onboarding", { replace: true });
     };
-    checkRoleAndRedirect();
+    checkAndRedirect();
   }, [user, navigate]);
 
   if (user) return null;
