@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 interface ChatItem {
   matchId: string;
@@ -26,51 +28,55 @@ export default function ChatListPage() {
   const [loading, setLoading] = useState(true);
   const isFree = tier === "free";
 
-  useEffect(() => {
+  const loadChats = useCallback(async () => {
     if (!user) return;
-    const load = async () => {
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("*")
-        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-        .order("created_at", { ascending: false });
+    const { data: matches } = await supabase
+      .from("matches")
+      .select("*")
+      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+      .order("created_at", { ascending: false });
 
-      if (!matches) { setLoading(false); return; }
+    if (!matches) { setLoading(false); return; }
 
-      const items: ChatItem[] = [];
-      for (const m of matches) {
-        const otherUserId = m.user_a === user.id ? m.user_b : m.user_a;
-        const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", otherUserId).single();
-        if (!profile) continue;
+    const items: ChatItem[] = [];
+    for (const m of matches) {
+      const otherUserId = m.user_a === user.id ? m.user_b : m.user_a;
+      const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", otherUserId).single();
+      if (!profile) continue;
 
-        const { data: lastMsg } = await supabase
-          .from("messages")
-          .select("content, created_at")
-          .eq("match_id", m.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      const { data: lastMsg } = await supabase
+        .from("messages")
+        .select("content, created_at")
+        .eq("match_id", m.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-        const { count } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("match_id", m.id)
-          .neq("sender_id", user.id)
-          .is("read_at", null);
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("match_id", m.id)
+        .neq("sender_id", user.id)
+        .is("read_at", null);
 
-        items.push({
-          matchId: m.id,
-          profile,
-          lastMessage: lastMsg?.content,
-          lastMessageAt: lastMsg?.created_at ? new Date(lastMsg.created_at).toLocaleDateString() : undefined,
-          unread: count ?? 0,
-        });
-      }
-      setChats(items);
-      setLoading(false);
-    };
-    load();
+      items.push({
+        matchId: m.id,
+        profile,
+        lastMessage: lastMsg?.content,
+        lastMessageAt: lastMsg?.created_at ? new Date(lastMsg.created_at).toLocaleDateString() : undefined,
+        unread: count ?? 0,
+      });
+    }
+    setChats(items);
+    setLoading(false);
   }, [user]);
+
+  useEffect(() => { loadChats(); }, [loadChats]);
+
+  const handleRefresh = useCallback(async () => {
+    await loadChats();
+    toast.success("Chats refreshed!");
+  }, [loadChats]);
 
   if (loading) {
     return (
@@ -101,48 +107,50 @@ export default function ChatListPage() {
 
   return (
     <AppLayout>
-      <div className="px-3 pt-3 sm:px-4 sm:pt-4">
-        <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
-        {chats.length === 0 ? (
-          <div className="flex flex-col items-center py-20 text-center">
-            <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
-            <h2 className="mt-4 font-display text-xl font-bold">No conversations</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Match with someone to start chatting!</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {chats.map((c) => (
-              <button
-                key={c.matchId}
-                onClick={() => navigate(`/chat/${c.matchId}`)}
-                className="flex w-full items-center gap-2.5 sm:gap-3 rounded-2xl p-2.5 sm:p-3 hover:bg-secondary transition-colors overflow-hidden"
-              >
-                <Avatar className="h-11 w-11 sm:h-14 sm:w-14 shrink-0">
-                  <AvatarImage src={c.profile.photos?.[0] ?? ""} alt={c.profile.display_name ?? ""} />
-                  <AvatarFallback>{c.profile.display_name?.[0] ?? "?"}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <span className="font-medium text-sm sm:text-base truncate">{c.profile.display_name}</span>
-                      {c.profile.verified && <BadgeCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-info shrink-0" />}
+      <PullToRefresh onRefresh={handleRefresh} className="h-full">
+        <div className="px-3 pt-3 sm:px-4 sm:pt-4">
+          <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
+          {chats.length === 0 ? (
+            <div className="flex flex-col items-center py-20 text-center">
+              <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
+              <h2 className="mt-4 font-display text-xl font-bold">No conversations</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Match with someone to start chatting!</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {chats.map((c) => (
+                <button
+                  key={c.matchId}
+                  onClick={() => navigate(`/chat/${c.matchId}`)}
+                  className="flex w-full items-center gap-2.5 sm:gap-3 rounded-2xl p-2.5 sm:p-3 hover:bg-secondary transition-colors overflow-hidden"
+                >
+                  <Avatar className="h-11 w-11 sm:h-14 sm:w-14 shrink-0">
+                    <AvatarImage src={c.profile.photos?.[0] ?? ""} alt={c.profile.display_name ?? ""} />
+                    <AvatarFallback>{c.profile.display_name?.[0] ?? "?"}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="font-medium text-sm sm:text-base truncate">{c.profile.display_name}</span>
+                        {c.profile.verified && <BadgeCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-info shrink-0" />}
+                      </div>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{c.lastMessageAt}</span>
                     </div>
-                    <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{c.lastMessageAt}</span>
+                    <p className={`text-xs sm:text-sm line-clamp-1 ${c.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                      {c.lastMessage ?? "Say hello! 👋"}
+                    </p>
                   </div>
-                  <p className={`text-xs sm:text-sm line-clamp-1 ${c.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                    {c.lastMessage ?? "Say hello! 👋"}
-                  </p>
-                </div>
-                {c.unread > 0 && (
-                  <Badge className="gradient-warm border-0 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full flex items-center justify-center p-0 shrink-0">
-                    {c.unread}
-                  </Badge>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+                  {c.unread > 0 && (
+                    <Badge className="gradient-warm border-0 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full flex items-center justify-center p-0 shrink-0">
+                      {c.unread}
+                    </Badge>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </PullToRefresh>
     </AppLayout>
   );
 }
