@@ -24,6 +24,7 @@ interface ProfileDetailProps {
     state: string;
     verified: boolean;
     gender: string;
+    likesCount?: number;
   } | null;
 }
 
