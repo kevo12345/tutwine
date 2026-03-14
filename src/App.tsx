@@ -21,6 +21,7 @@ import PricingPage from "./pages/PricingPage";
 import AdminPage from "./pages/AdminPage";
 import SupportPage from "./pages/SupportPage";
 import LikesPage from "./pages/LikesPage";
+import InstallPage from "./pages/InstallPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
