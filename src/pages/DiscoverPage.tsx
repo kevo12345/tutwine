@@ -280,7 +280,7 @@ export default function DiscoverPage() {
                   handleSwipe("like");
                 }
               }}>
-                <Star className="h-7 w-7" />
+                <Star className="h-6 w-6 sm:h-7 sm:w-7" />
               </Button>
             </div>
           </>
