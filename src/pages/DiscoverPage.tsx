@@ -214,15 +214,29 @@ export default function DiscoverPage() {
           ) : (
             <>
               <div className="relative mx-auto aspect-[3/4] w-full max-w-sm">
-                {nextEffectiveIndex >= 0 && profiles[nextEffectiveIndex] && (
-                  <div className="absolute inset-0 scale-[0.95] opacity-50">
-                    <ProfileCard profile={{
-                      ...profileForCard!,
-                      id: profiles[nextEffectiveIndex].user_id,
-                      displayName: profiles[nextEffectiveIndex].display_name ?? "",
-                    }} />
-                  </div>
-                )}
+                {nextEffectiveIndex >= 0 && profiles[nextEffectiveIndex] && (() => {
+                  const nextP = profiles[nextEffectiveIndex];
+                  return (
+                    <div className="absolute inset-0 scale-[0.95] opacity-50">
+                      <ProfileCard profile={{
+                        id: nextP.user_id,
+                        displayName: nextP.display_name ?? "",
+                        age: nextP.date_of_birth
+                          ? Math.floor((Date.now() - new Date(nextP.date_of_birth).getTime()) / 31557600000)
+                          : 0,
+                        gender: nextP.gender ?? "other",
+                        bio: nextP.bio ?? "",
+                        interests: nextP.interests ?? [],
+                        photos: (nextP.photos?.length ? nextP.photos : ["https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop"]) as string[],
+                        distance: null,
+                        city: nextP.city ?? "",
+                        state: nextP.state ?? "",
+                        verified: nextP.verified ?? false,
+                        tier: profileTiers[nextP.user_id] ?? "free",
+                      }} />
+                    </div>
+                  );
+                })()}
 
                 <AnimatePresence mode="wait">
                   {profileForCard && (
