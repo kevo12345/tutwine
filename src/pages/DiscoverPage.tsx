@@ -243,8 +243,8 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                <AnimatePresence mode="wait">
-                  {profileForCard && (
+                <AnimatePresence>
+                  {profileForCard && !direction && (
                     <motion.div
                       key={currentProfile.user_id}
                       style={{ x, rotate }}
@@ -259,9 +259,9 @@ export default function DiscoverPage() {
                         else x.set(0);
                       }}
                       initial={{ scale: 0.95, opacity: 0 }}
-                      animate={direction === "right" ? { x: 500, rotate: 20, opacity: 0 } : direction === "left" ? { x: -500, rotate: -20, opacity: 0 } : { scale: 1, opacity: 1 }}
+                      animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
                       className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none select-none will-change-transform"
                       whileTap={{ scale: 0.98 }}
                     >
