@@ -73,6 +73,9 @@ export default function LikesPage() {
     if (!user || likingBack) return;
     setLikingBack(liker.user_id);
 
+    // Delete any existing swipe (e.g. a previous "pass") so INSERT trigger fires for match
+    await supabase.from("swipes").delete().eq("swiper_id", user.id).eq("target_id", liker.user_id);
+
     const { error } = await supabase.from("swipes").insert({
       swiper_id: user.id,
       target_id: liker.user_id,
@@ -85,7 +88,7 @@ export default function LikesPage() {
       return;
     }
 
-    // Check for match (the trigger should have created one)
+    // The check_mutual_like trigger should have created the match
     const { data: match } = await supabase
       .from("matches")
       .select("id")
