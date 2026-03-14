@@ -127,7 +127,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
               onClick={async () => {
-                const { error } = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
+                const { error } = await signInWithProvider("apple");
                 if (error) toast.error(error.message);
               }}
             >
