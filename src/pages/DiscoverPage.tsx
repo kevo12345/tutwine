@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { ProfileCard } from "@/components/ProfileCard";
+import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
 import { Button } from "@/components/ui/button";
 import { Heart, X, Star, SlidersHorizontal, Loader2 } from "lucide-react";
@@ -27,7 +28,7 @@ export default function DiscoverPage() {
   const [matchName, setMatchName] = useState("");
   const [matchId, setMatchId] = useState("");
   const [loading, setLoading] = useState(true);
-
+  const [viewProfile, setViewProfile] = useState(false);
   const effectiveIndex = profiles.length > 0 ? currentIndex % profiles.length : 0;
   const currentProfile = profiles.length > 0 ? profiles[effectiveIndex] : undefined;
   const x = useMotionValue(0);
@@ -209,7 +210,9 @@ export default function DiscoverPage() {
                     transition={{ duration: 0.3 }}
                     className="absolute inset-0 cursor-grab active:cursor-grabbing"
                   >
-                    <ProfileCard profile={profileForCard} />
+                    <div onClick={() => setViewProfile(true)}>
+                      <ProfileCard profile={profileForCard} />
+                    </div>
                     <motion.div style={{ opacity: likeOpacity }} className="absolute left-4 top-6 rounded-lg border-4 border-success px-4 py-1 text-2xl font-bold text-success -rotate-12">
                       LIKE
                     </motion.div>
@@ -250,6 +253,12 @@ export default function DiscoverPage() {
         matchName={matchName}
         onSendMessage={() => { setShowMatch(false); navigate(`/chat/${matchId}`); }}
         onKeepSwiping={() => setShowMatch(false)}
+      />
+
+      <ProfileDetailSheet
+        open={viewProfile}
+        onClose={() => setViewProfile(false)}
+        profile={profileForCard}
       />
     </AppLayout>
   );
