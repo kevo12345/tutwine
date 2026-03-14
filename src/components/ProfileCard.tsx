@@ -6,6 +6,7 @@ interface ProfileCardProps {
   profile: MockProfile;
   style?: React.CSSProperties;
   className?: string;
+  onTap?: () => void;
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; label: string; className: string }> = {
