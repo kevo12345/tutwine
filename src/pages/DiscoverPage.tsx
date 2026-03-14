@@ -56,9 +56,14 @@ export default function DiscoverPage() {
         .eq("onboarding_complete", true)
         .eq("suspended", false)
         .not("user_id", "in", `(${excludeIds.join(",")})`)
+        .not("display_name", "is", null)
         .limit(50);
 
-      setProfiles(data ?? []);
+      // Filter out profiles with no photos
+      const validProfiles = (data ?? []).filter(
+        (p) => p.photos && p.photos.length > 0 && p.display_name
+      );
+      setProfiles(validProfiles);
       setLoading(false);
     };
     fetchProfiles();

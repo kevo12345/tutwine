@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Tables } from "@/integrations/supabase/types";
 import VideoCall from "@/components/VideoCall";
 
@@ -17,6 +18,7 @@ export default function ChatThreadPage() {
   const navigate = useNavigate();
   const { matchId } = useParams();
   const { user } = useAuth();
+  const { tier } = useSubscription();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [otherProfile, setOtherProfile] = useState<Tables<"profiles"> | null>(null);
@@ -115,6 +117,11 @@ export default function ChatThreadPage() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (tier === "free") {
+    navigate("/chat");
+    return null;
   }
 
   return (

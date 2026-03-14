@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { BadgeCheck, Loader2, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BadgeCheck, Loader2, Lock, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Tables } from "@/integrations/supabase/types";
 
 interface ChatItem {
@@ -19,8 +21,10 @@ interface ChatItem {
 export default function ChatListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tier } = useSubscription();
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const isFree = tier === "free";
 
   useEffect(() => {
     if (!user) return;
@@ -73,6 +77,23 @@ export default function ChatListPage() {
       <AppLayout>
         <div className="flex h-[60vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (isFree) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+          <Lock className="h-16 w-16 text-muted-foreground/30" />
+          <h2 className="mt-4 font-display text-xl font-bold">Chat is a premium feature</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Upgrade your plan to start chatting with your matches.
+          </p>
+          <Button className="mt-6 gradient-warm border-0 text-primary-foreground" onClick={() => navigate("/pricing")}>
+            Upgrade Now
+          </Button>
         </div>
       </AppLayout>
     );
