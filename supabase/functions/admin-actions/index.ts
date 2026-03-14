@@ -30,6 +30,20 @@ serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    const body = await req.json();
+    const { action, targetUserId, reason, reportId, email, password, displayName, role } = body;
+
+    // Allow self-deletion without admin role
+    if (action === "delete_own_account") {
+      const { error: selfDeleteError } = await adminClient.auth.admin.deleteUser(caller.id);
+      if (selfDeleteError) throw selfDeleteError;
+      return new Response(JSON.stringify({ success: true, message: "Account deleted" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // All other actions require admin role
     const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
@@ -43,9 +57,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const body = await req.json();
-    const { action, targetUserId, reason, reportId, email, password, displayName, role } = body;
 
     let result: any = { success: true };
 
