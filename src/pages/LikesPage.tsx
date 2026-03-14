@@ -73,6 +73,7 @@ export default function LikesPage() {
     if (!user || likingBack) return;
     setLikingBack(liker.user_id);
 
+    // Use upsert to handle cases where a swipe already exists (e.g. previously passed)
     const { error } = await supabase.from("swipes").upsert({
       swiper_id: user.id,
       target_id: liker.user_id,
@@ -85,19 +86,33 @@ export default function LikesPage() {
       return;
     }
 
-    // Check for match (the trigger should have created one)
-    const { data: match } = await supabase
+    // Check if match already exists (trigger creates on INSERT, not UPDATE)
+    const { data: existingMatch } = await supabase
       .from("matches")
       .select("id")
       .or(`and(user_a.eq.${user.id},user_b.eq.${liker.user_id}),and(user_a.eq.${liker.user_id},user_b.eq.${user.id})`)
       .maybeSingle();
 
-    if (match) {
+    if (existingMatch) {
       setMatchName(liker.display_name ?? "Someone");
-      setMatchId(match.id);
+      setMatchId(existingMatch.id);
       setShowMatch(true);
     } else {
-      toast.success("💕 Liked back!");
+      // Mutual like exists but no match yet — create it
+      const userA = user.id < liker.user_id ? user.id : liker.user_id;
+      const userB = user.id < liker.user_id ? liker.user_id : user.id;
+      const { data: newMatch } = await supabase
+        .from("matches")
+        .insert({ user_a: userA, user_b: userB })
+        .select("id")
+        .single();
+      if (newMatch) {
+        setMatchName(liker.display_name ?? "Someone");
+        setMatchId(newMatch.id);
+        setShowMatch(true);
+      } else {
+        toast.success("💕 Liked back!");
+      }
     }
 
     queryClient.invalidateQueries({ queryKey: ["who-liked-me"] });
