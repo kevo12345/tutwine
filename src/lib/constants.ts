@@ -1,7 +1,7 @@
 export const TIER_LIMITS = {
-  free: { profileViews: 20, likes: 10, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: false },
-  basic: { profileViews: 100, likes: 50, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: true },
-  plus: { profileViews: Infinity, likes: 200, boosts: 1, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: true, adFree: true },
+  free: { profileViews: Infinity, likes: Infinity, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: false },
+  basic: { profileViews: Infinity, likes: Infinity, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: true },
+  plus: { profileViews: Infinity, likes: Infinity, boosts: 1, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: true, adFree: true },
   pro: { profileViews: Infinity, likes: Infinity, boosts: 7, seeWhoLiked: true, superLike: true, undoSwipe: true, readReceipts: true, videoChat: true, priorityDiscovery: true, advancedFilters: true, adFree: true },
 } as const;
 
