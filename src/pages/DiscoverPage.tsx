@@ -193,6 +193,7 @@ export default function DiscoverPage() {
 
   return (
     <AppLayout>
+      <div className="relative flex-1 h-full" style={{ minHeight: 0 }}>
       <div className="absolute inset-0 flex flex-col overflow-hidden overscroll-none" style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}>
         <div className="px-3 pt-3 sm:px-4 sm:pt-4 shrink-0">
           <div className="mb-3 flex items-center justify-between">
