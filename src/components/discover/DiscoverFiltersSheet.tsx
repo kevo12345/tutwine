@@ -48,6 +48,7 @@ export function DiscoverFiltersSheet({
   open,
   onOpenChange,
   filters,
+  matchCount,
   onChange,
   onReset,
 }: DiscoverFiltersSheetProps) {
