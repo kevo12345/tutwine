@@ -179,8 +179,12 @@ export function DiscoverFiltersSheet({
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={minAgeInput}
+                onFocus={() => setIsMinAgeFocused(true)}
                 onChange={(event) => handleMinAgeChange(event.target.value)}
-                onBlur={(event) => commitMinAge(event.target.value)}
+                onBlur={(event) => {
+                  setIsMinAgeFocused(false);
+                  commitMinAge(event.target.value);
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -192,8 +196,12 @@ export function DiscoverFiltersSheet({
                 pattern="[0-9]*"
                 placeholder="Any age"
                 value={maxAgeInput}
+                onFocus={() => setIsMaxAgeFocused(true)}
                 onChange={(event) => handleMaxAgeChange(event.target.value)}
-                onBlur={(event) => commitMaxAge(event.target.value)}
+                onBlur={(event) => {
+                  setIsMaxAgeFocused(false);
+                  commitMaxAge(event.target.value);
+                }}
               />
               <p className="text-xs text-muted-foreground">Leave blank to search {filters.minAge}+.</p>
             </div>
