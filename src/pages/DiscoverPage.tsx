@@ -56,7 +56,7 @@ export default function DiscoverPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [filters, setFilters] = useState<DiscoverFilters>(DEFAULT_FILTERS);
-  const isSwiping = useRef(false);
+  const pendingSwipeIdsRef = useRef<Set<string>>(new Set());
   const activePointerId = useRef<number | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
@@ -213,76 +213,87 @@ export default function DiscoverPage() {
   const noMoreProfiles = filteredProfiles.length === 0;
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
-    if (!currentProfile || !user || isSwiping.current) return;
+    if (!currentProfile || !user) return;
 
-    isSwiping.current = true;
     const swipedProfile = currentProfile;
+
+    if (pendingSwipeIdsRef.current.has(swipedProfile.user_id)) {
+      return;
+    }
+
+    pendingSwipeIdsRef.current.add(swipedProfile.user_id);
+    activePointerId.current = null;
+    hasDraggedRef.current = false;
+    suppressTapRef.current = true;
     setDragOffsetX(0);
     setProfiles((current) => current.filter((profile) => profile.user_id !== swipedProfile.user_id));
     setCurrentIndex(0);
 
-    window.setTimeout(() => {
-      isSwiping.current = false;
-    }, 250);
+    try {
+      const { error: deleteError } = await supabase
+        .from("swipes")
+        .delete()
+        .eq("swiper_id", user.id)
+        .eq("target_id", swipedProfile.user_id);
 
-    const { error: deleteError } = await supabase
-      .from("swipes")
-      .delete()
-      .eq("swiper_id", user.id)
-      .eq("target_id", swipedProfile.user_id);
+      if (deleteError) {
+        console.error(deleteError);
+      }
 
-    if (deleteError) {
-      console.error(deleteError);
-    }
+      const { error: insertError } = await supabase.from("swipes").insert({
+        swiper_id: user.id,
+        target_id: swipedProfile.user_id,
+        action,
+      });
 
-    const { error: insertError } = await supabase.from("swipes").insert({
-      swiper_id: user.id,
-      target_id: swipedProfile.user_id,
-      action,
-    });
+      if (insertError) {
+        console.error(insertError);
+        return;
+      }
 
-    if (insertError) {
-      console.error(insertError);
-      return;
-    }
+      if (action !== "like") return;
 
-    if (action !== "like") return;
+      const { data: reciprocalSwipe, error: reciprocalError } = await supabase
+        .from("swipes")
+        .select("id")
+        .eq("swiper_id", swipedProfile.user_id)
+        .eq("target_id", user.id)
+        .eq("action", "like")
+        .maybeSingle();
 
-    const { data: reciprocalSwipe, error: reciprocalError } = await supabase
-      .from("swipes")
-      .select("id")
-      .eq("swiper_id", swipedProfile.user_id)
-      .eq("target_id", user.id)
-      .eq("action", "like")
-      .maybeSingle();
+      if (reciprocalError) {
+        console.error(reciprocalError);
+        return;
+      }
 
-    if (reciprocalError) {
-      console.error(reciprocalError);
-      return;
-    }
+      if (!reciprocalSwipe) return;
 
-    if (!reciprocalSwipe) return;
+      const { data: match, error: matchError } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
+        .maybeSingle();
 
-    const { data: match, error: matchError } = await supabase
-      .from("matches")
-      .select("id")
-      .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
-      .maybeSingle();
+      if (matchError) {
+        console.error(matchError);
+        return;
+      }
 
-    if (matchError) {
-      console.error(matchError);
-      return;
-    }
-
-    if (match) {
-      setMatchName(swipedProfile.display_name ?? "Someone");
-      setMatchId(match.id);
-      setShowMatch(true);
+      if (match) {
+        setMatchName(swipedProfile.display_name ?? "Someone");
+        setMatchId(match.id);
+        setShowMatch(true);
+      }
+    } finally {
+      pendingSwipeIdsRef.current.delete(swipedProfile.user_id);
+      window.setTimeout(() => {
+        suppressTapRef.current = false;
+      }, 50);
     }
   }, [currentProfile, user]);
 
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (!currentProfile || isSwiping.current) return;
+    if (!currentProfile || pendingSwipeIdsRef.current.has(currentProfile.user_id)) return;
     activePointerId.current = event.pointerId;
     startXRef.current = event.clientX;
     startYRef.current = event.clientY;
