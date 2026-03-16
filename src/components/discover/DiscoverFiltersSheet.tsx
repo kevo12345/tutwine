@@ -30,6 +30,7 @@ interface DiscoverFiltersSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: DiscoverFilters;
+  matchCount: number;
   onChange: (filters: DiscoverFilters) => void;
   onReset: () => void;
 }
@@ -47,6 +48,7 @@ export function DiscoverFiltersSheet({
   open,
   onOpenChange,
   filters,
+  matchCount,
   onChange,
   onReset,
 }: DiscoverFiltersSheetProps) {
@@ -229,13 +231,18 @@ export function DiscoverFiltersSheet({
           </div>
         </div>
 
-        <SheetFooter className="mt-8 gap-2">
-          <Button variant="outline" onClick={onReset}>
-            Reset
-          </Button>
-          <Button className="gradient-warm border-0 text-primary-foreground" onClick={() => onOpenChange(false)}>
-            Show matches
-          </Button>
+        <SheetFooter className="mt-8 gap-3">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{matchCount}</span> {matchCount === 1 ? "profile matches" : "profiles match"}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onReset}>
+              Reset
+            </Button>
+            <Button className="gradient-warm border-0 text-primary-foreground" onClick={() => onOpenChange(false)}>
+              Show matches
+            </Button>
+          </div>
         </SheetFooter>
       </SheetContent>
     </Sheet>
