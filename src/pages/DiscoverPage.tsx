@@ -190,7 +190,7 @@ export default function DiscoverPage() {
     activePointerId.current = null;
     hasDraggedRef.current = false;
     suppressTapRef.current = false;
-  }, [currentProfile?.user_id]);
+  }, [currentIndex, filteredProfiles.length]);
 
   const effectiveIndex = filteredProfiles.length > 0 ? currentIndex % filteredProfiles.length : 0;
   const currentProfile = filteredProfiles.length > 0 ? filteredProfiles[effectiveIndex] : undefined;
