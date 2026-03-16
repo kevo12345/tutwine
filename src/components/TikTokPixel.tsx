@@ -28,8 +28,11 @@ type TikTokMethod =
 
 type TikTokQueuedCall = [TikTokMethod, ...unknown[]];
 
+type TikTokDeferredMethod = (...args: unknown[]) => void;
+
 type TikTokPixelInstance = TikTokQueuedCall[] & {
   push: (...items: TikTokQueuedCall[]) => number;
+} & Partial<Record<TikTokMethod, TikTokDeferredMethod>> & {
   [key: string]: unknown;
 };
 
@@ -38,7 +41,6 @@ type TikTokPixelQueue = TikTokPixelInstance & {
   setAndDefer?: (target: TikTokPixelInstance, method: TikTokMethod) => void;
   instance?: (id: string) => TikTokPixelInstance;
   load?: (id: string, options?: Record<string, unknown>) => void;
-  page?: () => void;
   _i?: Record<string, TikTokPixelInstance>;
   _t?: Record<string, number>;
   _o?: Record<string, Record<string, unknown>>;
