@@ -162,10 +162,9 @@ export function DiscoverFiltersSheet({
               <Label htmlFor="discover-min-age">Minimum age</Label>
               <Input
                 id="discover-min-age"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={18}
-                max={MAX_AGE_LIMIT}
+                pattern="[0-9]*"
                 value={minAgeInput}
                 onChange={(event) => handleMinAgeChange(event.target.value)}
                 onBlur={(event) => commitMinAge(event.target.value)}
@@ -175,10 +174,9 @@ export function DiscoverFiltersSheet({
               <Label htmlFor="discover-max-age">Maximum age</Label>
               <Input
                 id="discover-max-age"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={18}
-                max={MAX_AGE_LIMIT}
+                pattern="[0-9]*"
                 placeholder="Any age"
                 value={maxAgeInput}
                 onChange={(event) => handleMaxAgeChange(event.target.value)}
