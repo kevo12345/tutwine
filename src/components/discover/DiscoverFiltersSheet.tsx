@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,8 @@ const genderValueMap = {
   Other: "other",
 } as const;
 
+const MAX_AGE_LIMIT = 80;
+
 export function DiscoverFiltersSheet({
   open,
   onOpenChange,
@@ -47,8 +50,48 @@ export function DiscoverFiltersSheet({
   onChange,
   onReset,
 }: DiscoverFiltersSheetProps) {
+  const [minAgeInput, setMinAgeInput] = useState(String(filters.minAge));
+  const [maxAgeInput, setMaxAgeInput] = useState(filters.maxAge?.toString() ?? "");
+
+  useEffect(() => {
+    setMinAgeInput(String(filters.minAge));
+    setMaxAgeInput(filters.maxAge?.toString() ?? "");
+  }, [filters.minAge, filters.maxAge, open]);
+
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
     onChange({ ...filters, [key]: value });
+  };
+
+  const commitMinAge = (rawValue: string) => {
+    const parsed = Number(rawValue);
+    const nextMinAge = Number.isNaN(parsed) ? 18 : Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
+    setMinAgeInput(String(nextMinAge));
+
+    if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
+      onChange({ ...filters, minAge: nextMinAge, maxAge: nextMinAge });
+      setMaxAgeInput(String(nextMinAge));
+      return;
+    }
+
+    updateFilter("minAge", nextMinAge);
+  };
+
+  const commitMaxAge = (rawValue: string) => {
+    const trimmedValue = rawValue.trim();
+
+    if (!trimmedValue) {
+      setMaxAgeInput("");
+      updateFilter("maxAge", null);
+      return;
+    }
+
+    const parsed = Number(trimmedValue);
+    const nextMaxAge = Number.isNaN(parsed)
+      ? filters.minAge
+      : Math.max(filters.minAge, Math.min(parsed, MAX_AGE_LIMIT));
+
+    setMaxAgeInput(String(nextMaxAge));
+    updateFilter("maxAge", nextMaxAge);
   };
 
   return (
@@ -90,17 +133,10 @@ export function DiscoverFiltersSheet({
                 type="number"
                 inputMode="numeric"
                 min={18}
-                max={80}
-                value={filters.minAge}
-                onChange={(event) => {
-                  const nextValue = Number(event.target.value || 18);
-                  const nextMinAge = Math.max(18, Math.min(nextValue, 80));
-                  updateFilter("minAge", nextMinAge);
-
-                  if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
-                    updateFilter("maxAge", nextMinAge);
-                  }
-                }}
+                max={MAX_AGE_LIMIT}
+                value={minAgeInput}
+                onChange={(event) => setMinAgeInput(event.target.value)}
+                onBlur={(event) => commitMinAge(event.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -110,19 +146,11 @@ export function DiscoverFiltersSheet({
                 type="number"
                 inputMode="numeric"
                 min={18}
-                max={80}
+                max={MAX_AGE_LIMIT}
                 placeholder="Any age"
-                value={filters.maxAge ?? ""}
-                onChange={(event) => {
-                  const rawValue = event.target.value.trim();
-                  if (!rawValue) {
-                    updateFilter("maxAge", null);
-                    return;
-                  }
-
-                  const nextValue = Number(rawValue);
-                  updateFilter("maxAge", Math.min(80, Math.max(nextValue, filters.minAge)));
-                }}
+                value={maxAgeInput}
+                onChange={(event) => setMaxAgeInput(event.target.value)}
+                onBlur={(event) => commitMaxAge(event.target.value)}
               />
               <p className="text-xs text-muted-foreground">Leave blank to search {filters.minAge}+.</p>
             </div>
