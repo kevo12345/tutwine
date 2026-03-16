@@ -17,6 +17,7 @@ type AudienceConfig = {
   badge: string;
   headline: string;
   subheadline: string;
+  emotionalNote: string;
   cta: string;
   heroImage: string;
   heroAlt: string;
@@ -27,58 +28,62 @@ type AudienceConfig = {
 const audienceConfig: Record<AudienceKey, AudienceConfig> = {
   "serious-dating": {
     badge: "Built for real relationships",
-    headline: "Meet people who are actually ready for something serious.",
-    subheadline: "Skip the endless chatting and connect with verified singles who want commitment, chemistry, and genuine conversation.",
-    cta: "Start Meeting Serious Singles",
+    headline: "Meet someone who feels easy to talk to — and worth showing up for.",
+    subheadline: "Tutwine helps you connect with real people who want something genuine, warm, and lasting — not just another empty chat.",
+    emotionalNote: "Because the best connections start with honesty, comfort, and a little spark.",
+    cta: "Start Something Real",
     heroImage: seriousDatingHero,
     heroAlt: "Elegant couple enjoying a romantic candlelit dinner",
-    proof: ["Verified profiles", "Photo-first matching", "Fast signup"],
+    proof: ["Verified profiles", "Warm first impressions", "Fast signup"],
     highlights: [
-      { icon: Heart, title: "Intentional matches", description: "Profile prompts and compatibility signals help you meet people looking for the same thing." },
-      { icon: Shield, title: "Safer dating", description: "Age-gated signup, profile reporting, and privacy-first location settings reduce noise and risk." },
-      { icon: Sparkles, title: "Designed to convert", description: "Clear onboarding and fewer distractions make it easier to register and start discovering." },
+      { icon: Heart, title: "More human matches", description: "Profiles are shaped to feel personal, so every conversation starts with more depth and less guesswork." },
+      { icon: Shield, title: "Safer from the first hello", description: "Privacy tools and clear reporting help people feel more comfortable opening up." },
+      { icon: Sparkles, title: "Built for genuine chemistry", description: "A softer, more intentional flow helps people join with the right expectations." },
     ],
   },
   "young-professionals": {
     badge: "For ambitious, social adults",
-    headline: "Find your person between meetings, workouts, and weekend plans.",
-    subheadline: "A clean, fast dating experience for busy professionals who want quality matches without wasting time.",
-    cta: "Join Busy Professionals",
+    headline: "Find someone who fits your rhythm — and feels good to come home to.",
+    subheadline: "For busy people who still want real connection, Tutwine makes it easier to meet someone genuine without wasting energy.",
+    emotionalNote: "A modern dating experience that feels effortless, warm, and worth your time.",
+    cta: "Meet Someone Genuine",
     heroImage: youngProfessionalsHero,
     heroAlt: "Stylish professionals meeting on a rooftop at sunset",
-    proof: ["Quick onboarding", "Nearby discovery", "Conversation-first"],
+    proof: ["Quick onboarding", "Quality matches", "Real conversations"],
     highlights: [
-      { icon: Briefcase, title: "Time-saving signup", description: "Get from ad click to account creation in minutes with a simple registration flow." },
-      { icon: Users, title: "Higher-quality pool", description: "Audience-matched landing copy helps attract the kind of members your campaign is targeting." },
-      { icon: Heart, title: "Better first matches", description: "Strong profile guidance helps new users look more complete from day one." },
+      { icon: Briefcase, title: "Simple to start", description: "A cleaner path from ad click to signup keeps the experience calm, polished, and inviting." },
+      { icon: Users, title: "People you can picture yourself with", description: "Audience-matched messaging helps attract users who feel aligned with your lifestyle." },
+      { icon: Heart, title: "Less noise, more connection", description: "The page focuses on warmth and clarity instead of hype, so the experience feels more real." },
     ],
   },
   "new-in-town": {
     badge: "Perfect for fresh starts",
-    headline: "New city, new energy, new people worth meeting.",
-    subheadline: "Whether you just moved or want a new circle, Tutwine helps you meet nearby people faster without awkward guesswork.",
+    headline: "New place, new energy, and new people who can make it feel like home.",
+    subheadline: "Whether you just moved or simply want a new chapter, Tutwine helps you meet nearby people in a way that feels natural and welcoming.",
+    emotionalNote: "Sometimes one good conversation is all it takes to make a city feel smaller.",
     cta: "Meet People Nearby",
     heroImage: newInTownHero,
     heroAlt: "Two people meeting for coffee in a lively city neighborhood",
-    proof: ["Local discovery", "Real profiles", "Instant chat after match"],
+    proof: ["Local discovery", "Friendly first matches", "Instant chat"],
     highlights: [
-      { icon: Users, title: "Built for local connection", description: "Distance-based discovery makes it easy to meet people in your area right away." },
-      { icon: Sparkles, title: "Warm first impression", description: "Landing page messaging matches relocation and fresh-start campaigns for stronger relevance." },
-      { icon: Shield, title: "Private by default", description: "Approximate location controls help users feel safe while exploring a new environment." },
+      { icon: Users, title: "A warmer first step", description: "The experience feels less like swiping strangers and more like meeting people already close to your world." },
+      { icon: Sparkles, title: "Built for fresh beginnings", description: "The page speaks to curiosity, comfort, and possibility — not pressure." },
+      { icon: Shield, title: "Private while you explore", description: "Location privacy gives people confidence while they settle in and connect." },
     ],
   },
   "single-parents": {
     badge: "Dating that respects your life",
-    headline: "Meaningful connections for single parents who value maturity and intention.",
-    subheadline: "No games, no endless swiping — just a more thoughtful way to meet people who appreciate your pace and priorities.",
-    cta: "Start with Intention",
+    headline: "Meet someone who understands your pace, your priorities, and your heart.",
+    subheadline: "Tutwine creates a calmer, more intentional dating experience for people who want something genuine without the pressure or games.",
+    emotionalNote: "Real connection can still feel light, hopeful, and beautifully simple.",
+    cta: "Begin with Intention",
     heroImage: singleParentsHero,
     heroAlt: "Mature couple sharing coffee in a calm welcoming cafe",
-    proof: ["Respectful community", "Fast registration", "Clear intentions"],
+    proof: ["Respectful community", "Gentle signup", "Clear intentions"],
     highlights: [
-      { icon: Heart, title: "More intentional dating", description: "Speak to users looking for emotional maturity and genuine connection from the first click." },
-      { icon: Shield, title: "Trust-focused experience", description: "Verification and reporting tools support a safer, calmer dating environment." },
-      { icon: Users, title: "Audience-fit campaigns", description: "Dedicated copy and CTA improve relevance for parent-focused ads and social campaigns." },
+      { icon: Heart, title: "Emotionally grounded", description: "The tone is softer and more reassuring, making the experience feel respectful from the first click." },
+      { icon: Shield, title: "Trust you can feel", description: "Safety and clarity stay visible without making the page feel cold or clinical." },
+      { icon: Users, title: "Made for real life", description: "Everything is framed around connection, maturity, and feeling understood." },
     ],
   },
 };
@@ -102,9 +107,9 @@ export default function AdLandingPage() {
       <section className="relative isolate overflow-hidden">
         <div className="absolute inset-0">
           <img src={config.heroImage} alt={config.heroAlt} className="h-full w-full object-cover object-center" />
-          <div className="absolute inset-0 bg-foreground/45" />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/55 via-foreground/30 to-foreground/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/15 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-foreground/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/50 via-foreground/18 to-foreground/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/18 via-transparent to-transparent" />
         </div>
 
         <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-4 py-10 lg:px-8">
@@ -116,16 +121,19 @@ export default function AdLandingPage() {
             <Button variant="outline" className="border-primary-foreground/30 bg-card/15 text-primary-foreground hover:bg-card/25" onClick={() => navigate("/login")}>Log in</Button>
           </div>
 
-          <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="max-w-3xl rounded-[2rem] border border-primary-foreground/10 bg-card/10 p-6 backdrop-blur-[2px] sm:p-8">
+          <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="max-w-3xl rounded-[2rem] border border-primary-foreground/15 bg-card/8 p-6 backdrop-blur-[3px] sm:p-8">
               <Badge className="mb-5 border-0 gradient-warm px-4 py-1.5 text-sm text-primary-foreground">
                 {config.badge}
               </Badge>
               <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-primary-foreground sm:text-6xl">
                 {config.headline}
               </h1>
-              <p className="mt-5 max-w-2xl text-lg text-primary-foreground/85 sm:text-xl">
+              <p className="mt-5 max-w-2xl text-lg text-primary-foreground/90 sm:text-xl">
                 {config.subheadline}
+              </p>
+              <p className="mt-4 max-w-xl text-base italic text-primary-foreground/80 sm:text-lg">
+                {config.emotionalNote}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -146,9 +154,12 @@ export default function AdLandingPage() {
               </div>
             </div>
 
-            <Card className="border-border/30 bg-card/78 shadow-card backdrop-blur-md">
+            <Card className="border-border/25 bg-card/72 shadow-card backdrop-blur-md">
               <CardContent className="p-6 sm:p-8">
-                <p className="mb-6 text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Why this page converts</p>
+                <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Why it feels right</p>
+                <p className="mb-6 max-w-md text-sm leading-6 text-muted-foreground">
+                  A warmer first impression helps people trust the app faster and imagine themselves inside it.
+                </p>
                 <div className="space-y-5">
                   {config.highlights.map((item) => (
                     <div key={item.title} className="flex gap-4">
@@ -162,11 +173,11 @@ export default function AdLandingPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-8 rounded-3xl bg-secondary p-5">
+                <div className="mt-8 rounded-3xl bg-secondary/90 p-5">
                   <p className="text-sm text-secondary-foreground">
                     <strong className="text-foreground">Campaign tip:</strong> send each ad set to its own URL like
                     <span className="mx-1 font-medium text-foreground">/welcome/{config.key}</span>
-                    so the headline, promise, and CTA match the creative.
+                    so the story, image, and CTA feel consistent from ad to signup.
                   </p>
                 </div>
               </CardContent>
