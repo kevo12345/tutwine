@@ -12,6 +12,7 @@ import { MetaPixel } from "@/components/MetaPixel";
 import { Loader2 } from "lucide-react";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const AdLandingPage = lazy(() => import("./pages/AdLandingPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
