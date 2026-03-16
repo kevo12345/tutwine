@@ -167,7 +167,7 @@ export function DiscoverFiltersSheet({
                 min={18}
                 max={MAX_AGE_LIMIT}
                 value={minAgeInput}
-                onChange={(event) => setMinAgeInput(event.target.value)}
+                onChange={(event) => handleMinAgeChange(event.target.value)}
                 onBlur={(event) => commitMinAge(event.target.value)}
               />
             </div>
@@ -181,7 +181,7 @@ export function DiscoverFiltersSheet({
                 max={MAX_AGE_LIMIT}
                 placeholder="Any age"
                 value={maxAgeInput}
-                onChange={(event) => setMaxAgeInput(event.target.value)}
+                onChange={(event) => handleMaxAgeChange(event.target.value)}
                 onBlur={(event) => commitMaxAge(event.target.value)}
               />
               <p className="text-xs text-muted-foreground">Leave blank to search {filters.minAge}+.</p>
