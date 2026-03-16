@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap, Menu, X } from "lucide-react";
+import { Heart, Shield, MapPin, MessageCircle, Sparkles, Check, ArrowRight, Star, Users, Clock, TrendingUp, Zap, Menu, X, Facebook, Instagram } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { TIER_PRICES } from "@/lib/constants";
@@ -362,16 +362,49 @@ export default function LandingPage() {
 
       {/* Footer with semantic HTML */}
       <footer className="border-t border-border px-4 py-8" role="contentinfo">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-5 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
             <img src="/logo.jpeg" alt="Tutwine" className="h-7 w-7 rounded-lg object-cover" />
             <span className="font-display font-bold">tutwine</span>
           </div>
-          <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground" aria-label="Footer navigation">
-            <a href="/terms" className="hover:text-foreground transition-colors">Terms & Conditions</a>
-            <a href="/faq" className="hover:text-foreground transition-colors">FAQs</a>
-            <a href="/pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          </nav>
+          <div className="flex flex-col items-center gap-4 sm:items-end">
+            <nav className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground sm:gap-6" aria-label="Footer navigation">
+              <a href="/terms" className="transition-colors hover:text-foreground">Terms & Conditions</a>
+              <a href="/faq" className="transition-colors hover:text-foreground">FAQs</a>
+              <a href="/pricing" className="transition-colors hover:text-foreground">Pricing</a>
+            </nav>
+            <nav className="flex items-center gap-3 text-muted-foreground" aria-label="Social links">
+              <a
+                href="https://www.tiktok.com/@tutwine"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit Tutwine on TikTok"
+                className="rounded-full border border-border p-2 transition-colors hover:text-foreground"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+                  <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.227V2h-3.193v12.766c0 1.71-1.372 3.098-3.097 3.098a3.103 3.103 0 0 1-3.097-3.098 3.103 3.103 0 0 1 3.097-3.097c.213 0 .417.023.615.062V8.482a6.33 6.33 0 0 0-.615-.03A6.29 6.29 0 0 0 3.24 14.74 6.29 6.29 0 0 0 9.53 21.03a6.29 6.29 0 0 0 6.29-6.29V8.272a7.95 7.95 0 0 0 4.77 1.587V6.686z" />
+                </svg>
+              </a>
+              <a
+                href="https://www.instagram.com/tu.twine/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit Tutwine on Instagram"
+                className="rounded-full border border-border p-2 transition-colors hover:text-foreground"
+              >
+                <Instagram className="h-4 w-4" />
+              </a>
+              <a
+                href="https://web.facebook.com/tutwine"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Visit Tutwine on Facebook"
+                className="rounded-full border border-border p-2 transition-colors hover:text-foreground"
+              >
+                <Facebook className="h-4 w-4" />
+              </a>
+            </nav>
+          </div>
           <p className="text-sm text-muted-foreground">© 2026 tutwine. All rights reserved.</p>
         </div>
       </footer>
