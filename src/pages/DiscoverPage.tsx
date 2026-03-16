@@ -134,15 +134,6 @@ export default function DiscoverPage() {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  useEffect(() => {
-    if (!myProfile) return;
-    setFilters((current) => ({
-      ...current,
-      minAge: myProfile.preferred_age_min ?? current.minAge,
-      maxAge: myProfile.preferred_age_max ?? current.maxAge,
-      maxDistanceKm: myProfile.preferred_distance_km ?? current.maxDistanceKm,
-    }));
-  }, [myProfile]);
 
   const filteredProfiles = useMemo(() => {
     return profiles.filter((profile) => {
