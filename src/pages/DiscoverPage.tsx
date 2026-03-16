@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
-
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
+import { DiscoverFiltersSheet, type DiscoverFilters } from "@/components/discover/DiscoverFiltersSheet";
 import { Button } from "@/components/ui/button";
 import { Heart, X, Star, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -16,11 +16,33 @@ import { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
 
+const DEFAULT_FILTERS: DiscoverFilters = {
+  gender: "any",
+  minAge: 18,
+  maxAge: 80,
+  maxDistanceKm: 50,
+};
+
+const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop";
+
+const getAge = (dateOfBirth: string | null) => {
+  if (!dateOfBirth) return 0;
+  return Math.floor((Date.now() - new Date(dateOfBirth).getTime()) / 31557600000);
+};
+
+const calcDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+};
+
 export default function DiscoverPage() {
   const navigate = useNavigate();
   const { user, profile: myProfile } = useAuth();
   const { limits } = useSubscription();
-  
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
   const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
@@ -31,23 +53,28 @@ export default function DiscoverPage() {
   const [matchId, setMatchId] = useState("");
   const [loading, setLoading] = useState(true);
   const [viewProfile, setViewProfile] = useState(false);
-  const effectiveIndex = profiles.length > 0 ? currentIndex % profiles.length : 0;
-  const currentProfile = profiles.length > 0 ? profiles[effectiveIndex] : undefined;
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<DiscoverFilters>({
+    ...DEFAULT_FILTERS,
+    maxDistanceKm: myProfile?.preferred_distance_km ?? DEFAULT_FILTERS.maxDistanceKm,
+    minAge: myProfile?.preferred_age_min ?? DEFAULT_FILTERS.minAge,
+    maxAge: myProfile?.preferred_age_max ?? DEFAULT_FILTERS.maxAge,
+  });
   const isSwiping = useRef(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
-
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
+
     const { data: swipedIds } = await supabase
       .from("swipes")
       .select("target_id")
       .eq("swiper_id", user.id);
 
-    const excludeIds = [user.id, ...(swipedIds?.map(s => s.target_id) ?? [])];
+    const excludeIds = [user.id, ...(swipedIds?.map((s) => s.target_id) ?? [])];
 
     let { data } = await supabase
       .from("profiles")
@@ -59,9 +86,7 @@ export default function DiscoverPage() {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    let validProfiles = (data ?? []).filter(
-      (p) => p.photos && p.photos.length > 0 && p.display_name
-    );
+    let validProfiles = (data ?? []).filter((p) => p.photos && p.photos.length > 0 && p.display_name);
 
     if (validProfiles.length === 0) {
       const { data: allData } = await supabase
@@ -74,41 +99,123 @@ export default function DiscoverPage() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      validProfiles = (allData ?? []).filter(
-        (p) => p.photos && p.photos.length > 0 && p.display_name
-      );
+      validProfiles = (allData ?? []).filter((p) => p.photos && p.photos.length > 0 && p.display_name);
     }
 
     setProfiles(validProfiles);
     setCurrentIndex(0);
 
     if (validProfiles.length > 0) {
-      const userIds = validProfiles.map(p => p.user_id);
+      const userIds = validProfiles.map((p) => p.user_id);
       const { data: subs } = await supabase
         .from("subscriptions")
         .select("user_id, tier")
         .in("user_id", userIds)
         .eq("status", "active");
       const tierMap: Record<string, string> = {};
-      subs?.forEach(s => { tierMap[s.user_id] = s.tier; });
+      subs?.forEach((s) => {
+        tierMap[s.user_id] = s.tier;
+      });
       setProfileTiers(tierMap);
 
-      // Fetch like counts for each profile
       const { data: likeCounts } = await supabase
         .from("swipes")
         .select("target_id")
         .in("target_id", userIds)
         .eq("action", "like");
       const likeMap: Record<string, number> = {};
-      likeCounts?.forEach(s => { likeMap[s.target_id] = (likeMap[s.target_id] ?? 0) + 1; });
+      likeCounts?.forEach((s) => {
+        likeMap[s.target_id] = (likeMap[s.target_id] ?? 0) + 1;
+      });
       setProfileLikes(likeMap);
     }
 
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
+  useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
 
+  useEffect(() => {
+    if (!myProfile) return;
+    setFilters((current) => ({
+      ...current,
+      minAge: myProfile.preferred_age_min ?? current.minAge,
+      maxAge: myProfile.preferred_age_max ?? current.maxAge,
+      maxDistanceKm: myProfile.preferred_distance_km ?? current.maxDistanceKm,
+    }));
+  }, [myProfile]);
+
+  const filteredProfiles = useMemo(() => {
+    return profiles.filter((profile) => {
+      const age = getAge(profile.date_of_birth);
+      const matchesGender = filters.gender === "any" || profile.gender === filters.gender;
+      const matchesAge = age >= filters.minAge && age <= filters.maxAge;
+
+      if (!matchesGender || !matchesAge) return false;
+
+      const hasCoordinates =
+        myProfile?.latitude != null &&
+        myProfile?.longitude != null &&
+        profile.latitude != null &&
+        profile.longitude != null;
+
+      if (!hasCoordinates) return true;
+
+      const distance = calcDistanceKm(myProfile.latitude!, myProfile.longitude!, profile.latitude!, profile.longitude!);
+      return distance <= filters.maxDistanceKm;
+    });
+  }, [filters, myProfile, profiles]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [filters]);
+
+  useEffect(() => {
+    if (filteredProfiles.length === 0) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    if (currentIndex >= filteredProfiles.length) {
+      setCurrentIndex(0);
+    }
+  }, [currentIndex, filteredProfiles.length]);
+
+  const effectiveIndex = filteredProfiles.length > 0 ? currentIndex % filteredProfiles.length : 0;
+  const currentProfile = filteredProfiles.length > 0 ? filteredProfiles[effectiveIndex] : undefined;
+  const nextEffectiveIndex = filteredProfiles.length > 1 ? (effectiveIndex + 1) % filteredProfiles.length : -1;
+  const activeFilterCount = [
+    filters.gender !== DEFAULT_FILTERS.gender,
+    filters.minAge !== DEFAULT_FILTERS.minAge || filters.maxAge !== DEFAULT_FILTERS.maxAge,
+    filters.maxDistanceKm !== DEFAULT_FILTERS.maxDistanceKm,
+  ].filter(Boolean).length;
+
+  const toCardProfile = (profile: Profile) => ({
+    id: profile.user_id,
+    displayName: profile.display_name ?? "Unknown",
+    age: getAge(profile.date_of_birth),
+    gender: profile.gender ?? "other",
+    bio: profile.bio ?? "",
+    interests: profile.interests ?? [],
+    photos: (profile.photos?.length ? profile.photos : [FALLBACK_PHOTO]) as string[],
+    distance:
+      myProfile?.latitude != null &&
+      myProfile?.longitude != null &&
+      profile.latitude != null &&
+      profile.longitude != null
+        ? calcDistanceKm(myProfile.latitude, myProfile.longitude, profile.latitude, profile.longitude)
+        : null,
+    city: profile.city ?? "",
+    state: profile.state ?? "",
+    verified: profile.verified ?? false,
+    tier: profileTiers[profile.user_id] ?? "free",
+    likesCount: profileLikes[profile.user_id] ?? 0,
+  });
+
+  const profileForCard = currentProfile ? toCardProfile(currentProfile) : null;
+  const noMoreProfiles = filteredProfiles.length === 0;
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user || isSwiping.current) return;
@@ -119,20 +226,17 @@ export default function DiscoverPage() {
     setDirection(action === "like" ? "right" : "left");
     setCurrentIndex((i) => i + 1);
 
-    // Unlock swiping quickly for rapid taps
     setTimeout(() => {
       isSwiping.current = false;
     }, 250);
 
-    // Fire DB calls in the background (non-blocking)
     supabase.from("swipes").insert({
       swiper_id: user.id,
       target_id: swipedProfile.user_id,
-      action: action,
+      action,
     }).then(({ error }) => {
       if (error) console.error(error);
     });
-
 
     if (action === "like") {
       supabase
@@ -148,7 +252,7 @@ export default function DiscoverPage() {
           }
         });
     }
-  }, [currentProfile, user, navigate, x]);
+  }, [currentProfile, user]);
 
   if (loading) {
     return (
@@ -160,89 +264,60 @@ export default function DiscoverPage() {
     );
   }
 
-  const calcDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-  };
-
-  const profileForCard = currentProfile ? {
-    id: currentProfile.user_id,
-    displayName: currentProfile.display_name ?? "Unknown",
-    age: currentProfile.date_of_birth
-      ? Math.floor((Date.now() - new Date(currentProfile.date_of_birth).getTime()) / 31557600000)
-      : 0,
-    gender: currentProfile.gender ?? "other",
-    bio: currentProfile.bio ?? "",
-    interests: currentProfile.interests ?? [],
-    photos: (currentProfile.photos?.length ? currentProfile.photos : ["https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop"]) as string[],
-    distance: (myProfile?.latitude && myProfile?.longitude && currentProfile.latitude && currentProfile.longitude)
-      ? calcDistanceKm(myProfile.latitude, myProfile.longitude, currentProfile.latitude, currentProfile.longitude)
-      : null,
-    city: currentProfile.city ?? "",
-    state: currentProfile.state ?? "",
-    verified: currentProfile.verified ?? false,
-    tier: profileTiers[currentProfile.user_id] ?? "free",
-    likesCount: profileLikes[currentProfile.user_id] ?? 0,
-  } : null;
-
-  const noMoreProfiles = profiles.length === 0;
-  const nextEffectiveIndex = profiles.length > 1 ? (effectiveIndex + 1) % profiles.length : -1;
-
   return (
     <AppLayout>
-      <div className="flex flex-col overflow-hidden overscroll-none h-full" style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}>
-        <div className="px-3 pt-3 sm:px-4 sm:pt-4 shrink-0">
-          <div className="mb-3 flex items-center justify-between">
-            <h1 className="font-display text-xl sm:text-2xl font-bold">Discover</h1>
-            <div className="flex items-center gap-2">
-              
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
+      <div className="flex h-full flex-col overflow-hidden overscroll-none" style={{ overscrollBehavior: "none", touchAction: "pan-x" }}>
+        <div className="shrink-0 px-3 pt-3 sm:px-4 sm:pt-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h1 className="font-display text-xl font-bold sm:text-2xl">Discover</h1>
+            <Button
+              variant="outline"
+              className="h-9 gap-2 rounded-full px-3"
+              onClick={() => setFiltersOpen(true)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>Filter</span>
+              {activeFilterCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 px-3 sm:px-4 flex flex-col">
+        <div className="flex min-h-0 flex-1 flex-col px-3 sm:px-4">
           {noMoreProfiles ? (
-            <div className="flex flex-col items-center justify-center flex-1 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
               <Heart className="h-16 w-16 text-muted-foreground/30" />
-              <h2 className="mt-4 font-display text-xl font-bold">No profiles yet</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Be the first! Invite your friends to join.</p>
+              <h2 className="mt-4 font-display text-xl font-bold">
+                {profiles.length === 0 ? "No profiles yet" : "No matches for these filters"}
+              </h2>
+              <p className="mt-2 max-w-xs text-sm text-muted-foreground">
+                {profiles.length === 0
+                  ? "Be the first! Invite your friends to join."
+                  : "Try widening your age, gender, or location filters to see more people."}
+              </p>
+              {profiles.length > 0 && (
+                <Button variant="outline" className="mt-4" onClick={() => setFilters(DEFAULT_FILTERS)}>
+                  Reset filters
+                </Button>
+              )}
             </div>
           ) : (
             <>
-              <div className="relative mx-auto w-full max-w-sm md:max-w-md lg:max-w-lg flex-1 min-h-0">
-                {nextEffectiveIndex >= 0 && profiles[nextEffectiveIndex] && (() => {
-                  const nextP = profiles[nextEffectiveIndex];
+              <div className="relative mx-auto flex min-h-0 w-full max-w-sm flex-1 md:max-w-md lg:max-w-lg">
+                {nextEffectiveIndex >= 0 && filteredProfiles[nextEffectiveIndex] && (() => {
+                  const nextProfile = filteredProfiles[nextEffectiveIndex];
                   return (
                     <div className="absolute inset-0 scale-[0.95] opacity-50">
-                      <ProfileCard profile={{
-                        id: nextP.user_id,
-                        displayName: nextP.display_name ?? "",
-                        age: nextP.date_of_birth
-                          ? Math.floor((Date.now() - new Date(nextP.date_of_birth).getTime()) / 31557600000)
-                          : 0,
-                        gender: nextP.gender ?? "other",
-                        bio: nextP.bio ?? "",
-                        interests: nextP.interests ?? [],
-                        photos: (nextP.photos?.length ? nextP.photos : ["https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop"]) as string[],
-                        distance: null,
-                        city: nextP.city ?? "",
-                        state: nextP.state ?? "",
-                        verified: nextP.verified ?? false,
-                        tier: profileTiers[nextP.user_id] ?? "free",
-                        likesCount: profileLikes[nextP.user_id] ?? 0,
-                      }} />
+                      <ProfileCard profile={toCardProfile(nextProfile)} />
                     </div>
                   );
                 })()}
 
                 <AnimatePresence initial={false} mode="popLayout">
-                  {profileForCard && (
+                  {profileForCard && currentProfile && (
                     <motion.div
                       key={currentProfile.user_id}
                       initial={{ x: direction === "right" ? 300 : direction === "left" ? -300 : 0, opacity: 0 }}
@@ -250,23 +325,28 @@ export default function DiscoverPage() {
                       exit={{ x: direction === "right" ? -300 : 300, opacity: 0 }}
                       transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
                       className="absolute inset-0 touch-none select-none will-change-transform"
-                      style={{ transform: 'translateZ(0)' }}
+                      style={{ x, rotate, transform: "translateZ(0)" }}
                     >
-                      <div className="h-full w-full relative">
-                        {/* Arrow overlays */}
+                      <motion.div className="absolute left-4 top-4 z-20 rounded-full border border-destructive/30 bg-background/80 px-3 py-1 text-sm font-semibold text-destructive backdrop-blur-sm" style={{ opacity: passOpacity }}>
+                        Pass
+                      </motion.div>
+                      <motion.div className="absolute right-4 top-4 z-20 rounded-full border border-primary/30 bg-background/80 px-3 py-1 text-sm font-semibold text-primary backdrop-blur-sm" style={{ opacity: likeOpacity }}>
+                        Like
+                      </motion.div>
+                      <div className="relative h-full w-full">
                         <button
                           onClick={() => handleSwipe("pass")}
-                          className="absolute left-1 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/70 hover:bg-background/80 transition-colors"
+                          className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
                         >
                           <ChevronLeft className="h-6 w-6" />
                         </button>
                         <button
                           onClick={() => handleSwipe("like")}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/70 hover:bg-background/80 transition-colors"
+                          className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
                         >
                           <ChevronRight className="h-6 w-6" />
                         </button>
-                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard!.id}`)} />
+                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard.id}`)} />
                       </div>
                     </motion.div>
                   )}
@@ -300,6 +380,14 @@ export default function DiscoverPage() {
           )}
         </div>
       </div>
+
+      <DiscoverFiltersSheet
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        filters={filters}
+        onChange={setFilters}
+        onReset={() => setFilters(DEFAULT_FILTERS)}
+      />
 
       <MatchAnimation
         show={showMatch}
