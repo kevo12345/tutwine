@@ -19,7 +19,7 @@ const DEFAULT_FILTERS: DiscoverFilters = {
   gender: "any",
   minAge: 18,
   maxAge: null,
-  maxDistanceKm: 50,
+  maxDistanceKm: 500,
 };
 
 const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop";
@@ -55,12 +55,7 @@ export default function DiscoverPage() {
   const [viewProfile, setViewProfile] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dragOffsetX, setDragOffsetX] = useState(0);
-  const [filters, setFilters] = useState<DiscoverFilters>({
-    ...DEFAULT_FILTERS,
-    maxDistanceKm: myProfile?.preferred_distance_km ?? DEFAULT_FILTERS.maxDistanceKm,
-    minAge: myProfile?.preferred_age_min ?? DEFAULT_FILTERS.minAge,
-    maxAge: myProfile?.preferred_age_max ?? DEFAULT_FILTERS.maxAge,
-  });
+  const [filters, setFilters] = useState<DiscoverFilters>(DEFAULT_FILTERS);
   const isSwiping = useRef(false);
   const activePointerId = useRef<number | null>(null);
   const startXRef = useRef(0);
@@ -139,15 +134,6 @@ export default function DiscoverPage() {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  useEffect(() => {
-    if (!myProfile) return;
-    setFilters((current) => ({
-      ...current,
-      minAge: myProfile.preferred_age_min ?? current.minAge,
-      maxAge: myProfile.preferred_age_max ?? current.maxAge,
-      maxDistanceKm: myProfile.preferred_distance_km ?? current.maxDistanceKm,
-    }));
-  }, [myProfile]);
 
   const filteredProfiles = useMemo(() => {
     return profiles.filter((profile) => {
@@ -232,33 +218,66 @@ export default function DiscoverPage() {
     isSwiping.current = true;
     const swipedProfile = currentProfile;
     setDragOffsetX(0);
-    setCurrentIndex((i) => i + 1);
+    setProfiles((current) => current.filter((profile) => profile.user_id !== swipedProfile.user_id));
+    setCurrentIndex(0);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       isSwiping.current = false;
     }, 250);
 
-    supabase.from("swipes").insert({
+    const { error: deleteError } = await supabase
+      .from("swipes")
+      .delete()
+      .eq("swiper_id", user.id)
+      .eq("target_id", swipedProfile.user_id);
+
+    if (deleteError) {
+      console.error(deleteError);
+    }
+
+    const { error: insertError } = await supabase.from("swipes").insert({
       swiper_id: user.id,
       target_id: swipedProfile.user_id,
       action,
-    }).then(({ error }) => {
-      if (error) console.error(error);
     });
 
-    if (action === "like") {
-      supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
-        .maybeSingle()
-        .then(({ data: match }) => {
-          if (match) {
-            setMatchName(swipedProfile.display_name ?? "Someone");
-            setMatchId(match.id);
-            setShowMatch(true);
-          }
-        });
+    if (insertError) {
+      console.error(insertError);
+      return;
+    }
+
+    if (action !== "like") return;
+
+    const { data: reciprocalSwipe, error: reciprocalError } = await supabase
+      .from("swipes")
+      .select("id")
+      .eq("swiper_id", swipedProfile.user_id)
+      .eq("target_id", user.id)
+      .eq("action", "like")
+      .maybeSingle();
+
+    if (reciprocalError) {
+      console.error(reciprocalError);
+      return;
+    }
+
+    if (!reciprocalSwipe) return;
+
+    const { data: match, error: matchError } = await supabase
+      .from("matches")
+      .select("id")
+      .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
+      .maybeSingle();
+
+    if (matchError) {
+      console.error(matchError);
+      return;
+    }
+
+    if (match) {
+      setMatchName(swipedProfile.display_name ?? "Someone");
+      setMatchId(match.id);
+      setShowMatch(true);
     }
   }, [currentProfile, user]);
 
