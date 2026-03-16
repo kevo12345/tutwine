@@ -1,4 +1,7 @@
-import heroBg from "@/assets/hero-bg.jpg";
+import seriousDatingHero from "@/assets/ad-serious-dating-clean.jpg";
+import youngProfessionalsHero from "@/assets/ad-young-professionals.jpg";
+import newInTownHero from "@/assets/ad-new-in-town.jpg";
+import singleParentsHero from "@/assets/ad-single-parents.jpg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,19 +11,27 @@ import { useNavigate, useParams } from "react-router-dom";
 
 type AudienceKey = "serious-dating" | "young-professionals" | "new-in-town" | "single-parents";
 
-const audienceConfig: Record<AudienceKey, {
+type HighlightIcon = typeof Heart;
+
+type AudienceConfig = {
   badge: string;
   headline: string;
   subheadline: string;
   cta: string;
+  heroImage: string;
+  heroAlt: string;
   proof: string[];
-  highlights: { icon: typeof Heart; title: string; description: string }[];
-}> = {
+  highlights: { icon: HighlightIcon; title: string; description: string }[];
+};
+
+const audienceConfig: Record<AudienceKey, AudienceConfig> = {
   "serious-dating": {
     badge: "Built for real relationships",
     headline: "Meet people who are actually ready for something serious.",
     subheadline: "Skip the endless chatting and connect with verified singles who want commitment, chemistry, and genuine conversation.",
     cta: "Start Meeting Serious Singles",
+    heroImage: seriousDatingHero,
+    heroAlt: "Elegant couple enjoying a romantic candlelit dinner",
     proof: ["Verified profiles", "Photo-first matching", "Fast signup"],
     highlights: [
       { icon: Heart, title: "Intentional matches", description: "Profile prompts and compatibility signals help you meet people looking for the same thing." },
@@ -33,6 +44,8 @@ const audienceConfig: Record<AudienceKey, {
     headline: "Find your person between meetings, workouts, and weekend plans.",
     subheadline: "A clean, fast dating experience for busy professionals who want quality matches without wasting time.",
     cta: "Join Busy Professionals",
+    heroImage: youngProfessionalsHero,
+    heroAlt: "Stylish professionals meeting on a rooftop at sunset",
     proof: ["Quick onboarding", "Nearby discovery", "Conversation-first"],
     highlights: [
       { icon: Briefcase, title: "Time-saving signup", description: "Get from ad click to account creation in minutes with a simple registration flow." },
@@ -45,6 +58,8 @@ const audienceConfig: Record<AudienceKey, {
     headline: "New city, new energy, new people worth meeting.",
     subheadline: "Whether you just moved or want a new circle, Tutwine helps you meet nearby people faster without awkward guesswork.",
     cta: "Meet People Nearby",
+    heroImage: newInTownHero,
+    heroAlt: "Two people meeting for coffee in a lively city neighborhood",
     proof: ["Local discovery", "Real profiles", "Instant chat after match"],
     highlights: [
       { icon: Users, title: "Built for local connection", description: "Distance-based discovery makes it easy to meet people in your area right away." },
@@ -57,6 +72,8 @@ const audienceConfig: Record<AudienceKey, {
     headline: "Meaningful connections for single parents who value maturity and intention.",
     subheadline: "No games, no endless swiping — just a more thoughtful way to meet people who appreciate your pace and priorities.",
     cta: "Start with Intention",
+    heroImage: singleParentsHero,
+    heroAlt: "Mature couple sharing coffee in a calm welcoming cafe",
     proof: ["Respectful community", "Fast registration", "Clear intentions"],
     highlights: [
       { icon: Heart, title: "More intentional dating", description: "Speak to users looking for emotional maturity and genuine connection from the first click." },
@@ -84,7 +101,7 @@ export default function AdLandingPage() {
     <main className="min-h-screen bg-background">
       <section className="relative isolate overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="Tutwine couples dating experience" className="h-full w-full object-cover" />
+          <img src={config.heroImage} alt={config.heroAlt} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-foreground/70" />
           <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 via-foreground/65 to-background/20" />
         </div>
