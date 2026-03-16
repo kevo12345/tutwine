@@ -309,41 +309,28 @@ export default function DiscoverPage() {
                   );
                 })()}
 
-                <AnimatePresence initial={false} mode="popLayout">
-                  {profileForCard && currentProfile && (
-                    <motion.div
-                      key={currentProfile.user_id}
-                      initial={{ x: direction === "right" ? 300 : direction === "left" ? -300 : 0, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      exit={{ x: direction === "right" ? -300 : 300, opacity: 0 }}
-                      transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="absolute inset-0 touch-none select-none will-change-transform"
-                      style={{ x, rotate, transform: "translateZ(0)" }}
-                    >
-                      <motion.div className="absolute left-4 top-4 z-20 rounded-full border border-destructive/30 bg-background/80 px-3 py-1 text-sm font-semibold text-destructive backdrop-blur-sm" style={{ opacity: passOpacity }}>
-                        Pass
-                      </motion.div>
-                      <motion.div className="absolute right-4 top-4 z-20 rounded-full border border-primary/30 bg-background/80 px-3 py-1 text-sm font-semibold text-primary backdrop-blur-sm" style={{ opacity: likeOpacity }}>
-                        Like
-                      </motion.div>
-                      <div className="relative h-full w-full">
-                        <button
-                          onClick={() => handleSwipe("pass")}
-                          className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
-                        >
-                          <ChevronLeft className="h-6 w-6" />
-                        </button>
-                        <button
-                          onClick={() => handleSwipe("like")}
-                          className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
-                        >
-                          <ChevronRight className="h-6 w-6" />
-                        </button>
-                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard.id}`)} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {profileForCard && currentProfile && (
+                  <div
+                    key={currentProfile.user_id}
+                    className="absolute inset-0 touch-none select-none"
+                  >
+                    <div className="relative h-full w-full">
+                      <button
+                        onClick={() => handleSwipe("pass")}
+                        className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </button>
+                      <button
+                        onClick={() => handleSwipe("like")}
+                        className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                      </button>
+                      <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard.id}`)} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="shrink-0 py-2 pb-3 flex items-center justify-center gap-2 sm:gap-4">
