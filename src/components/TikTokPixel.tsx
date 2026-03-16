@@ -78,7 +78,7 @@ function loadTikTokPixel() {
     }
 
     ttq.instance = function (id: string) {
-      const instance = (ttq._i?.[id] || []) as TikTokPixelQueue;
+      const instance = ((ttq._i && ttq._i[id]) || ([] as TikTokPixelQueue)) as TikTokPixelQueue;
       for (let i = 0; i < (ttq.methods?.length || 0); i += 1) {
         ttq.setAndDefer?.(instance, ttq.methods![i]);
       }
