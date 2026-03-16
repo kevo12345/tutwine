@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const APP_NAME = 'TutWine';
+const ADMIN_NOTIFICATION_EMAIL = 'payment@tutwine.com';
 const ADMIN_NOTIFICATION_FROM = 'TutWine Billing <billing@mg.lovable.app>';
 const ADMIN_NOTIFICATION_SUBJECT = 'New subscription activated';
 
@@ -16,44 +17,6 @@ function escapeHtml(value: string) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
-}
-
-async function getAdminEmails(serviceClient: ReturnType<typeof createClient>) {
-  const { data: adminRoles, error: rolesError } = await serviceClient
-    .from('user_roles')
-    .select('user_id')
-    .eq('role', 'admin');
-
-  if (rolesError) {
-    throw new Error(`Failed to load admin roles: ${rolesError.message}`);
-  }
-
-  const adminIds = Array.from(new Set((adminRoles ?? []).map((row) => row.user_id).filter(Boolean)));
-  if (!adminIds.length) return [];
-
-  const adminEmailSet = new Set<string>();
-  let page = 1;
-  const perPage = 200;
-
-  while (true) {
-    const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
-
-    if (error) {
-      throw new Error(`Failed to load admin users: ${error.message}`);
-    }
-
-    const users = data?.users ?? [];
-    for (const user of users) {
-      if (adminIds.includes(user.id) && user.email) {
-        adminEmailSet.add(user.email);
-      }
-    }
-
-    if (users.length < perPage) break;
-    page += 1;
-  }
-
-  return Array.from(adminEmailSet);
 }
 
 async function sendAdminSubscriptionNotification(
