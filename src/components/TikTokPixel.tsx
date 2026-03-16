@@ -26,12 +26,13 @@ type TikTokMethod =
   | "revokeConsent"
   | "grantConsent";
 
-type TikTokPixelQueue = Array<unknown> & {
+type TikTokPixelQueue = {
   methods?: TikTokMethod[];
   setAndDefer?: (target: TikTokPixelQueue, method: TikTokMethod) => void;
   instance?: (id: string) => TikTokPixelQueue;
   load?: (id: string, options?: Record<string, unknown>) => void;
   page?: () => void;
+  push: (...items: unknown[]) => number;
   _i?: Record<string, TikTokPixelQueue>;
   _t?: Record<string, number>;
   _o?: Record<string, Record<string, unknown>>;
