@@ -5,6 +5,188 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const APP_NAME = 'TutWine';
+const ADMIN_NOTIFICATION_FROM = 'TutWine Billing <billing@mg.lovable.app>';
+const ADMIN_NOTIFICATION_SUBJECT = 'New subscription activated';
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+async function getAdminEmails(serviceClient: ReturnType<typeof createClient>) {
+  const { data: adminRoles, error: rolesError } = await serviceClient
+    .from('user_roles')
+    .select('user_id')
+    .eq('role', 'admin');
+
+  if (rolesError) {
+    throw new Error(`Failed to load admin roles: ${rolesError.message}`);
+  }
+
+  const adminIds = Array.from(new Set((adminRoles ?? []).map((row) => row.user_id).filter(Boolean)));
+  if (!adminIds.length) return [];
+
+  const adminEmailSet = new Set<string>();
+  let page = 1;
+  const perPage = 200;
+
+  while (true) {
+    const { data, error } = await serviceClient.auth.admin.listUsers({ page, perPage });
+
+    if (error) {
+      throw new Error(`Failed to load admin users: ${error.message}`);
+    }
+
+    const users = data?.users ?? [];
+    for (const user of users) {
+      if (adminIds.includes(user.id) && user.email) {
+        adminEmailSet.add(user.email);
+      }
+    }
+
+    if (users.length < perPage) break;
+    page += 1;
+  }
+
+  return Array.from(adminEmailSet);
+}
+
+async function sendAdminSubscriptionNotification(
+  serviceClient: ReturnType<typeof createClient>,
+  subscription: { id: string; user_id: string; tier: string },
+  lookupId: string
+) {
+  const adminEmails = await getAdminEmails(serviceClient);
+  if (!adminEmails.length) {
+    console.warn('No admin emails found for subscription notification');
+    return;
+  }
+
+  const { data: profile } = await serviceClient
+    .from('profiles')
+    .select('display_name')
+    .eq('user_id', subscription.user_id)
+    .maybeSingle();
+
+  const displayName = profile?.display_name || 'Unknown user';
+  const safeDisplayName = escapeHtml(displayName);
+  const safeTier = escapeHtml(subscription.tier);
+  const safeUserId = escapeHtml(subscription.user_id);
+  const safeLookupId = escapeHtml(lookupId);
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+      <h2 style="margin: 0 0 16px;">New subscription activated</h2>
+      <p style="margin: 0 0 16px;">A customer has successfully activated a paid subscription.</p>
+      <table style="border-collapse: collapse; width: 100%; max-width: 520px;">
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>App</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${APP_NAME}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Plan</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb; text-transform: capitalize;">${safeTier}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>User</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${safeDisplayName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>User ID</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${safeUserId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Subscription ID</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${escapeHtml(subscription.id)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Payment Ref</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${safeLookupId}</td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  const text = [
+    'New subscription activated',
+    '',
+    `App: ${APP_NAME}`,
+    `Plan: ${subscription.tier}`,
+    `User: ${displayName}`,
+    `User ID: ${subscription.user_id}`,
+    `Subscription ID: ${subscription.id}`,
+    `Payment Ref: ${lookupId}`,
+  ].join('\n');
+
+  const queuedAt = new Date().toISOString();
+
+  await Promise.all(
+    adminEmails.map(async (email) => {
+      const messageId = `subscription-activated-${subscription.id}-${email}`;
+
+      await serviceClient.from('email_send_log').insert({
+        message_id: messageId,
+        template_name: 'subscription-admin-notification',
+        recipient_email: email,
+        status: 'pending',
+      });
+
+      const { error } = await serviceClient.rpc('enqueue_email', {
+        queue_name: 'transactional_emails',
+        payload: {
+          message_id: messageId,
+          queued_at: queuedAt,
+          to: email,
+          from: ADMIN_NOTIFICATION_FROM,
+          subject: ADMIN_NOTIFICATION_SUBJECT,
+          html,
+          text,
+          purpose: 'transactional',
+          label: 'subscription-admin-notification',
+          idempotency_key: messageId,
+        },
+      });
+
+      if (error) {
+        throw new Error(`Failed to queue admin notification: ${error.message}`);
+      }
+    })
+  );
+}
+
+async function activateSubscription(
+  serviceClient: ReturnType<typeof createClient>,
+  subscription: { id: string; user_id: string; tier: string },
+  lookupId: string
+) {
+  const { error } = await serviceClient
+    .from('subscriptions')
+    .update({
+      status: 'active',
+      started_at: new Date().toISOString(),
+      ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .eq('id', subscription.id);
+
+  if (error) {
+    console.error('Error activating subscription:', error);
+    return;
+  }
+
+  console.log('Subscription activated for user:', subscription.user_id, 'tier:', subscription.tier);
+
+  try {
+    await sendAdminSubscriptionNotification(serviceClient, subscription, lookupId);
+  } catch (notificationError) {
+    console.error('Failed to send admin subscription notification:', notificationError);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -57,15 +239,7 @@ Deno.serve(async (req) => {
         if (altSub) {
           console.log('Found subscription via alternate ID:', altId);
           if (isSuccess) {
-            await serviceClient
-              .from('subscriptions')
-              .update({
-                status: 'active',
-                started_at: new Date().toISOString(),
-                ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              })
-              .eq('id', altSub.id);
-            console.log('Subscription activated for user:', altSub.user_id, 'tier:', altSub.tier);
+            await activateSubscription(serviceClient, altSub, altId);
           } else {
             await serviceClient
               .from('subscriptions')
@@ -86,20 +260,7 @@ Deno.serve(async (req) => {
     }
 
     if (isSuccess) {
-      const { error } = await serviceClient
-        .from('subscriptions')
-        .update({
-          status: 'active',
-          started_at: new Date().toISOString(),
-          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        })
-        .eq('id', sub.id);
-
-      if (error) {
-        console.error('Error activating subscription:', error);
-      } else {
-        console.log('Subscription activated for user:', sub.user_id, 'tier:', sub.tier);
-      }
+      await activateSubscription(serviceClient, sub, lookupId);
     } else {
       const { error } = await serviceClient
         .from('subscriptions')
