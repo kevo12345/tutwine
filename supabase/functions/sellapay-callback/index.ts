@@ -64,6 +64,10 @@ async function sendAdminSubscriptionNotification(
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${escapeHtml(subscription.id)}</td>
         </tr>
         <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Paid Amount</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${escapeHtml(paidAmount)} ${escapeHtml(paidCurrency)}</td>
+        </tr>
+        <tr>
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Payment Ref</strong></td>
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${safeLookupId}</td>
         </tr>
