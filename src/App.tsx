@@ -59,6 +59,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <TikTokPixel />
+        <MetaPixel />
         <ScrollToTop />
         <AuthProvider>
           <Suspense fallback={<PageLoader />}>
