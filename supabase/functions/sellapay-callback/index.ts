@@ -21,7 +21,7 @@ function escapeHtml(value: string) {
 
 async function sendAdminSubscriptionNotification(
   serviceClient: ReturnType<typeof createClient>,
-  subscription: { id: string; user_id: string; tier: string },
+  subscription: { id: string; user_id: string; tier: string; price?: number | string | null; currency?: string | null },
   lookupId: string
 ) {
   const { data: profile } = await serviceClient
