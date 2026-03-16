@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
     // Try to find the subscription by provider_sub_id
     const { data: sub } = await serviceClient
       .from('subscriptions')
-      .select('id, user_id, tier')
+      .select('id, user_id, tier, price, currency')
       .eq('provider_sub_id', lookupId)
       .eq('status', 'past_due')
       .maybeSingle();
