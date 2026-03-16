@@ -30,34 +30,56 @@ export default function ChatListPage() {
 
   const loadChats = useCallback(async () => {
     if (!user) return;
+
     const { data: matches } = await supabase
       .from("matches")
       .select("*")
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
       .order("created_at", { ascending: false });
 
-    if (!matches) { setLoading(false); return; }
+    if (!matches?.length) {
+      setChats([]);
+      setLoading(false);
+      return;
+    }
 
     const items: ChatItem[] = [];
+
     for (const m of matches) {
       const otherUserId = m.user_a === user.id ? m.user_b : m.user_a;
-      const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", otherUserId).single();
-      if (!profile) continue;
 
-      const { data: lastMsg } = await supabase
-        .from("messages")
-        .select("content, created_at")
-        .eq("match_id", m.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [{ data: outgoingLike }, { data: incomingLike }, { data: profile }, { data: lastMsg }, { count }] = await Promise.all([
+        supabase
+          .from("swipes")
+          .select("id")
+          .eq("swiper_id", user.id)
+          .eq("target_id", otherUserId)
+          .eq("action", "like")
+          .maybeSingle(),
+        supabase
+          .from("swipes")
+          .select("id")
+          .eq("swiper_id", otherUserId)
+          .eq("target_id", user.id)
+          .eq("action", "like")
+          .maybeSingle(),
+        supabase.from("profiles").select("*").eq("user_id", otherUserId).single(),
+        supabase
+          .from("messages")
+          .select("content, created_at")
+          .eq("match_id", m.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("match_id", m.id)
+          .neq("sender_id", user.id)
+          .is("read_at", null),
+      ]);
 
-      const { count } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .eq("match_id", m.id)
-        .neq("sender_id", user.id)
-        .is("read_at", null);
+      if (!outgoingLike || !incomingLike || !profile) continue;
 
       items.push({
         matchId: m.id,
@@ -67,6 +89,7 @@ export default function ChatListPage() {
         unread: count ?? 0,
       });
     }
+
     setChats(items);
     setLoading(false);
   }, [user]);
