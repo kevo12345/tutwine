@@ -48,7 +48,9 @@ function loadTikTokPixel() {
 
   (function (w: Window & typeof globalThis, d: Document, t: "ttq") {
     w.TiktokAnalyticsObject = t;
-    const ttq = (w[t] = w[t] || []) as TikTokPixelQueue;
+    const existingQueue = w[t] as TikTokPixelQueue | undefined;
+    const ttq = existingQueue || ({ push: Array.prototype.push } as TikTokPixelQueue);
+    w[t] = ttq;
     ttq.methods = [
       "page",
       "track",
@@ -79,7 +81,7 @@ function loadTikTokPixel() {
     }
 
     ttq.instance = function (id: string) {
-      const instance = ((ttq._i && ttq._i[id]) || ([] as TikTokPixelQueue)) as TikTokPixelQueue;
+      const instance = (ttq._i?.[id] || ({ push: Array.prototype.push } as TikTokPixelQueue));
       for (let i = 0; i < (ttq.methods?.length || 0); i += 1) {
         ttq.setAndDefer?.(instance, ttq.methods![i]);
       }
@@ -92,7 +94,7 @@ function loadTikTokPixel() {
       const script = d.createElement("script");
 
       ttq._i = ttq._i || {};
-      ttq._i[id] = [] as TikTokPixelQueue;
+      ttq._i[id] = { push: Array.prototype.push } as TikTokPixelQueue;
       ttq._i[id]._u = src;
       ttq._t = ttq._t || {};
       ttq._t[id] = Date.now();
