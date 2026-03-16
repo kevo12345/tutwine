@@ -19,7 +19,7 @@ type Profile = Tables<"profiles">;
 const DEFAULT_FILTERS: DiscoverFilters = {
   gender: "any",
   minAge: 18,
-  maxAge: 80,
+  maxAge: null,
   maxDistanceKm: 50,
 };
 
