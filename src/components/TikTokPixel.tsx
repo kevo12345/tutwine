@@ -27,7 +27,6 @@ type TikTokMethod =
   | "grantConsent";
 
 type TikTokQueuedCall = [TikTokMethod, ...unknown[]];
-
 type TikTokDeferredMethod = (...args: unknown[]) => void;
 
 type TikTokPixelInstance = TikTokQueuedCall[] & {
@@ -50,7 +49,9 @@ const TIKTOK_PIXEL_ID = "D6RVESJC77UC6S37IFM0";
 const TIKTOK_SCRIPT_ID = "tiktok-pixel-script";
 
 function createQueue(): TikTokPixelInstance {
-  return [] as unknown as TikTokPixelInstance;
+  const queue = [] as unknown as TikTokPixelInstance;
+  queue.push = Array.prototype.push as (...items: TikTokQueuedCall[]) => number;
+  return queue;
 }
 
 function loadTikTokPixel() {
@@ -83,7 +84,7 @@ function loadTikTokPixel() {
       ];
     }
 
-    ttq.setAndDefer = function (target: TikTokPixelInstance, method: TikTokMethod) {
+    ttq.setAndDefer = (target: TikTokPixelInstance, method: TikTokMethod) => {
       target[method] = (...args: unknown[]) => {
         target.push([method, ...args]);
       };
@@ -95,7 +96,7 @@ function loadTikTokPixel() {
       }
     }
 
-    ttq.instance = function (id: string) {
+    ttq.instance = (id: string) => {
       ttq._i = ttq._i || {};
       const instance = ttq._i[id] ?? createQueue();
       ttq._i[id] = instance;
@@ -109,7 +110,7 @@ function loadTikTokPixel() {
       return instance;
     };
 
-    ttq.load = function (id: string, options?: Record<string, unknown>) {
+    ttq.load = (id: string, options?: Record<string, unknown>) => {
       const src = "https://analytics.tiktok.com/i18n/pixel/events.js";
       const existingScript = d.getElementById(TIKTOK_SCRIPT_ID) as HTMLScriptElement | null;
 
