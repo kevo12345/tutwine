@@ -52,11 +52,18 @@ export function DiscoverFiltersSheet({
 }: DiscoverFiltersSheetProps) {
   const [minAgeInput, setMinAgeInput] = useState(String(filters.minAge));
   const [maxAgeInput, setMaxAgeInput] = useState(filters.maxAge?.toString() ?? "");
+  const [isMinAgeFocused, setIsMinAgeFocused] = useState(false);
+  const [isMaxAgeFocused, setIsMaxAgeFocused] = useState(false);
 
   useEffect(() => {
-    setMinAgeInput(String(filters.minAge));
-    setMaxAgeInput(filters.maxAge?.toString() ?? "");
-  }, [filters.minAge, filters.maxAge, open]);
+    if (!isMinAgeFocused) {
+      setMinAgeInput(String(filters.minAge));
+    }
+
+    if (!isMaxAgeFocused) {
+      setMaxAgeInput(filters.maxAge?.toString() ?? "");
+    }
+  }, [filters.minAge, filters.maxAge, open, isMinAgeFocused, isMaxAgeFocused]);
 
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
     onChange({ ...filters, [key]: value });
@@ -69,11 +76,15 @@ export function DiscoverFiltersSheet({
     if (!sanitizedValue) return;
 
     const parsed = Number(sanitizedValue);
-    const nextMinAge = Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
+    if (Number.isNaN(parsed) || parsed < 18) return;
+
+    const nextMinAge = Math.min(parsed, MAX_AGE_LIMIT);
 
     if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
       onChange({ ...filters, minAge: nextMinAge, maxAge: nextMinAge });
-      setMaxAgeInput(String(nextMinAge));
+      if (!isMaxAgeFocused) {
+        setMaxAgeInput(String(nextMinAge));
+      }
       return;
     }
 
@@ -90,7 +101,9 @@ export function DiscoverFiltersSheet({
     }
 
     const parsed = Number(sanitizedValue);
-    updateFilter("maxAge", Math.max(filters.minAge, Math.min(parsed, MAX_AGE_LIMIT)));
+    if (Number.isNaN(parsed) || parsed < filters.minAge) return;
+
+    updateFilter("maxAge", Math.min(parsed, MAX_AGE_LIMIT));
   };
 
   const commitMinAge = (rawValue: string) => {
