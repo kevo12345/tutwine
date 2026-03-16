@@ -46,7 +46,6 @@ export default function DiscoverPage() {
   const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
   const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
   const [matchId, setMatchId] = useState("");
@@ -60,10 +59,6 @@ export default function DiscoverPage() {
     maxAge: myProfile?.preferred_age_max ?? DEFAULT_FILTERS.maxAge,
   });
   const isSwiping = useRef(false);
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-15, 15]);
-  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
-  const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
