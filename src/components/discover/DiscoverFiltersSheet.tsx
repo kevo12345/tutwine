@@ -21,7 +21,7 @@ import { DISTANCE_OPTIONS, GENDER_OPTIONS } from "@/lib/constants";
 export type DiscoverFilters = {
   gender: "any" | "man" | "woman" | "non-binary" | "other";
   minAge: number;
-  maxAge: number;
+  maxAge: number | null;
   maxDistanceKm: number;
 };
 
@@ -84,7 +84,7 @@ export function DiscoverFiltersSheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="discover-min-age">Min age</Label>
+              <Label htmlFor="discover-min-age">Minimum age</Label>
               <Input
                 id="discover-min-age"
                 type="number"
@@ -94,24 +94,37 @@ export function DiscoverFiltersSheet({
                 value={filters.minAge}
                 onChange={(event) => {
                   const nextValue = Number(event.target.value || 18);
-                  updateFilter("minAge", Math.max(18, Math.min(nextValue, filters.maxAge)));
+                  const nextMinAge = Math.max(18, Math.min(nextValue, 80));
+                  updateFilter("minAge", nextMinAge);
+
+                  if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
+                    updateFilter("maxAge", nextMinAge);
+                  }
                 }}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="discover-max-age">Max age</Label>
+              <Label htmlFor="discover-max-age">Maximum age</Label>
               <Input
                 id="discover-max-age"
                 type="number"
                 inputMode="numeric"
                 min={18}
                 max={80}
-                value={filters.maxAge}
+                placeholder="Any age"
+                value={filters.maxAge ?? ""}
                 onChange={(event) => {
-                  const nextValue = Number(event.target.value || 80);
+                  const rawValue = event.target.value.trim();
+                  if (!rawValue) {
+                    updateFilter("maxAge", null);
+                    return;
+                  }
+
+                  const nextValue = Number(rawValue);
                   updateFilter("maxAge", Math.min(80, Math.max(nextValue, filters.minAge)));
                 }}
               />
+              <p className="text-xs text-muted-foreground">Leave blank to search {filters.minAge}+.</p>
             </div>
           </div>
 

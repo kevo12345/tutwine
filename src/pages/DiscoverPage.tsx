@@ -151,7 +151,7 @@ export default function DiscoverPage() {
     return profiles.filter((profile) => {
       const age = getAge(profile.date_of_birth);
       const matchesGender = filters.gender === "any" || profile.gender === filters.gender;
-      const matchesAge = age >= filters.minAge && age <= filters.maxAge;
+      const matchesAge = age >= filters.minAge && (filters.maxAge == null || age <= filters.maxAge);
 
       if (!matchesGender || !matchesAge) return false;
 
