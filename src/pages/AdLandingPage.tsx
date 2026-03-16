@@ -101,35 +101,36 @@ export default function AdLandingPage() {
     <main className="min-h-screen bg-background">
       <section className="relative isolate overflow-hidden">
         <div className="absolute inset-0">
-          <img src={config.heroImage} alt={config.heroAlt} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-foreground/70" />
-          <div className="absolute inset-0 bg-gradient-to-b from-foreground/50 via-foreground/65 to-background/20" />
+          <img src={config.heroImage} alt={config.heroAlt} className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-foreground/45" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/55 via-foreground/30 to-foreground/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/15 via-transparent to-transparent" />
         </div>
 
         <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-4 py-10 lg:px-8">
           <div className="mb-8 flex items-center justify-between gap-4">
-            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-primary-foreground/80 transition-opacity hover:opacity-100">
+            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-primary-foreground/90 transition-opacity hover:opacity-100">
               <img src="/logo.jpeg" alt="Tutwine" className="h-10 w-10 rounded-xl object-cover" />
               <span className="font-display text-lg font-semibold text-primary-foreground">tutwine</span>
             </button>
-            <Button variant="outline" className="border-primary-foreground/30 bg-card/10 text-primary-foreground hover:bg-card/20" onClick={() => navigate("/login")}>Log in</Button>
+            <Button variant="outline" className="border-primary-foreground/30 bg-card/15 text-primary-foreground hover:bg-card/25" onClick={() => navigate("/login")}>Log in</Button>
           </div>
 
           <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="max-w-3xl">
+            <div className="max-w-3xl rounded-[2rem] border border-primary-foreground/10 bg-card/10 p-6 backdrop-blur-[2px] sm:p-8">
               <Badge className="mb-5 border-0 gradient-warm px-4 py-1.5 text-sm text-primary-foreground">
                 {config.badge}
               </Badge>
               <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-primary-foreground sm:text-6xl">
                 {config.headline}
               </h1>
-              <p className="mt-5 max-w-2xl text-lg text-primary-foreground/80 sm:text-xl">
+              <p className="mt-5 max-w-2xl text-lg text-primary-foreground/85 sm:text-xl">
                 {config.subheadline}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {config.proof.map((item) => (
-                  <span key={item} className="rounded-full border border-primary-foreground/20 bg-card/10 px-4 py-2 text-sm text-primary-foreground/90 backdrop-blur-sm">
+                  <span key={item} className="rounded-full border border-primary-foreground/20 bg-card/15 px-4 py-2 text-sm text-primary-foreground/95 backdrop-blur-sm">
                     {item}
                   </span>
                 ))}
@@ -139,13 +140,13 @@ export default function AdLandingPage() {
                 <Button size="lg" className="gradient-warm border-0 px-8 text-base text-primary-foreground shadow-glow" onClick={() => navigate(`/signup?audience=${config.key}`)}>
                   {config.cta} <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
-                <Button size="lg" variant="outline" className="border-primary-foreground/30 bg-card/10 text-base text-primary-foreground hover:bg-card/20" onClick={() => navigate("/pricing")}>
+                <Button size="lg" variant="outline" className="border-primary-foreground/30 bg-card/15 text-base text-primary-foreground hover:bg-card/25" onClick={() => navigate("/pricing")}>
                   View Plans
                 </Button>
               </div>
             </div>
 
-            <Card className="border-border/40 bg-card/85 shadow-card backdrop-blur-md">
+            <Card className="border-border/30 bg-card/78 shadow-card backdrop-blur-md">
               <CardContent className="p-6 sm:p-8">
                 <p className="mb-6 text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Why this page converts</p>
                 <div className="space-y-5">
