@@ -217,7 +217,6 @@ export default function DiscoverPage() {
     isSwiping.current = true;
     const swipedProfile = currentProfile;
 
-    setDirection(action === "like" ? "right" : "left");
     setCurrentIndex((i) => i + 1);
 
     setTimeout(() => {
