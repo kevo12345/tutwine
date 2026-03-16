@@ -55,12 +55,7 @@ export default function DiscoverPage() {
   const [viewProfile, setViewProfile] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dragOffsetX, setDragOffsetX] = useState(0);
-  const [filters, setFilters] = useState<DiscoverFilters>({
-    ...DEFAULT_FILTERS,
-    maxDistanceKm: myProfile?.preferred_distance_km ?? DEFAULT_FILTERS.maxDistanceKm,
-    minAge: myProfile?.preferred_age_min ?? DEFAULT_FILTERS.minAge,
-    maxAge: myProfile?.preferred_age_max ?? DEFAULT_FILTERS.maxAge,
-  });
+  const [filters, setFilters] = useState<DiscoverFilters>(DEFAULT_FILTERS);
   const isSwiping = useRef(false);
   const activePointerId = useRef<number | null>(null);
   const startXRef = useRef(0);
