@@ -8,6 +8,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { TikTokPixel } from "@/components/TikTokPixel";
+import { MetaPixel } from "@/components/MetaPixel";
 import { Loader2 } from "lucide-react";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -58,6 +59,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <TikTokPixel />
+        <MetaPixel />
         <ScrollToTop />
         <AuthProvider>
           <Suspense fallback={<PageLoader />}>
