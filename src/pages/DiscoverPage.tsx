@@ -23,6 +23,8 @@ const DEFAULT_FILTERS: DiscoverFilters = {
 };
 
 const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop";
+const SWIPE_TRIGGER_PX = 80;
+const TAP_CANCEL_PX = 12;
 
 const getAge = (dateOfBirth: string | null) => {
   if (!dateOfBirth) return 0;
@@ -52,6 +54,7 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [viewProfile, setViewProfile] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [dragOffsetX, setDragOffsetX] = useState(0);
   const [filters, setFilters] = useState<DiscoverFilters>({
     ...DEFAULT_FILTERS,
     maxDistanceKm: myProfile?.preferred_distance_km ?? DEFAULT_FILTERS.maxDistanceKm,
@@ -59,6 +62,11 @@ export default function DiscoverPage() {
     maxAge: myProfile?.preferred_age_max ?? DEFAULT_FILTERS.maxAge,
   });
   const isSwiping = useRef(false);
+  const activePointerId = useRef<number | null>(null);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+  const suppressTapRef = useRef(false);
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
@@ -177,6 +185,13 @@ export default function DiscoverPage() {
     }
   }, [currentIndex, filteredProfiles.length]);
 
+  useEffect(() => {
+    setDragOffsetX(0);
+    activePointerId.current = null;
+    hasDraggedRef.current = false;
+    suppressTapRef.current = false;
+  }, [currentIndex, filteredProfiles.length]);
+
   const effectiveIndex = filteredProfiles.length > 0 ? currentIndex % filteredProfiles.length : 0;
   const currentProfile = filteredProfiles.length > 0 ? filteredProfiles[effectiveIndex] : undefined;
   const nextEffectiveIndex = filteredProfiles.length > 1 ? (effectiveIndex + 1) % filteredProfiles.length : -1;
@@ -216,7 +231,7 @@ export default function DiscoverPage() {
 
     isSwiping.current = true;
     const swipedProfile = currentProfile;
-
+    setDragOffsetX(0);
     setCurrentIndex((i) => i + 1);
 
     setTimeout(() => {
@@ -246,6 +261,60 @@ export default function DiscoverPage() {
         });
     }
   }, [currentProfile, user]);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!currentProfile || isSwiping.current) return;
+    activePointerId.current = event.pointerId;
+    startXRef.current = event.clientX;
+    startYRef.current = event.clientY;
+    hasDraggedRef.current = false;
+    suppressTapRef.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, [currentProfile]);
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerId.current !== event.pointerId) return;
+
+    const deltaX = event.clientX - startXRef.current;
+    const deltaY = event.clientY - startYRef.current;
+
+    if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+
+    if (Math.abs(deltaX) > TAP_CANCEL_PX) {
+      hasDraggedRef.current = true;
+      suppressTapRef.current = true;
+    }
+
+    setDragOffsetX(deltaX);
+  }, []);
+
+  const finishPointerGesture = useCallback((pointerId: number) => {
+    if (activePointerId.current !== pointerId) return;
+    activePointerId.current = null;
+
+    if (dragOffsetX >= SWIPE_TRIGGER_PX) {
+      handleSwipe("like");
+      return;
+    }
+
+    if (dragOffsetX <= -SWIPE_TRIGGER_PX) {
+      handleSwipe("pass");
+      return;
+    }
+
+    setDragOffsetX(0);
+    window.setTimeout(() => {
+      suppressTapRef.current = false;
+    }, 50);
+  }, [dragOffsetX, handleSwipe]);
+
+  const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    finishPointerGesture(event.pointerId);
+  }, [finishPointerGesture]);
+
+  const handlePointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    finishPointerGesture(event.pointerId);
+  }, [finishPointerGesture]);
 
   if (loading) {
     return (
@@ -312,40 +381,60 @@ export default function DiscoverPage() {
                 {profileForCard && currentProfile && (
                   <div
                     key={currentProfile.user_id}
-                    className="absolute inset-0 touch-none select-none"
+                    className="absolute inset-0 select-none"
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerCancel}
                   >
                     <div className="relative h-full w-full">
                       <button
                         onClick={() => handleSwipe("pass")}
                         className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
+                        aria-label="Pass profile"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
                       <button
                         onClick={() => handleSwipe("like")}
                         className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
+                        aria-label="Like profile"
                       >
                         <ChevronRight className="h-6 w-6" />
                       </button>
-                      <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard.id}`)} />
+                      <div
+                        className="h-full w-full"
+                        style={{
+                          transform: `translateX(${dragOffsetX}px) rotate(${dragOffsetX / 20}deg)`,
+                          transition: activePointerId.current == null ? "transform 0.2s ease-out" : "none",
+                        }}
+                        onClickCapture={(event) => {
+                          if (suppressTapRef.current) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }
+                        }}
+                      >
+                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard.id}`)} />
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="shrink-0 py-2 pb-3 flex items-center justify-center gap-2 sm:gap-4">
-                <Button variant="outline" size="icon" className="h-9 w-9 sm:h-14 sm:w-14 rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive" onClick={() => handleSwipe("pass")}>
+              <div className="shrink-0 flex items-center justify-center gap-2 py-2 pb-3 sm:gap-4">
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-2 border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive/10 sm:h-14 sm:w-14" onClick={() => handleSwipe("pass")}>
                   <X className="h-4 w-4 sm:h-7 sm:w-7" />
                 </Button>
                 {limits.undoSwipe && (
-                  <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
+                  <Button variant="outline" size="icon" className="h-7 w-7 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10 sm:h-9 sm:w-9" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                   </Button>
                 )}
-                <Button size="icon" className="h-11 w-11 sm:h-16 sm:w-16 rounded-full gradient-warm border-0 text-primary-foreground shadow-glow" onClick={() => handleSwipe("like")}>
-                  <Heart className="h-5 w-5 sm:h-8 sm:w-8 fill-current" />
+                <Button size="icon" className="gradient-warm h-11 w-11 rounded-full border-0 text-primary-foreground shadow-glow sm:h-16 sm:w-16" onClick={() => handleSwipe("like")}>
+                  <Heart className="h-5 w-5 fill-current sm:h-8 sm:w-8" />
                 </Button>
-                <Button variant="outline" size="icon" className={`h-9 w-9 sm:h-14 sm:w-14 rounded-full border-2 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
+                <Button variant="outline" size="icon" className={`h-9 w-9 rounded-full border-2 border-accent/30 text-accent hover:border-accent hover:bg-accent/10 sm:h-14 sm:w-14 ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
                   if (!limits.superLike) {
                     toast("⭐ Super Like is a Pro feature", { description: "Upgrade to Pro to send Super Likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
                   } else {
@@ -373,7 +462,10 @@ export default function DiscoverPage() {
       <MatchAnimation
         show={showMatch}
         matchName={matchName}
-        onSendMessage={() => { setShowMatch(false); navigate(`/chat/${matchId}`); }}
+        onSendMessage={() => {
+          setShowMatch(false);
+          navigate(`/chat/${matchId}`);
+        }}
         onKeepSwiping={() => setShowMatch(false)}
       />
 
