@@ -24,12 +24,6 @@ async function sendAdminSubscriptionNotification(
   subscription: { id: string; user_id: string; tier: string },
   lookupId: string
 ) {
-  const adminEmails = await getAdminEmails(serviceClient);
-  if (!adminEmails.length) {
-    console.warn('No admin emails found for subscription notification');
-    return;
-  }
-
   const { data: profile } = await serviceClient
     .from('profiles')
     .select('display_name')
@@ -86,40 +80,34 @@ async function sendAdminSubscriptionNotification(
     `Payment Ref: ${lookupId}`,
   ].join('\n');
 
-  const queuedAt = new Date().toISOString();
+  const messageId = `subscription-activated-${subscription.id}-${ADMIN_NOTIFICATION_EMAIL}`;
 
-  await Promise.all(
-    adminEmails.map(async (email) => {
-      const messageId = `subscription-activated-${subscription.id}-${email}`;
+  await serviceClient.from('email_send_log').insert({
+    message_id: messageId,
+    template_name: 'subscription-admin-notification',
+    recipient_email: ADMIN_NOTIFICATION_EMAIL,
+    status: 'pending',
+  });
 
-      await serviceClient.from('email_send_log').insert({
-        message_id: messageId,
-        template_name: 'subscription-admin-notification',
-        recipient_email: email,
-        status: 'pending',
-      });
+  const { error } = await serviceClient.rpc('enqueue_email', {
+    queue_name: 'transactional_emails',
+    payload: {
+      message_id: messageId,
+      queued_at: new Date().toISOString(),
+      to: ADMIN_NOTIFICATION_EMAIL,
+      from: ADMIN_NOTIFICATION_FROM,
+      subject: ADMIN_NOTIFICATION_SUBJECT,
+      html,
+      text,
+      purpose: 'transactional',
+      label: 'subscription-admin-notification',
+      idempotency_key: messageId,
+    },
+  });
 
-      const { error } = await serviceClient.rpc('enqueue_email', {
-        queue_name: 'transactional_emails',
-        payload: {
-          message_id: messageId,
-          queued_at: queuedAt,
-          to: email,
-          from: ADMIN_NOTIFICATION_FROM,
-          subject: ADMIN_NOTIFICATION_SUBJECT,
-          html,
-          text,
-          purpose: 'transactional',
-          label: 'subscription-admin-notification',
-          idempotency_key: messageId,
-        },
-      });
-
-      if (error) {
-        throw new Error(`Failed to queue admin notification: ${error.message}`);
-      }
-    })
-  );
+  if (error) {
+    throw new Error(`Failed to queue admin notification: ${error.message}`);
+  }
 }
 
 async function activateSubscription(
