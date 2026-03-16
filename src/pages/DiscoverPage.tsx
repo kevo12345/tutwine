@@ -56,7 +56,7 @@ export default function DiscoverPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [filters, setFilters] = useState<DiscoverFilters>(DEFAULT_FILTERS);
-  const isSwiping = useRef(false);
+  const pendingSwipeIdsRef = useRef<Set<string>>(new Set());
   const activePointerId = useRef<number | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
