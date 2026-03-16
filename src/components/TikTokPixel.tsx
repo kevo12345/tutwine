@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 declare global {
   interface Window {
     TiktokAnalyticsObject?: string;
-    ttq?: TikTokPixelQueue;
+    ttq?: TikTokQueue;
   }
 }
 
@@ -26,21 +26,15 @@ type TikTokMethod =
   | "revokeConsent"
   | "grantConsent";
 
-type TikTokQueuedCall = [TikTokMethod, ...unknown[]];
-type TikTokDeferredMethod = (...args: unknown[]) => void;
+type TikTokMethodFn = (...args: unknown[]) => void;
 
-type TikTokPixelInstance = TikTokQueuedCall[] & {
-  push: (...items: TikTokQueuedCall[]) => number;
-} & Partial<Record<TikTokMethod, TikTokDeferredMethod>> & {
-  [key: string]: unknown;
-};
-
-type TikTokPixelQueue = TikTokPixelInstance & {
+type TikTokQueue = ((unknown[] | TikTokMethodFn)[] & Record<string, any>) & {
   methods?: TikTokMethod[];
-  setAndDefer?: (target: TikTokPixelInstance, method: TikTokMethod) => void;
-  instance?: (id: string) => TikTokPixelInstance;
+  setAndDefer?: (target: TikTokQueue, method: TikTokMethod) => void;
+  instance?: (id: string) => TikTokQueue;
   load?: (id: string, options?: Record<string, unknown>) => void;
-  _i?: Record<string, TikTokPixelInstance>;
+  page?: TikTokMethodFn;
+  _i?: Record<string, TikTokQueue>;
   _t?: Record<string, number>;
   _o?: Record<string, Record<string, unknown>>;
 };
@@ -48,19 +42,19 @@ type TikTokPixelQueue = TikTokPixelInstance & {
 const TIKTOK_PIXEL_ID = "D6RVESJC77UC6S37IFM0";
 const TIKTOK_SCRIPT_ID = "tiktok-pixel-script";
 
-function createQueue(): TikTokPixelInstance {
-  const queue = [] as unknown as TikTokPixelInstance;
-  queue.push = Array.prototype.push as (...items: TikTokQueuedCall[]) => number;
+function createQueue(): TikTokQueue {
+  const queue = [] as unknown as TikTokQueue;
+  queue.push = Array.prototype.push;
   return queue;
 }
 
 function loadTikTokPixel() {
   if (typeof window === "undefined") return;
 
-  (function (w: Window & typeof globalThis, d: Document, t: "ttq") {
+  ((w: Window & typeof globalThis, d: Document, t: "ttq") => {
     w.TiktokAnalyticsObject = t;
 
-    const ttq = (w[t] as TikTokPixelQueue | undefined) ?? createQueue();
+    const ttq = w[t] ?? createQueue();
     w[t] = ttq;
 
     if (!ttq.methods) {
@@ -84,7 +78,7 @@ function loadTikTokPixel() {
       ];
     }
 
-    ttq.setAndDefer = (target: TikTokPixelInstance, method: TikTokMethod) => {
+    ttq.setAndDefer = (target, method) => {
       target[method] = (...args: unknown[]) => {
         target.push([method, ...args]);
       };
@@ -98,10 +92,10 @@ function loadTikTokPixel() {
 
     ttq.instance = (id: string) => {
       ttq._i = ttq._i || {};
-      const instance = ttq._i[id] ?? createQueue();
+      const instance = ttq._i[id] || createQueue();
       ttq._i[id] = instance;
 
-      for (const method of ttq.methods ?? []) {
+      for (const method of ttq.methods || []) {
         if (typeof instance[method] !== "function") {
           ttq.setAndDefer?.(instance, method);
         }
@@ -112,7 +106,7 @@ function loadTikTokPixel() {
 
     ttq.load = (id: string, options?: Record<string, unknown>) => {
       const src = "https://analytics.tiktok.com/i18n/pixel/events.js";
-      const existingScript = d.getElementById(TIKTOK_SCRIPT_ID) as HTMLScriptElement | null;
+      const existingScript = d.getElementById(TIKTOK_SCRIPT_ID);
 
       ttq._i = ttq._i || {};
       ttq._i[id] = ttq._i[id] || createQueue();
@@ -125,7 +119,6 @@ function loadTikTokPixel() {
 
       const script = d.createElement("script");
       script.id = TIKTOK_SCRIPT_ID;
-      script.type = "text/javascript";
       script.async = true;
       script.src = `${src}?sdkid=${id}&lib=${t}`;
 
