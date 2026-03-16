@@ -21,7 +21,7 @@ function escapeHtml(value: string) {
 
 async function sendAdminSubscriptionNotification(
   serviceClient: ReturnType<typeof createClient>,
-  subscription: { id: string; user_id: string; tier: string },
+  subscription: { id: string; user_id: string; tier: string; price?: number | string | null; currency?: string | null },
   lookupId: string
 ) {
   const { data: profile } = await serviceClient
@@ -35,6 +35,8 @@ async function sendAdminSubscriptionNotification(
   const safeTier = escapeHtml(subscription.tier);
   const safeUserId = escapeHtml(subscription.user_id);
   const safeLookupId = escapeHtml(lookupId);
+  const paidAmount = subscription.price != null ? String(subscription.price) : 'Unknown';
+  const paidCurrency = subscription.currency || 'Unknown';
 
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
@@ -62,6 +64,10 @@ async function sendAdminSubscriptionNotification(
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${escapeHtml(subscription.id)}</td>
         </tr>
         <tr>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Paid Amount</strong></td>
+          <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${escapeHtml(paidAmount)} ${escapeHtml(paidCurrency)}</td>
+        </tr>
+        <tr>
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;"><strong>Payment Ref</strong></td>
           <td style="padding: 8px 12px; border: 1px solid #e5e7eb;">${safeLookupId}</td>
         </tr>
@@ -77,7 +83,8 @@ async function sendAdminSubscriptionNotification(
     `User: ${displayName}`,
     `User ID: ${subscription.user_id}`,
     `Subscription ID: ${subscription.id}`,
-    `Payment Ref: ${lookupId}`,
+    `Paid Amount: ${paidAmount} ${paidCurrency}`,
+    `Payment Ref: ${lookupId}`, 
   ].join('\n');
 
   const messageId = `subscription-activated-${subscription.id}-${ADMIN_NOTIFICATION_EMAIL}`;
@@ -171,7 +178,7 @@ Deno.serve(async (req) => {
     // Try to find the subscription by provider_sub_id
     const { data: sub } = await serviceClient
       .from('subscriptions')
-      .select('id, user_id, tier')
+      .select('id, user_id, tier, price, currency')
       .eq('provider_sub_id', lookupId)
       .eq('status', 'past_due')
       .maybeSingle();
@@ -183,7 +190,7 @@ Deno.serve(async (req) => {
         if (altId === lookupId) continue;
         const { data: altSub } = await serviceClient
           .from('subscriptions')
-          .select('id, user_id, tier')
+          .select('id, user_id, tier, price, currency')
           .eq('provider_sub_id', altId)
           .eq('status', 'past_due')
           .maybeSingle();
