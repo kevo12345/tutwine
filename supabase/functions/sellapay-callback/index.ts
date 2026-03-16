@@ -83,7 +83,8 @@ async function sendAdminSubscriptionNotification(
     `User: ${displayName}`,
     `User ID: ${subscription.user_id}`,
     `Subscription ID: ${subscription.id}`,
-    `Payment Ref: ${lookupId}`,
+    `Paid Amount: ${paidAmount} ${paidCurrency}`,
+    `Payment Ref: ${lookupId}`, 
   ].join('\n');
 
   const messageId = `subscription-activated-${subscription.id}-${ADMIN_NOTIFICATION_EMAIL}`;
