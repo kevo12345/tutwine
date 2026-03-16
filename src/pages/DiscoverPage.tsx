@@ -365,6 +365,7 @@ export default function DiscoverPage() {
         open={filtersOpen}
         onOpenChange={setFiltersOpen}
         filters={filters}
+        matchCount={filteredProfiles.length}
         onChange={setFilters}
         onReset={() => setFilters(DEFAULT_FILTERS)}
       />
