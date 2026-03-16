@@ -218,33 +218,66 @@ export default function DiscoverPage() {
     isSwiping.current = true;
     const swipedProfile = currentProfile;
     setDragOffsetX(0);
-    setCurrentIndex((i) => i + 1);
+    setProfiles((current) => current.filter((profile) => profile.user_id !== swipedProfile.user_id));
+    setCurrentIndex(0);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       isSwiping.current = false;
     }, 250);
 
-    supabase.from("swipes").insert({
+    const { error: deleteError } = await supabase
+      .from("swipes")
+      .delete()
+      .eq("swiper_id", user.id)
+      .eq("target_id", swipedProfile.user_id);
+
+    if (deleteError) {
+      console.error(deleteError);
+    }
+
+    const { error: insertError } = await supabase.from("swipes").insert({
       swiper_id: user.id,
       target_id: swipedProfile.user_id,
       action,
-    }).then(({ error }) => {
-      if (error) console.error(error);
     });
 
-    if (action === "like") {
-      supabase
-        .from("matches")
-        .select("id")
-        .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
-        .maybeSingle()
-        .then(({ data: match }) => {
-          if (match) {
-            setMatchName(swipedProfile.display_name ?? "Someone");
-            setMatchId(match.id);
-            setShowMatch(true);
-          }
-        });
+    if (insertError) {
+      console.error(insertError);
+      return;
+    }
+
+    if (action !== "like") return;
+
+    const { data: reciprocalSwipe, error: reciprocalError } = await supabase
+      .from("swipes")
+      .select("id")
+      .eq("swiper_id", swipedProfile.user_id)
+      .eq("target_id", user.id)
+      .eq("action", "like")
+      .maybeSingle();
+
+    if (reciprocalError) {
+      console.error(reciprocalError);
+      return;
+    }
+
+    if (!reciprocalSwipe) return;
+
+    const { data: match, error: matchError } = await supabase
+      .from("matches")
+      .select("id")
+      .or(`and(user_a.eq.${user.id},user_b.eq.${swipedProfile.user_id}),and(user_a.eq.${swipedProfile.user_id},user_b.eq.${user.id})`)
+      .maybeSingle();
+
+    if (matchError) {
+      console.error(matchError);
+      return;
+    }
+
+    if (match) {
+      setMatchName(swipedProfile.display_name ?? "Someone");
+      setMatchId(match.id);
+      setShowMatch(true);
     }
   }, [currentProfile, user]);
 
