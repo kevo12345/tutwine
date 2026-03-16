@@ -63,11 +63,12 @@ export function DiscoverFiltersSheet({
   };
 
   const handleMinAgeChange = (rawValue: string) => {
-    setMinAgeInput(rawValue);
+    const sanitizedValue = rawValue.replace(/\D/g, "");
+    setMinAgeInput(sanitizedValue);
 
-    const parsed = Number(rawValue);
-    if (!rawValue.trim() || Number.isNaN(parsed)) return;
+    if (!sanitizedValue) return;
 
+    const parsed = Number(sanitizedValue);
     const nextMinAge = Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
 
     if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
@@ -80,23 +81,22 @@ export function DiscoverFiltersSheet({
   };
 
   const handleMaxAgeChange = (rawValue: string) => {
-    setMaxAgeInput(rawValue);
+    const sanitizedValue = rawValue.replace(/\D/g, "");
+    setMaxAgeInput(sanitizedValue);
 
-    const trimmedValue = rawValue.trim();
-    if (!trimmedValue) {
+    if (!sanitizedValue) {
       updateFilter("maxAge", null);
       return;
     }
 
-    const parsed = Number(trimmedValue);
-    if (Number.isNaN(parsed)) return;
-
+    const parsed = Number(sanitizedValue);
     updateFilter("maxAge", Math.max(filters.minAge, Math.min(parsed, MAX_AGE_LIMIT)));
   };
 
   const commitMinAge = (rawValue: string) => {
-    const parsed = Number(rawValue);
-    const nextMinAge = Number.isNaN(parsed) ? 18 : Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
+    const sanitizedValue = rawValue.replace(/\D/g, "");
+    const parsed = Number(sanitizedValue);
+    const nextMinAge = Number.isNaN(parsed) || !sanitizedValue ? 18 : Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
     setMinAgeInput(String(nextMinAge));
 
     if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
@@ -109,15 +109,15 @@ export function DiscoverFiltersSheet({
   };
 
   const commitMaxAge = (rawValue: string) => {
-    const trimmedValue = rawValue.trim();
+    const sanitizedValue = rawValue.replace(/\D/g, "");
 
-    if (!trimmedValue) {
+    if (!sanitizedValue) {
       setMaxAgeInput("");
       updateFilter("maxAge", null);
       return;
     }
 
-    const parsed = Number(trimmedValue);
+    const parsed = Number(sanitizedValue);
     const nextMaxAge = Number.isNaN(parsed)
       ? filters.minAge
       : Math.max(filters.minAge, Math.min(parsed, MAX_AGE_LIMIT));
