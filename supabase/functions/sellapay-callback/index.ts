@@ -35,6 +35,8 @@ async function sendAdminSubscriptionNotification(
   const safeTier = escapeHtml(subscription.tier);
   const safeUserId = escapeHtml(subscription.user_id);
   const safeLookupId = escapeHtml(lookupId);
+  const paidAmount = subscription.price != null ? String(subscription.price) : 'Unknown';
+  const paidCurrency = subscription.currency || 'Unknown';
 
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
