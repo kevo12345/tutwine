@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
         if (altId === lookupId) continue;
         const { data: altSub } = await serviceClient
           .from('subscriptions')
-          .select('id, user_id, tier')
+          .select('id, user_id, tier, price, currency')
           .eq('provider_sub_id', altId)
           .eq('status', 'past_due')
           .maybeSingle();
