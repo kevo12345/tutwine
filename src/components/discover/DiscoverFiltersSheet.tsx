@@ -62,6 +62,38 @@ export function DiscoverFiltersSheet({
     onChange({ ...filters, [key]: value });
   };
 
+  const handleMinAgeChange = (rawValue: string) => {
+    setMinAgeInput(rawValue);
+
+    const parsed = Number(rawValue);
+    if (!rawValue.trim() || Number.isNaN(parsed)) return;
+
+    const nextMinAge = Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
+
+    if (filters.maxAge !== null && filters.maxAge < nextMinAge) {
+      onChange({ ...filters, minAge: nextMinAge, maxAge: nextMinAge });
+      setMaxAgeInput(String(nextMinAge));
+      return;
+    }
+
+    updateFilter("minAge", nextMinAge);
+  };
+
+  const handleMaxAgeChange = (rawValue: string) => {
+    setMaxAgeInput(rawValue);
+
+    const trimmedValue = rawValue.trim();
+    if (!trimmedValue) {
+      updateFilter("maxAge", null);
+      return;
+    }
+
+    const parsed = Number(trimmedValue);
+    if (Number.isNaN(parsed)) return;
+
+    updateFilter("maxAge", Math.max(filters.minAge, Math.min(parsed, MAX_AGE_LIMIT)));
+  };
+
   const commitMinAge = (rawValue: string) => {
     const parsed = Number(rawValue);
     const nextMinAge = Number.isNaN(parsed) ? 18 : Math.max(18, Math.min(parsed, MAX_AGE_LIMIT));
