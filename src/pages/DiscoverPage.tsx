@@ -19,7 +19,7 @@ const DEFAULT_FILTERS: DiscoverFilters = {
   gender: "any",
   minAge: 18,
   maxAge: null,
-  maxDistanceKm: 50,
+  maxDistanceKm: 500,
 };
 
 const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop";
