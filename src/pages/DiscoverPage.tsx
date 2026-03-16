@@ -293,7 +293,7 @@ export default function DiscoverPage() {
   }, [currentProfile, user]);
 
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (!currentProfile || isSwiping.current) return;
+    if (!currentProfile || pendingSwipeIdsRef.current.has(currentProfile.user_id)) return;
     activePointerId.current = event.pointerId;
     startXRef.current = event.clientX;
     startYRef.current = event.clientY;
