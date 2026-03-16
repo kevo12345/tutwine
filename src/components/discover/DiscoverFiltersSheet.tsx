@@ -30,6 +30,7 @@ interface DiscoverFiltersSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filters: DiscoverFilters;
+  matchCount: number;
   onChange: (filters: DiscoverFilters) => void;
   onReset: () => void;
 }
