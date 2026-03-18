@@ -177,6 +177,7 @@ export default function DiscoverPage() {
     activePointerId.current = null;
     hasDraggedRef.current = false;
     suppressTapRef.current = false;
+    gestureAxisRef.current = null;
   }, [currentIndex, filteredProfiles.length]);
 
   const effectiveIndex = filteredProfiles.length > 0 ? currentIndex % filteredProfiles.length : 0;
