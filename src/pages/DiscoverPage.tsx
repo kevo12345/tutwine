@@ -311,7 +311,13 @@ export default function DiscoverPage() {
     const deltaX = event.clientX - startXRef.current;
     const deltaY = event.clientY - startYRef.current;
 
-    if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+    // Lock axis on first significant movement
+    if (!gestureAxisRef.current && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
+      gestureAxisRef.current = Math.abs(deltaX) >= Math.abs(deltaY) ? "horizontal" : "vertical";
+    }
+
+    // Ignore vertical gestures entirely
+    if (gestureAxisRef.current !== "horizontal") return;
 
     if (Math.abs(deltaX) > TAP_CANCEL_PX) {
       hasDraggedRef.current = true;
