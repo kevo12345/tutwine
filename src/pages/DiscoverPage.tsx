@@ -431,16 +431,16 @@ export default function DiscoverPage() {
                   >
                     <div className="relative h-full w-full">
                       <button
-                        onClick={() => handleSwipe("pass")}
+                        onClick={navigatePrev}
                         className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
-                        aria-label="Pass profile"
+                        aria-label="Previous profile"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
                       <button
-                        onClick={() => handleSwipe("like")}
+                        onClick={navigateNext}
                         className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
-                        aria-label="Like profile"
+                        aria-label="Next profile"
                       >
                         <ChevronRight className="h-6 w-6" />
                       </button>
