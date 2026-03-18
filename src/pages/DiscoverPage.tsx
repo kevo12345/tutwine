@@ -301,6 +301,7 @@ export default function DiscoverPage() {
     startYRef.current = event.clientY;
     hasDraggedRef.current = false;
     suppressTapRef.current = false;
+    gestureAxisRef.current = null;
     event.currentTarget.setPointerCapture(event.pointerId);
   }, [currentProfile]);
 
