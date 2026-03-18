@@ -62,6 +62,7 @@ export default function DiscoverPage() {
   const startYRef = useRef(0);
   const hasDraggedRef = useRef(false);
   const suppressTapRef = useRef(false);
+  const gestureAxisRef = useRef<"horizontal" | "vertical" | null>(null);
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
@@ -176,6 +177,7 @@ export default function DiscoverPage() {
     activePointerId.current = null;
     hasDraggedRef.current = false;
     suppressTapRef.current = false;
+    gestureAxisRef.current = null;
   }, [currentIndex, filteredProfiles.length]);
 
   const effectiveIndex = filteredProfiles.length > 0 ? currentIndex % filteredProfiles.length : 0;
@@ -299,6 +301,7 @@ export default function DiscoverPage() {
     startYRef.current = event.clientY;
     hasDraggedRef.current = false;
     suppressTapRef.current = false;
+    gestureAxisRef.current = null;
     event.currentTarget.setPointerCapture(event.pointerId);
   }, [currentProfile]);
 
@@ -308,7 +311,13 @@ export default function DiscoverPage() {
     const deltaX = event.clientX - startXRef.current;
     const deltaY = event.clientY - startYRef.current;
 
-    if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+    // Lock axis on first significant movement
+    if (!gestureAxisRef.current && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
+      gestureAxisRef.current = Math.abs(deltaX) >= Math.abs(deltaY) ? "horizontal" : "vertical";
+    }
+
+    // Ignore vertical gestures entirely
+    if (gestureAxisRef.current !== "horizontal") return;
 
     if (Math.abs(deltaX) > TAP_CANCEL_PX) {
       hasDraggedRef.current = true;
@@ -333,6 +342,7 @@ export default function DiscoverPage() {
   const finishPointerGesture = useCallback((pointerId: number) => {
     if (activePointerId.current !== pointerId) return;
     activePointerId.current = null;
+    gestureAxisRef.current = null;
 
     if (dragOffsetX >= SWIPE_TRIGGER_PX) {
       navigateNext();
