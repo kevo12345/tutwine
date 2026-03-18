@@ -318,17 +318,29 @@ export default function DiscoverPage() {
     setDragOffsetX(deltaX);
   }, []);
 
+  const navigateNext = useCallback(() => {
+    if (filteredProfiles.length <= 1) return;
+    setCurrentIndex((i) => (i + 1) % filteredProfiles.length);
+    setDragOffsetX(0);
+  }, [filteredProfiles.length]);
+
+  const navigatePrev = useCallback(() => {
+    if (filteredProfiles.length <= 1) return;
+    setCurrentIndex((i) => (i - 1 + filteredProfiles.length) % filteredProfiles.length);
+    setDragOffsetX(0);
+  }, [filteredProfiles.length]);
+
   const finishPointerGesture = useCallback((pointerId: number) => {
     if (activePointerId.current !== pointerId) return;
     activePointerId.current = null;
 
     if (dragOffsetX >= SWIPE_TRIGGER_PX) {
-      handleSwipe("like");
+      navigateNext();
       return;
     }
 
     if (dragOffsetX <= -SWIPE_TRIGGER_PX) {
-      handleSwipe("pass");
+      navigatePrev();
       return;
     }
 
@@ -336,7 +348,7 @@ export default function DiscoverPage() {
     window.setTimeout(() => {
       suppressTapRef.current = false;
     }, 50);
-  }, [dragOffsetX, handleSwipe]);
+  }, [dragOffsetX, navigateNext, navigatePrev]);
 
   const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     finishPointerGesture(event.pointerId);
