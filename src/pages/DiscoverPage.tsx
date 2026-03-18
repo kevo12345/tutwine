@@ -226,8 +226,8 @@ export default function DiscoverPage() {
     hasDraggedRef.current = false;
     suppressTapRef.current = true;
     setDragOffsetX(0);
-    setProfiles((current) => current.filter((profile) => profile.user_id !== swipedProfile.user_id));
-    setCurrentIndex(0);
+    // Advance to next profile (looping)
+    setCurrentIndex((i) => filteredProfiles.length > 1 ? (i + 1) % filteredProfiles.length : 0);
 
     try {
       const { error: deleteError } = await supabase
