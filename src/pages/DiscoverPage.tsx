@@ -342,6 +342,7 @@ export default function DiscoverPage() {
   const finishPointerGesture = useCallback((pointerId: number) => {
     if (activePointerId.current !== pointerId) return;
     activePointerId.current = null;
+    gestureAxisRef.current = null;
 
     if (dragOffsetX >= SWIPE_TRIGGER_PX) {
       navigateNext();
