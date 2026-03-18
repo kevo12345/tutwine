@@ -62,6 +62,7 @@ export default function DiscoverPage() {
   const startYRef = useRef(0);
   const hasDraggedRef = useRef(false);
   const suppressTapRef = useRef(false);
+  const gestureAxisRef = useRef<"horizontal" | "vertical" | null>(null);
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
