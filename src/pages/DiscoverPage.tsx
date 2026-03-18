@@ -226,8 +226,8 @@ export default function DiscoverPage() {
     hasDraggedRef.current = false;
     suppressTapRef.current = true;
     setDragOffsetX(0);
-    setProfiles((current) => current.filter((profile) => profile.user_id !== swipedProfile.user_id));
-    setCurrentIndex(0);
+    // Advance to next profile (looping)
+    setCurrentIndex((i) => filteredProfiles.length > 1 ? (i + 1) % filteredProfiles.length : 0);
 
     try {
       const { error: deleteError } = await supabase
@@ -318,17 +318,29 @@ export default function DiscoverPage() {
     setDragOffsetX(deltaX);
   }, []);
 
+  const navigateNext = useCallback(() => {
+    if (filteredProfiles.length <= 1) return;
+    setCurrentIndex((i) => (i + 1) % filteredProfiles.length);
+    setDragOffsetX(0);
+  }, [filteredProfiles.length]);
+
+  const navigatePrev = useCallback(() => {
+    if (filteredProfiles.length <= 1) return;
+    setCurrentIndex((i) => (i - 1 + filteredProfiles.length) % filteredProfiles.length);
+    setDragOffsetX(0);
+  }, [filteredProfiles.length]);
+
   const finishPointerGesture = useCallback((pointerId: number) => {
     if (activePointerId.current !== pointerId) return;
     activePointerId.current = null;
 
     if (dragOffsetX >= SWIPE_TRIGGER_PX) {
-      handleSwipe("like");
+      navigateNext();
       return;
     }
 
     if (dragOffsetX <= -SWIPE_TRIGGER_PX) {
-      handleSwipe("pass");
+      navigatePrev();
       return;
     }
 
@@ -336,7 +348,7 @@ export default function DiscoverPage() {
     window.setTimeout(() => {
       suppressTapRef.current = false;
     }, 50);
-  }, [dragOffsetX, handleSwipe]);
+  }, [dragOffsetX, navigateNext, navigatePrev]);
 
   const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     finishPointerGesture(event.pointerId);
@@ -419,16 +431,16 @@ export default function DiscoverPage() {
                   >
                     <div className="relative h-full w-full">
                       <button
-                        onClick={() => handleSwipe("pass")}
+                        onClick={navigatePrev}
                         className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
-                        aria-label="Pass profile"
+                        aria-label="Previous profile"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
                       <button
-                        onClick={() => handleSwipe("like")}
+                        onClick={navigateNext}
                         className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/60 text-foreground/70 backdrop-blur-sm transition-colors hover:bg-background/80"
-                        aria-label="Like profile"
+                        aria-label="Next profile"
                       >
                         <ChevronRight className="h-6 w-6" />
                       </button>
