@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -31,7 +33,27 @@ async function getSellapayToken(): Promise<string> {
   return data.access_token;
 }
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+function cleanKenyanPhoneNumber(phone: string) {
+  let cleanPhone = phone.replace(/\s+/g, '').replace(/^(\+?254)/, '');
+  if (cleanPhone.startsWith('0')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  return cleanPhone;
+}
+
+function extractProviderSubscriptionId(stkData: any, fallbackReference: string) {
+  return (
+    stkData?.transaction_id ||
+    stkData?.TransactionID ||
+    stkData?.CheckoutRequestID ||
+    stkData?.checkout_request_id ||
+    stkData?.message?.transaction_id ||
+    stkData?.message?.TransactionID ||
+    stkData?.message?.CheckoutRequestID ||
+    stkData?.message?.checkout_request_id ||
+    fallbackReference
+  );
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -39,7 +61,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate the user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -64,7 +85,6 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-
     const { phone, amount, tier, reference } = await req.json();
 
     if (!phone || !amount || !tier) {
@@ -74,22 +94,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Clean phone number
-    let cleanPhone = phone.replace(/\s+/g, '').replace(/^(\+?254)/, '');
-    if (cleanPhone.startsWith('0')) {
-      cleanPhone = cleanPhone.substring(1);
-    }
-
-    // Get SellaPay access token
+    const cleanPhone = cleanKenyanPhoneNumber(phone);
     const sellapayToken = await getSellapayToken();
-
     const subRef = reference || `SUB-${tier.toUpperCase()}-${userId.slice(0, 8)}-${Date.now()}`;
 
-    // Build callback URL for SellaPay to notify us on payment completion
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback`;
 
-    // Initiate STK Push
     const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
       method: 'POST',
       headers: {
@@ -101,7 +112,7 @@ Deno.serve(async (req) => {
         amount: Number(amount),
         reference: subRef,
         description: `TutWine ${tier} subscription`,
-        callbackUrl: callbackUrl,
+        callbackUrl,
         callback_url: callbackUrl,
       }),
     });
@@ -122,24 +133,14 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Deactivate any existing active subscription
-    await serviceClient
-      .from('subscriptions')
-      .update({ status: 'canceled', ends_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .eq('status', 'active');
-
-    // Also clean up any lingering past_due subscriptions for this user
     await serviceClient
       .from('subscriptions')
       .update({ status: 'canceled' })
       .eq('user_id', userId)
       .eq('status', 'past_due');
 
-    // Use transaction_id if available, otherwise use the reference as fallback
-    const providerSubId = stkData.transaction_id || stkData.CheckoutRequestID || subRef;
+    const providerSubId = extractProviderSubscriptionId(stkData, subRef);
 
-    // Create new subscription as past_due (pending M-Pesa confirmation)
     const { error: subError } = await serviceClient.from('subscriptions').insert({
       user_id: userId,
       tier,
@@ -161,7 +162,8 @@ Deno.serve(async (req) => {
         success: true,
         message: 'STK push sent! Check your phone for the M-Pesa prompt.',
         transaction_id: providerSubId,
-        status: stkData.status,
+        reference: subRef,
+        status: stkData?.status ?? stkData?.message?.ResponseDescription ?? 'pending',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
