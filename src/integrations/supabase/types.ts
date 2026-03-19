@@ -370,6 +370,7 @@ export type Database = {
           currency: string | null
           ends_at: string | null
           id: string
+          payment_phone: string | null
           price: number | null
           provider: string | null
           provider_sub_id: string | null
@@ -384,6 +385,7 @@ export type Database = {
           currency?: string | null
           ends_at?: string | null
           id?: string
+          payment_phone?: string | null
           price?: number | null
           provider?: string | null
           provider_sub_id?: string | null
@@ -398,6 +400,7 @@ export type Database = {
           currency?: string | null
           ends_at?: string | null
           id?: string
+          payment_phone?: string | null
           price?: number | null
           provider?: string | null
           provider_sub_id?: string | null
