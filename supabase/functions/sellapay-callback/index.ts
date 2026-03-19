@@ -355,7 +355,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.error('No pending subscription found for identifiers:', identifiers.join(', '));
+    console.log('No subscription found by identifiers:', identifiers.join(', '), '— trying phone fallback');
+
+    const fallbackSub = await findSubscriptionByPhone(serviceClient, body);
+    if (fallbackSub) {
+      const fallbackLookupId = identifiers[0] || 'phone-fallback';
+      console.log('Phone fallback matched subscription:', fallbackSub.id, 'for user:', fallbackSub.user_id);
+
+      if (isSuccess) {
+        await activateSubscription(serviceClient, fallbackSub, fallbackLookupId);
+      } else {
+        await serviceClient
+          .from('subscriptions')
+          .update({ status: 'canceled' })
+          .eq('id', fallbackSub.id);
+        console.log('Subscription canceled (phone fallback) for:', fallbackSub.user_id);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, matched_by: 'phone_fallback', matched_identifier: fallbackLookupId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.error('No pending subscription found by identifiers or phone fallback');
     return new Response(
       JSON.stringify({ error: 'Subscription not found', identifiers }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
