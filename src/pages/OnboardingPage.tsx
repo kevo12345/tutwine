@@ -19,7 +19,8 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, profile: existingProfile, refreshProfile } = useAuth();
   const isEditing = existingProfile?.onboarding_complete === true;
-  const [step, setStep] = useState(0);
+  const initialStep = existingProfile?.onboarding_step ?? 0;
+  const [step, setStep] = useState(initialStep);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +57,12 @@ export default function OnboardingPage() {
       toast.error("Please upload at least 3 photos"); return;
     }
     if (step < STEPS.length - 1) {
-      setStep(step + 1);
+      const nextStepVal = step + 1;
+      setStep(nextStepVal);
+      // Save progress so user can resume later
+      if (user) {
+        supabase.from("profiles").update({ onboarding_step: nextStepVal } as any).eq("user_id", user.id).then(() => {});
+      }
     } else {
       // Save profile to database
       if (!user) return;

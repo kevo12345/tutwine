@@ -79,7 +79,7 @@ serve(async (req) => {
         const blockedIds = new Set((blockedUsers ?? []).map((b: any) => b.blocked_id));
         result = (users ?? []).map((u: any) => {
           const sub = (subs ?? []).find((s: any) => s.user_id === u.user_id);
-          return { ...u, tier: sub?.tier ?? "free", status: blockedIds.has(u.user_id) ? "suspended" : "active" };
+          return { ...u, tier: sub?.tier ?? "free", status: blockedIds.has(u.user_id) ? "suspended" : "active", onboarding_complete: u.onboarding_complete ?? false, onboarding_step: u.onboarding_step ?? 0 };
         });
         break;
       }
