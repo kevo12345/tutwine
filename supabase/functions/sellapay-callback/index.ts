@@ -10,6 +10,14 @@ const ADMIN_NOTIFICATION_EMAIL = 'payment@tutwine.com';
 const ADMIN_NOTIFICATION_FROM = 'TutWine Billing <billing@mg.lovable.app>';
 const ADMIN_NOTIFICATION_SUBJECT = 'New subscription activated';
 
+type SubscriptionRecord = {
+  id: string;
+  user_id: string;
+  tier: string;
+  price?: number | string | null;
+  currency?: string | null;
+};
+
 function escapeHtml(value: string) {
   return value
     .replaceAll('&', '&amp;')
@@ -19,9 +27,49 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#39;');
 }
 
+function getCandidateIdentifiers(body: any) {
+  return Array.from(new Set([
+    body?.transaction_id,
+    body?.TransactionID,
+    body?.checkout_request_id,
+    body?.CheckoutRequestID,
+    body?.reference,
+    body?.merchant_reference,
+    body?.external_reference,
+    body?.message?.transaction_id,
+    body?.message?.TransactionID,
+    body?.message?.checkout_request_id,
+    body?.message?.CheckoutRequestID,
+    body?.message?.reference,
+    body?.data?.transaction_id,
+    body?.data?.TransactionID,
+    body?.data?.checkout_request_id,
+    body?.data?.CheckoutRequestID,
+    body?.data?.reference,
+  ].filter(Boolean).map(String)));
+}
+
+function isSuccessfulPayment(body: any) {
+  const status = String(
+    body?.status ??
+    body?.payment_status ??
+    body?.message?.status ??
+    body?.data?.status ??
+    ''
+  ).toLowerCase();
+
+  const resultCode = body?.ResultCode ?? body?.result_code ?? body?.message?.ResultCode ?? body?.data?.ResultCode;
+
+  return (
+    resultCode === 0 ||
+    resultCode === '0' ||
+    ['completed', 'complete', 'success', 'successful', 'paid'].includes(status)
+  );
+}
+
 async function sendAdminSubscriptionNotification(
   serviceClient: ReturnType<typeof createClient>,
-  subscription: { id: string; user_id: string; tier: string; price?: number | string | null; currency?: string | null },
+  subscription: SubscriptionRecord,
   lookupId: string
 ) {
   const { data: profile } = await serviceClient
@@ -84,7 +132,7 @@ async function sendAdminSubscriptionNotification(
     `User ID: ${subscription.user_id}`,
     `Subscription ID: ${subscription.id}`,
     `Paid Amount: ${paidAmount} ${paidCurrency}`,
-    `Payment Ref: ${lookupId}`, 
+    `Payment Ref: ${lookupId}`,
   ].join('\n');
 
   const messageId = `subscription-activated-${subscription.id}-${ADMIN_NOTIFICATION_EMAIL}`;
@@ -119,12 +167,23 @@ async function sendAdminSubscriptionNotification(
 
 async function activateSubscription(
   serviceClient: ReturnType<typeof createClient>,
-  subscription: { id: string; user_id: string; tier: string },
+  subscription: SubscriptionRecord,
   lookupId: string
 ) {
+  await serviceClient
+    .from('subscriptions')
+    .update({
+      status: 'canceled',
+      ends_at: new Date().toISOString(),
+    })
+    .eq('user_id', subscription.user_id)
+    .eq('status', 'active')
+    .neq('id', subscription.id);
+
   const { error } = await serviceClient
     .from('subscriptions')
     .update({
+      provider_sub_id: lookupId,
       status: 'active',
       started_at: new Date().toISOString(),
       ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -136,7 +195,7 @@ async function activateSubscription(
     return;
   }
 
-  console.log('Subscription activated for user:', subscription.user_id, 'tier:', subscription.tier);
+  console.log('Subscription activated for user:', subscription.user_id, 'tier:', subscription.tier, 'lookupId:', lookupId);
 
   try {
     await sendAdminSubscriptionNotification(serviceClient, subscription, lookupId);
@@ -154,12 +213,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log('SellaPay callback received:', JSON.stringify(body));
 
-    const { transaction_id, status, ResultCode, ResultDesc, CheckoutRequestID, reference } = body;
-
-    // Try multiple identifiers to find the subscription
-    const lookupId = transaction_id || CheckoutRequestID || reference;
-
-    if (!lookupId) {
+    const identifiers = getCandidateIdentifiers(body);
+    if (!identifiers.length) {
       console.error('No identifier found in callback body:', JSON.stringify(body));
       return new Response(
         JSON.stringify({ error: 'No transaction identifier found' }),
@@ -172,69 +227,45 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Check if payment was successful (ResultCode 0 = success in M-Pesa)
-    const isSuccess = ResultCode === 0 || ResultCode === '0' || status === 'completed' || status === 'success';
+    const isSuccess = isSuccessfulPayment(body);
 
-    // Try to find the subscription by provider_sub_id
-    const { data: sub } = await serviceClient
-      .from('subscriptions')
-      .select('id, user_id, tier, price, currency')
-      .eq('provider_sub_id', lookupId)
-      .eq('status', 'past_due')
-      .maybeSingle();
+    for (const lookupId of identifiers) {
+      const { data: sub } = await serviceClient
+        .from('subscriptions')
+        .select('id, user_id, tier, price, currency')
+        .eq('provider_sub_id', lookupId)
+        .eq('status', 'past_due')
+        .maybeSingle();
 
-    if (!sub) {
-      console.error('No pending subscription found for identifier:', lookupId);
-      // Try alternate identifiers
-      for (const altId of [transaction_id, CheckoutRequestID, reference].filter(Boolean)) {
-        if (altId === lookupId) continue;
-        const { data: altSub } = await serviceClient
+      if (!sub) {
+        continue;
+      }
+
+      if (isSuccess) {
+        await activateSubscription(serviceClient, sub, lookupId);
+      } else {
+        const { error } = await serviceClient
           .from('subscriptions')
-          .select('id, user_id, tier, price, currency')
-          .eq('provider_sub_id', altId)
-          .eq('status', 'past_due')
-          .maybeSingle();
-        if (altSub) {
-          console.log('Found subscription via alternate ID:', altId);
-          if (isSuccess) {
-            await activateSubscription(serviceClient, altSub, altId);
-          } else {
-            await serviceClient
-              .from('subscriptions')
-              .update({ status: 'canceled' })
-              .eq('id', altSub.id);
-          }
-          return new Response(
-            JSON.stringify({ success: true }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          .update({ status: 'canceled' })
+          .eq('id', sub.id);
+
+        if (error) {
+          console.error('Error canceling subscription:', error);
+        } else {
+          console.log('Subscription canceled for:', sub.user_id, 'Reason:', body?.ResultDesc || body?.message?.ResultDesc || body?.status);
         }
       }
 
       return new Response(
-        JSON.stringify({ error: 'Subscription not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, matched_identifier: lookupId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (isSuccess) {
-      await activateSubscription(serviceClient, sub, lookupId);
-    } else {
-      const { error } = await serviceClient
-        .from('subscriptions')
-        .update({ status: 'canceled' })
-        .eq('id', sub.id);
-
-      if (error) {
-        console.error('Error canceling subscription:', error);
-      } else {
-        console.log('Subscription canceled for:', sub.user_id, 'Reason:', ResultDesc || status);
-      }
-    }
-
+    console.error('No pending subscription found for identifiers:', identifiers.join(', '));
     return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Subscription not found', identifiers }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Callback error:', error);
