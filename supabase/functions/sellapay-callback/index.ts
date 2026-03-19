@@ -31,6 +31,7 @@ function getCandidateIdentifiers(body: any) {
   return Array.from(new Set([
     body?.transaction_id,
     body?.TransactionID,
+    body?.MpesaTransID,
     body?.checkout_request_id,
     body?.CheckoutRequestID,
     body?.reference,
@@ -38,15 +39,76 @@ function getCandidateIdentifiers(body: any) {
     body?.external_reference,
     body?.message?.transaction_id,
     body?.message?.TransactionID,
+    body?.message?.MpesaTransID,
     body?.message?.checkout_request_id,
     body?.message?.CheckoutRequestID,
     body?.message?.reference,
     body?.data?.transaction_id,
     body?.data?.TransactionID,
+    body?.data?.MpesaTransID,
     body?.data?.checkout_request_id,
     body?.data?.CheckoutRequestID,
     body?.data?.reference,
   ].filter(Boolean).map(String)));
+}
+
+function extractPhoneNumber(body: any): string | null {
+  const raw = body?.phone || body?.data?.phone || body?.message?.phone ||
+    body?.MSISDN || body?.data?.MSISDN || body?.message?.MSISDN;
+  if (!raw || typeof raw !== 'string') return null;
+  // Only use unhashed phone numbers (hashed ones are 64+ hex chars)
+  if (/^[a-f0-9]{40,}$/i.test(raw)) return null;
+  // Normalize: strip leading +, 254 prefix → 0-prefixed
+  let phone = raw.replace(/\s+/g, '');
+  if (phone.startsWith('+')) phone = phone.substring(1);
+  if (phone.startsWith('254')) phone = '0' + phone.substring(3);
+  return phone;
+}
+
+async function findSubscriptionByPhone(
+  serviceClient: ReturnType<typeof createClient>,
+  body: any
+): Promise<SubscriptionRecord | null> {
+  const phone = extractPhoneNumber(body);
+  if (!phone) {
+    console.log('No usable phone number found in callback for fallback lookup');
+    return null;
+  }
+  console.log('Attempting phone-based fallback lookup with phone:', phone);
+
+  // Find users with this phone number
+  const phonesToTry = [phone];
+  // Also try without leading 0
+  if (phone.startsWith('0')) phonesToTry.push(phone.substring(1));
+  // Also try with 254 prefix
+  if (phone.startsWith('0')) phonesToTry.push('254' + phone.substring(1));
+  // Also try with +254
+  if (phone.startsWith('0')) phonesToTry.push('+254' + phone.substring(1));
+
+  const { data: profiles } = await serviceClient
+    .from('profiles')
+    .select('user_id, phone')
+    .in('phone', phonesToTry);
+
+  if (!profiles || profiles.length === 0) {
+    console.log('No profiles found for phone numbers:', phonesToTry.join(', '));
+    return null;
+  }
+
+  const userIds = profiles.map(p => p.user_id);
+  console.log('Found user IDs for phone:', userIds.join(', '));
+
+  // Find the most recent past_due subscription for these users
+  const { data: sub } = await serviceClient
+    .from('subscriptions')
+    .select('id, user_id, tier, price, currency')
+    .in('user_id', userIds)
+    .eq('status', 'past_due')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return sub || null;
 }
 
 function isSuccessfulPayment(body: any) {
@@ -293,7 +355,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.error('No pending subscription found for identifiers:', identifiers.join(', '));
+    console.log('No subscription found by identifiers:', identifiers.join(', '), '— trying phone fallback');
+
+    const fallbackSub = await findSubscriptionByPhone(serviceClient, body);
+    if (fallbackSub) {
+      const fallbackLookupId = identifiers[0] || 'phone-fallback';
+      console.log('Phone fallback matched subscription:', fallbackSub.id, 'for user:', fallbackSub.user_id);
+
+      if (isSuccess) {
+        await activateSubscription(serviceClient, fallbackSub, fallbackLookupId);
+      } else {
+        await serviceClient
+          .from('subscriptions')
+          .update({ status: 'canceled' })
+          .eq('id', fallbackSub.id);
+        console.log('Subscription canceled (phone fallback) for:', fallbackSub.user_id);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, matched_by: 'phone_fallback', matched_identifier: fallbackLookupId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.error('No pending subscription found by identifiers or phone fallback');
     return new Response(
       JSON.stringify({ error: 'Subscription not found', identifiers }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
