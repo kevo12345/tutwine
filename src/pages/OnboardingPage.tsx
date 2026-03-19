@@ -57,7 +57,12 @@ export default function OnboardingPage() {
       toast.error("Please upload at least 3 photos"); return;
     }
     if (step < STEPS.length - 1) {
-      setStep(step + 1);
+      const nextStepVal = step + 1;
+      setStep(nextStepVal);
+      // Save progress so user can resume later
+      if (user) {
+        supabase.from("profiles").update({ onboarding_step: nextStepVal } as any).eq("user_id", user.id).then(() => {});
+      }
     } else {
       // Save profile to database
       if (!user) return;

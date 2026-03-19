@@ -20,6 +20,8 @@ interface AdminUser {
   country: string | null;
   tier: string;
   status: string;
+  onboarding_complete: boolean | null;
+  onboarding_step: number | null;
 }
 
 interface AdminReport {
