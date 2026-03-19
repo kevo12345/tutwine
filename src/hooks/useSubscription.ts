@@ -1,12 +1,20 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIER_LIMITS } from "@/lib/constants";
+import { toast } from "sonner";
+
+const TIER_LABELS: Record<string, string> = {
+  basic: "Basic",
+  plus: "Plus",
+  pro: "Pro",
+};
 
 export function useSubscription() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const previousTierRef = useRef<string | null>(null);
 
   const { data: subscription } = useQuery({
     queryKey: ["subscription", user?.id],
@@ -22,6 +30,21 @@ export function useSubscription() {
     },
     enabled: !!user,
   });
+
+  const tier = subscription?.tier ?? "free";
+
+  // Show toast when tier upgrades via realtime
+  useEffect(() => {
+    const prev = previousTierRef.current;
+    if (prev !== null && prev !== tier && tier !== "free") {
+      const label = TIER_LABELS[tier] || tier;
+      toast.success(`🎉 You've been upgraded to ${label}!`, {
+        description: `Your ${label} plan is now active. Enjoy your new features!`,
+        duration: 6000,
+      });
+    }
+    previousTierRef.current = tier;
+  }, [tier]);
 
   // Listen for realtime changes to auto-refresh after payment
   useEffect(() => {
@@ -48,7 +71,6 @@ export function useSubscription() {
     };
   }, [user, queryClient]);
 
-  const tier = subscription?.tier ?? "free";
   const limits = TIER_LIMITS[tier as keyof typeof TIER_LIMITS] ?? TIER_LIMITS.free;
 
   return { subscription, tier, limits };
