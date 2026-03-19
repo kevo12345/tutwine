@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
       currency: 'KES',
       provider: 'sellapay',
       provider_sub_id: providerSubId,
+      payment_phone: cleanPhone,
       started_at: new Date().toISOString(),
       ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
