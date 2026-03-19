@@ -226,6 +226,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           onboarding_complete: boolean | null
+          onboarding_step: number | null
           phone: string | null
           photos: string[] | null
           preferred_age_max: number | null
@@ -254,6 +255,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           onboarding_complete?: boolean | null
+          onboarding_step?: number | null
           phone?: string | null
           photos?: string[] | null
           preferred_age_max?: number | null
@@ -282,6 +284,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           onboarding_complete?: boolean | null
+          onboarding_step?: number | null
           phone?: string | null
           photos?: string[] | null
           preferred_age_max?: number | null
