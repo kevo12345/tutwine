@@ -19,7 +19,8 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, profile: existingProfile, refreshProfile } = useAuth();
   const isEditing = existingProfile?.onboarding_complete === true;
-  const [step, setStep] = useState(0);
+  const initialStep = existingProfile?.onboarding_step ?? 0;
+  const [step, setStep] = useState(initialStep);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
