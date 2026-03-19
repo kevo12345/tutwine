@@ -81,8 +81,7 @@ export default function DiscoverPage() {
       .eq("suspended", false)
       .not("user_id", "in", `(${excludeIds.join(",")})`)
       .not("display_name", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .order("created_at", { ascending: false });
 
     let validProfiles = (data ?? []).filter((p) => p.photos && p.photos.length > 0 && p.display_name);
 
@@ -94,8 +93,7 @@ export default function DiscoverPage() {
         .eq("suspended", false)
         .neq("user_id", user.id)
         .not("display_name", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(50);
+        .order("created_at", { ascending: false });
 
       validProfiles = (allData ?? []).filter((p) => p.photos && p.photos.length > 0 && p.display_name);
     }
