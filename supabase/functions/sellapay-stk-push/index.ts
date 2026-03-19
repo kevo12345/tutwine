@@ -85,6 +85,10 @@ Deno.serve(async (req) => {
 
     const subRef = reference || `SUB-${tier.toUpperCase()}-${userId.slice(0, 8)}-${Date.now()}`;
 
+    // Build callback URL for SellaPay to notify us on payment completion
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback`;
+
     // Initiate STK Push
     const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
       method: 'POST',
@@ -97,6 +101,8 @@ Deno.serve(async (req) => {
         amount: Number(amount),
         reference: subRef,
         description: `TutWine ${tier} subscription`,
+        callbackUrl: callbackUrl,
+        callback_url: callbackUrl,
       }),
     });
 
