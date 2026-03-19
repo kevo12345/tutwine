@@ -76,30 +76,48 @@ async function findSubscriptionByPhone(
   }
   console.log('Attempting phone-based fallback lookup with phone:', phone);
 
-  // Find users with this phone number
+  // Build all phone format variations to match against payment_phone stored during STK push
   const phonesToTry = [phone];
-  // Also try without leading 0
-  if (phone.startsWith('0')) phonesToTry.push(phone.substring(1));
-  // Also try with 254 prefix
-  if (phone.startsWith('0')) phonesToTry.push('254' + phone.substring(1));
-  // Also try with +254
-  if (phone.startsWith('0')) phonesToTry.push('+254' + phone.substring(1));
+  if (phone.startsWith('0')) {
+    phonesToTry.push(phone.substring(1)); // e.g. 723227295
+    phonesToTry.push('254' + phone.substring(1)); // e.g. 254723227295
+    phonesToTry.push('+254' + phone.substring(1)); // e.g. +254723227295
+  } else if (phone.startsWith('254')) {
+    phonesToTry.push('0' + phone.substring(3));
+    phonesToTry.push(phone.substring(3));
+    phonesToTry.push('+' + phone);
+  }
 
+  // First: match by payment_phone stored on the subscription itself (works even if paying phone != profile phone)
+  const { data: sub } = await serviceClient
+    .from('subscriptions')
+    .select('id, user_id, tier, price, currency')
+    .in('payment_phone', phonesToTry)
+    .eq('status', 'past_due')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (sub) {
+    console.log('Matched subscription by payment_phone:', sub.id, 'for user:', sub.user_id);
+    return sub;
+  }
+
+  // Fallback: match by profile phone (legacy support)
   const { data: profiles } = await serviceClient
     .from('profiles')
     .select('user_id, phone')
     .in('phone', phonesToTry);
 
   if (!profiles || profiles.length === 0) {
-    console.log('No profiles found for phone numbers:', phonesToTry.join(', '));
+    console.log('No subscriptions or profiles found for phone numbers:', phonesToTry.join(', '));
     return null;
   }
 
   const userIds = profiles.map(p => p.user_id);
-  console.log('Found user IDs for phone:', userIds.join(', '));
+  console.log('Found user IDs for phone via profile:', userIds.join(', '));
 
-  // Find the most recent past_due subscription for these users
-  const { data: sub } = await serviceClient
+  const { data: profileSub } = await serviceClient
     .from('subscriptions')
     .select('id, user_id, tier, price, currency')
     .in('user_id', userIds)
@@ -108,7 +126,7 @@ async function findSubscriptionByPhone(
     .limit(1)
     .maybeSingle();
 
-  return sub || null;
+  return profileSub || null;
 }
 
 function isSuccessfulPayment(body: any) {
