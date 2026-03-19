@@ -210,8 +210,39 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    console.log('SellaPay callback received:', JSON.stringify(body));
+    let body: any;
+    const contentType = req.headers.get('content-type') || '';
+    const rawText = await req.text();
+    console.log('SellaPay callback raw:', rawText, 'Content-Type:', contentType);
+
+    if (contentType.includes('application/json')) {
+      body = JSON.parse(rawText);
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      const params = new URLSearchParams(rawText);
+      body = Object.fromEntries(params.entries());
+    } else {
+      // Try JSON first, then form-encoded
+      try {
+        body = JSON.parse(rawText);
+      } catch {
+        try {
+          const params = new URLSearchParams(rawText);
+          body = Object.fromEntries(params.entries());
+        } catch {
+          body = {};
+        }
+      }
+    }
+
+    // Also merge any query parameters (some providers send data via URL)
+    const url = new URL(req.url);
+    if (url.searchParams.toString()) {
+      const queryParams = Object.fromEntries(url.searchParams.entries());
+      body = { ...queryParams, ...body };
+      console.log('Merged query params:', JSON.stringify(queryParams));
+    }
+
+    console.log('SellaPay callback parsed:', JSON.stringify(body));
 
     const identifiers = getCandidateIdentifiers(body);
     if (!identifiers.length) {
