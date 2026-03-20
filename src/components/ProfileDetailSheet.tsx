@@ -107,12 +107,14 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
       <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl overflow-y-auto p-0">
         {/* Hero photo */}
         <div className="relative aspect-[4/3] w-full">
-          <img
-            src={profile.photos[0]}
-            alt={profile.displayName}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <button className="w-full h-full" onClick={() => { if (profile.photos.length > 0) { setLightboxIndex(0); setLightboxOpen(true); } }}>
+            <img
+              src={profile.photos[0]}
+              alt={profile.displayName}
+              className="h-full w-full object-cover"
+            />
+          </button>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
 
           {/* Status badge */}
           <div className="absolute top-4 right-4">
