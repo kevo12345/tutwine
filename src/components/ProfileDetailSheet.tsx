@@ -46,6 +46,8 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
   const isFree = tier === "free";
   const [isOnline, setIsOnline] = useState(false);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Fetch presence when sheet opens
   useEffect(() => {
