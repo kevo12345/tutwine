@@ -134,15 +134,29 @@ export default function UserProfilePage() {
     }
     if (!userId || !user) return;
     // Find existing match between the two users
+    const userA = user.id < userId ? user.id : userId;
+    const userB = user.id < userId ? userId : user.id;
     const { data: match } = await supabase
       .from("matches")
       .select("id")
-      .or(`and(user_a.eq.${user.id},user_b.eq.${userId}),and(user_a.eq.${userId},user_b.eq.${user.id})`)
+      .eq("user_a", userA)
+      .eq("user_b", userB)
       .maybeSingle();
     if (match) {
       navigate(`/chat/${match.id}`);
     } else {
-      toast("No match yet", { description: "You need to match with this person before chatting." });
+      // Create a new match so they can chat
+      const { data: newMatch, error } = await supabase
+        .from("matches")
+        .insert({ user_a: userA, user_b: userB })
+        .select("id")
+        .single();
+      if (error) {
+        toast.error("Couldn't start conversation");
+        console.error(error);
+        return;
+      }
+      navigate(`/chat/${newMatch.id}`);
     }
   };
 
