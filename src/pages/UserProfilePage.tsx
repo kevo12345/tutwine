@@ -124,7 +124,7 @@ export default function UserProfilePage() {
     setLightboxOpen(true);
   };
 
-  const handleChat = () => {
+  const handleChat = async () => {
     if (isFree) {
       toast("Chat is a premium feature", {
         description: "Upgrade to start chatting with your matches.",
@@ -132,7 +132,18 @@ export default function UserProfilePage() {
       });
       return;
     }
-    navigate("/chat");
+    if (!userId || !user) return;
+    // Find existing match between the two users
+    const { data: match } = await supabase
+      .from("matches")
+      .select("id")
+      .or(`and(user_a.eq.${user.id},user_b.eq.${userId}),and(user_a.eq.${userId},user_b.eq.${user.id})`)
+      .maybeSingle();
+    if (match) {
+      navigate(`/chat/${match.id}`);
+    } else {
+      toast("No match yet", { description: "You need to match with this person before chatting." });
+    }
   };
 
   return (
