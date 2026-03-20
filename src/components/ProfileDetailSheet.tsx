@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MapPin, BadgeCheck, MessageCircle, Lock, Circle, Heart } from "lucide-react";
