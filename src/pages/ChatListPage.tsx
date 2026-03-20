@@ -133,6 +133,12 @@ export default function ChatListPage() {
       <div className="h-full overflow-y-auto">
         <div className="px-3 pt-3 sm:px-4 sm:pt-4">
           <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
+          {isFree && chats.length > 0 && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2.5 text-sm text-muted-foreground">
+              <Lock className="h-4 w-4 shrink-0" />
+              <span>You can read messages but need to <button onClick={() => navigate("/pricing")} className="font-medium text-primary underline">upgrade</button> to reply.</span>
+            </div>
+          )}
           {chats.length === 0 ? (
             <div className="flex flex-col items-center py-20 text-center">
               <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
