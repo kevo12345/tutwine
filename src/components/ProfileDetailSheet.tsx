@@ -222,6 +222,15 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
           </Button>
         </div>
       </SheetContent>
+
+      {profile.photos.length > 0 && (
+        <PhotoLightbox
+          photos={profile.photos}
+          initialIndex={lightboxIndex}
+          open={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </Sheet>
   );
 }
