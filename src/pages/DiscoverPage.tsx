@@ -465,7 +465,7 @@ export default function DiscoverPage() {
                           }
                         }}
                       >
-                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${profileForCard.user_id}`)} />
+                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
                       </div>
                     </div>
                   </div>
