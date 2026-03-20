@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MapPin, BadgeCheck, MessageCircle, Lock, Circle, Heart } from "lucide-react";
@@ -45,6 +46,8 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
   const isFree = tier === "free";
   const [isOnline, setIsOnline] = useState(false);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Fetch presence when sheet opens
   useEffect(() => {
@@ -104,12 +107,14 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
       <SheetContent side="bottom" className="max-h-[85vh] rounded-t-3xl overflow-y-auto p-0">
         {/* Hero photo */}
         <div className="relative aspect-[4/3] w-full">
-          <img
-            src={profile.photos[0]}
-            alt={profile.displayName}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <button className="w-full h-full" onClick={() => { if (profile.photos.length > 0) { setLightboxIndex(0); setLightboxOpen(true); } }}>
+            <img
+              src={profile.photos[0]}
+              alt={profile.displayName}
+              className="h-full w-full object-cover"
+            />
+          </button>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
 
           {/* Status badge */}
           <div className="absolute top-4 right-4">
@@ -183,9 +188,13 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {profile.photos.slice(1).map((photo, i) => (
-                  <div key={i} className="aspect-square overflow-hidden rounded-xl">
-                    <img src={photo} alt="" className="h-full w-full object-cover" />
-                  </div>
+                  <button
+                    key={i}
+                    onClick={() => { setLightboxIndex(i + 1); setLightboxOpen(true); }}
+                    className="aspect-square overflow-hidden rounded-xl focus:ring-2 focus:ring-primary focus:outline-none"
+                  >
+                    <img src={photo} alt="" className="h-full w-full object-cover hover:scale-105 transition-transform duration-200" />
+                  </button>
                 ))}
               </div>
             </div>
@@ -213,6 +222,15 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
           </Button>
         </div>
       </SheetContent>
+
+      {profile.photos.length > 0 && (
+        <PhotoLightbox
+          photos={profile.photos}
+          initialIndex={lightboxIndex}
+          open={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </Sheet>
   );
 }
