@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, MoreVertical, Shield, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Shield, Flag, Loader2, Lock } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -20,12 +20,24 @@ export default function ChatThreadPage() {
   const { matchId } = useParams();
   const { user } = useAuth();
   const { tier } = useSubscription();
+  const isFree = tier === "free";
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [otherProfile, setOtherProfile] = useState<Tables<"profiles"> | null>(null);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showProfile, setShowProfile] = useState(false);
+
+  // Mark unread messages as read
+  const markMessagesAsRead = async () => {
+    if (!matchId || !user) return;
+    await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("match_id", matchId)
+      .neq("sender_id", user.id)
+      .is("read_at", null);
+  };
 
   useEffect(() => {
     if (!matchId || !user) return;
@@ -55,6 +67,9 @@ export default function ChatThreadPage() {
         .order("created_at", { ascending: true });
       setMessages(msgs ?? []);
       setLoading(false);
+
+      // Mark messages as read when opening the thread
+      await markMessagesAsRead();
     };
     loadData();
 
@@ -72,12 +87,21 @@ export default function ChatThreadPage() {
     return () => { supabase.removeChannel(channel); };
   }, [matchId, user, navigate]);
 
+  // Mark new incoming messages as read when they arrive
+  useEffect(() => {
+    if (!messages.length || !user || !matchId) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.sender_id !== user.id && !lastMsg.read_at) {
+      markMessagesAsRead();
+    }
+  }, [messages.length]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!newMsg.trim() || !user || !matchId) return;
+    if (!newMsg.trim() || !user || !matchId || isFree) return;
     const content = newMsg.trim();
     setNewMsg("");
 
@@ -117,11 +141,6 @@ export default function ChatThreadPage() {
     );
   }
 
-  if (tier === "free") {
-    navigate("/chat");
-    return null;
-  }
-
   return (
     <div className="flex h-[100dvh] flex-col bg-background lg:items-center lg:justify-center lg:p-8">
       <div className="flex h-full w-full flex-col lg:h-[calc(100dvh-4rem)] lg:max-w-2xl lg:rounded-2xl lg:border lg:border-border lg:shadow-card lg:overflow-hidden">
@@ -140,7 +159,7 @@ export default function ChatThreadPage() {
               <p className="text-[10px] sm:text-xs text-muted-foreground">Active now</p>
             </div>
           </button>
-          <VideoCall matchId={matchId!} />
+          {!isFree && <VideoCall matchId={matchId!} />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -184,23 +203,37 @@ export default function ChatThreadPage() {
 
         {/* Input - with safe area for mobile */}
         <div className="border-t border-border bg-card px-2 py-2 sm:p-3 shrink-0 lg:rounded-b-2xl" style={{ paddingBottom: `max(0.5rem, env(safe-area-inset-bottom, 0px))` }}>
-          <div className="flex gap-1.5 sm:gap-2">
-            <Input
-              placeholder="Type a message..."
-              value={newMsg}
-              onChange={(e) => setNewMsg(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              className="rounded-full text-sm h-9 sm:h-10"
-            />
-            <Button
-              size="icon"
-              className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground h-9 w-9 sm:h-10 sm:w-10"
-              onClick={sendMessage}
-              disabled={!newMsg.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+          {isFree ? (
+            <div className="flex items-center justify-center gap-2 py-1">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Upgrade to reply</span>
+              <Button
+                size="sm"
+                className="gradient-warm border-0 text-primary-foreground ml-2"
+                onClick={() => navigate("/pricing")}
+              >
+                Upgrade
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-1.5 sm:gap-2">
+              <Input
+                placeholder="Type a message..."
+                value={newMsg}
+                onChange={(e) => setNewMsg(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                className="rounded-full text-sm h-9 sm:h-10"
+              />
+              <Button
+                size="icon"
+                className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground h-9 w-9 sm:h-10 sm:w-10"
+                onClick={sendMessage}
+                disabled={!newMsg.trim()}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
