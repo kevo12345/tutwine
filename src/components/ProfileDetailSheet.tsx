@@ -188,9 +188,13 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {profile.photos.slice(1).map((photo, i) => (
-                  <div key={i} className="aspect-square overflow-hidden rounded-xl">
-                    <img src={photo} alt="" className="h-full w-full object-cover" />
-                  </div>
+                  <button
+                    key={i}
+                    onClick={() => { setLightboxIndex(i + 1); setLightboxOpen(true); }}
+                    className="aspect-square overflow-hidden rounded-xl focus:ring-2 focus:ring-primary focus:outline-none"
+                  >
+                    <img src={photo} alt="" className="h-full w-full object-cover hover:scale-105 transition-transform duration-200" />
+                  </button>
                 ))}
               </div>
             </div>
