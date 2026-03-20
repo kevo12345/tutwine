@@ -9,6 +9,7 @@ const APP_NAME = 'TutWine';
 const ADMIN_NOTIFICATION_EMAIL = 'payment@tutwine.com';
 const ADMIN_NOTIFICATION_FROM = 'TutWine Billing <billing@mg.lovable.app>';
 const ADMIN_NOTIFICATION_SUBJECT = 'New subscription activated';
+const RECENT_PENDING_LOOKUP_WINDOW_MINUTES = 20;
 
 type SubscriptionRecord = {
   id: string;
@@ -16,6 +17,7 @@ type SubscriptionRecord = {
   tier: string;
   price?: number | string | null;
   currency?: string | null;
+  created_at?: string | null;
 };
 
 function escapeHtml(value: string) {
@@ -56,13 +58,18 @@ function extractPhoneNumber(body: any): string | null {
   const raw = body?.phone || body?.data?.phone || body?.message?.phone ||
     body?.MSISDN || body?.data?.MSISDN || body?.message?.MSISDN;
   if (!raw || typeof raw !== 'string') return null;
-  // Only use unhashed phone numbers (hashed ones are 64+ hex chars)
   if (/^[a-f0-9]{40,}$/i.test(raw)) return null;
-  // Normalize: strip leading +, 254 prefix → 0-prefixed
+
   let phone = raw.replace(/\s+/g, '');
   if (phone.startsWith('+')) phone = phone.substring(1);
   if (phone.startsWith('254')) phone = '0' + phone.substring(3);
   return phone;
+}
+
+function extractPaidAmount(body: any): number | null {
+  const rawAmount = body?.amount ?? body?.data?.amount ?? body?.message?.amount;
+  const amount = Number(rawAmount);
+  return Number.isFinite(amount) ? amount : null;
 }
 
 async function findSubscriptionByPhone(
@@ -76,22 +83,20 @@ async function findSubscriptionByPhone(
   }
   console.log('Attempting phone-based fallback lookup with phone:', phone);
 
-  // Build all phone format variations to match against payment_phone stored during STK push
   const phonesToTry = [phone];
   if (phone.startsWith('0')) {
-    phonesToTry.push(phone.substring(1)); // e.g. 723227295
-    phonesToTry.push('254' + phone.substring(1)); // e.g. 254723227295
-    phonesToTry.push('+254' + phone.substring(1)); // e.g. +254723227295
+    phonesToTry.push(phone.substring(1));
+    phonesToTry.push('254' + phone.substring(1));
+    phonesToTry.push('+254' + phone.substring(1));
   } else if (phone.startsWith('254')) {
     phonesToTry.push('0' + phone.substring(3));
     phonesToTry.push(phone.substring(3));
     phonesToTry.push('+' + phone);
   }
 
-  // First: match by payment_phone stored on the subscription itself (works even if paying phone != profile phone)
   const { data: sub } = await serviceClient
     .from('subscriptions')
-    .select('id, user_id, tier, price, currency')
+    .select('id, user_id, tier, price, currency, created_at')
     .in('payment_phone', phonesToTry)
     .eq('status', 'past_due')
     .order('created_at', { ascending: false })
@@ -103,7 +108,6 @@ async function findSubscriptionByPhone(
     return sub;
   }
 
-  // Fallback: match by profile phone (legacy support)
   const { data: profiles } = await serviceClient
     .from('profiles')
     .select('user_id, phone')
@@ -114,12 +118,12 @@ async function findSubscriptionByPhone(
     return null;
   }
 
-  const userIds = profiles.map(p => p.user_id);
+  const userIds = profiles.map((p) => p.user_id);
   console.log('Found user IDs for phone via profile:', userIds.join(', '));
 
   const { data: profileSub } = await serviceClient
     .from('subscriptions')
-    .select('id, user_id, tier, price, currency')
+    .select('id, user_id, tier, price, currency, created_at')
     .in('user_id', userIds)
     .eq('status', 'past_due')
     .order('created_at', { ascending: false })
@@ -127,6 +131,52 @@ async function findSubscriptionByPhone(
     .maybeSingle();
 
   return profileSub || null;
+}
+
+async function findRecentPendingSubscriptionByAmount(
+  serviceClient: ReturnType<typeof createClient>,
+  body: any
+): Promise<SubscriptionRecord | null> {
+  const amount = extractPaidAmount(body);
+  if (amount === null) {
+    console.log('No usable payment amount found for recent pending fallback');
+    return null;
+  }
+
+  const windowStart = new Date(Date.now() - RECENT_PENDING_LOOKUP_WINDOW_MINUTES * 60 * 1000).toISOString();
+
+  const { data: candidates, error } = await serviceClient
+    .from('subscriptions')
+    .select('id, user_id, tier, price, currency, created_at')
+    .eq('status', 'past_due')
+    .eq('provider', 'sellapay')
+    .eq('price', amount)
+    .gte('created_at', windowStart)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error('Recent pending fallback query failed:', error);
+    return null;
+  }
+
+  if (!candidates || candidates.length === 0) {
+    console.log('No recent pending subscriptions found for amount fallback:', amount);
+    return null;
+  }
+
+  if (candidates.length > 1) {
+    console.log(
+      'Recent amount fallback ambiguous for amount:',
+      amount,
+      'candidate subscription IDs:',
+      candidates.map((candidate) => candidate.id).join(', ')
+    );
+    return null;
+  }
+
+  console.log('Matched subscription by recent amount fallback:', candidates[0].id, 'for user:', candidates[0].user_id);
+  return candidates[0];
 }
 
 function isSuccessfulPayment(body: any) {
@@ -248,7 +298,8 @@ async function sendAdminSubscriptionNotification(
 async function activateSubscription(
   serviceClient: ReturnType<typeof createClient>,
   subscription: SubscriptionRecord,
-  lookupId: string
+  lookupId: string,
+  paymentPhone?: string | null
 ) {
   await serviceClient
     .from('subscriptions')
@@ -260,14 +311,20 @@ async function activateSubscription(
     .eq('status', 'active')
     .neq('id', subscription.id);
 
+  const updatePayload: Record<string, unknown> = {
+    provider_sub_id: lookupId,
+    status: 'active',
+    started_at: new Date().toISOString(),
+    ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+
+  if (paymentPhone) {
+    updatePayload.payment_phone = paymentPhone;
+  }
+
   const { error } = await serviceClient
     .from('subscriptions')
-    .update({
-      provider_sub_id: lookupId,
-      status: 'active',
-      started_at: new Date().toISOString(),
-      ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', subscription.id);
 
   if (error) {
@@ -301,7 +358,6 @@ Deno.serve(async (req) => {
       const params = new URLSearchParams(rawText);
       body = Object.fromEntries(params.entries());
     } else {
-      // Try JSON first, then form-encoded
       try {
         body = JSON.parse(rawText);
       } catch {
@@ -314,7 +370,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Also merge any query parameters (some providers send data via URL)
     const url = new URL(req.url);
     if (url.searchParams.toString()) {
       const queryParams = Object.fromEntries(url.searchParams.entries());
@@ -339,11 +394,12 @@ Deno.serve(async (req) => {
     );
 
     const isSuccess = isSuccessfulPayment(body);
+    const callbackPhone = extractPhoneNumber(body);
 
     for (const lookupId of identifiers) {
       const { data: sub } = await serviceClient
         .from('subscriptions')
-        .select('id, user_id, tier, price, currency')
+        .select('id, user_id, tier, price, currency, created_at')
         .eq('provider_sub_id', lookupId)
         .eq('status', 'past_due')
         .maybeSingle();
@@ -353,7 +409,7 @@ Deno.serve(async (req) => {
       }
 
       if (isSuccess) {
-        await activateSubscription(serviceClient, sub, lookupId);
+        await activateSubscription(serviceClient, sub, lookupId, callbackPhone);
       } else {
         const { error } = await serviceClient
           .from('subscriptions')
@@ -381,7 +437,7 @@ Deno.serve(async (req) => {
       console.log('Phone fallback matched subscription:', fallbackSub.id, 'for user:', fallbackSub.user_id);
 
       if (isSuccess) {
-        await activateSubscription(serviceClient, fallbackSub, fallbackLookupId);
+        await activateSubscription(serviceClient, fallbackSub, fallbackLookupId, callbackPhone);
       } else {
         await serviceClient
           .from('subscriptions')
@@ -396,7 +452,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.error('No pending subscription found by identifiers or phone fallback');
+    console.log('Phone fallback failed — trying recent pending amount fallback');
+
+    const recentPendingSub = await findRecentPendingSubscriptionByAmount(serviceClient, body);
+    if (recentPendingSub) {
+      const fallbackLookupId = identifiers[0] || 'recent-amount-fallback';
+      console.log('Recent pending amount fallback matched subscription:', recentPendingSub.id, 'for user:', recentPendingSub.user_id);
+
+      if (isSuccess) {
+        await activateSubscription(serviceClient, recentPendingSub, fallbackLookupId, callbackPhone);
+      } else {
+        await serviceClient
+          .from('subscriptions')
+          .update({ status: 'canceled' })
+          .eq('id', recentPendingSub.id);
+        console.log('Subscription canceled (recent amount fallback) for:', recentPendingSub.user_id);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, matched_by: 'recent_amount_fallback', matched_identifier: fallbackLookupId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.error('No pending subscription found by identifiers, phone fallback, or recent amount fallback');
     return new Response(
       JSON.stringify({ error: 'Subscription not found', identifiers }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
