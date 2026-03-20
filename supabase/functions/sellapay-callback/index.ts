@@ -10,11 +10,13 @@ const ADMIN_NOTIFICATION_EMAIL = 'payment@tutwine.com';
 const ADMIN_NOTIFICATION_FROM = 'TutWine Billing <billing@mg.lovable.app>';
 const ADMIN_NOTIFICATION_SUBJECT = 'New subscription activated';
 const RECENT_PENDING_LOOKUP_WINDOW_MINUTES = 20;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type SubscriptionRecord = {
   id: string;
   user_id: string;
   tier: string;
+  status?: string | null;
   price?: number | string | null;
   currency?: string | null;
   created_at?: string | null;
@@ -27,6 +29,24 @@ function escapeHtml(value: string) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
+function getCandidateSubscriptionIds(body: any) {
+  return Array.from(new Set([
+    body?.subscription_id,
+    body?.subscriptionId,
+    body?.message?.subscription_id,
+    body?.message?.subscriptionId,
+    body?.data?.subscription_id,
+    body?.data?.subscriptionId,
+    body?.reference,
+    body?.message?.reference,
+    body?.data?.reference,
+  ].filter(isUuid)));
 }
 
 function getCandidateIdentifiers(body: any) {
@@ -96,7 +116,7 @@ async function findSubscriptionByPhone(
 
   const { data: sub } = await serviceClient
     .from('subscriptions')
-    .select('id, user_id, tier, price, currency, created_at')
+    .select('id, user_id, tier, status, price, currency, created_at')
     .in('payment_phone', phonesToTry)
     .eq('status', 'past_due')
     .order('created_at', { ascending: false })
@@ -123,7 +143,7 @@ async function findSubscriptionByPhone(
 
   const { data: profileSub } = await serviceClient
     .from('subscriptions')
-    .select('id, user_id, tier, price, currency, created_at')
+    .select('id, user_id, tier, status, price, currency, created_at')
     .in('user_id', userIds)
     .eq('status', 'past_due')
     .order('created_at', { ascending: false })
@@ -147,7 +167,7 @@ async function findRecentPendingSubscriptionByAmount(
 
   const { data: candidates, error } = await serviceClient
     .from('subscriptions')
-    .select('id, user_id, tier, price, currency, created_at')
+    .select('id, user_id, tier, status, price, currency, created_at')
     .eq('status', 'past_due')
     .eq('provider', 'sellapay')
     .eq('price', amount)
@@ -379,8 +399,9 @@ Deno.serve(async (req) => {
 
     console.log('SellaPay callback parsed:', JSON.stringify(body));
 
+    const subscriptionIds = getCandidateSubscriptionIds(body);
     const identifiers = getCandidateIdentifiers(body);
-    if (!identifiers.length) {
+    if (!subscriptionIds.length && !identifiers.length) {
       console.error('No identifier found in callback body:', JSON.stringify(body));
       return new Response(
         JSON.stringify({ error: 'No transaction identifier found' }),
@@ -396,10 +417,52 @@ Deno.serve(async (req) => {
     const isSuccess = isSuccessfulPayment(body);
     const callbackPhone = extractPhoneNumber(body);
 
+    for (const subscriptionId of subscriptionIds) {
+      const { data: sub } = await serviceClient
+        .from('subscriptions')
+        .select('id, user_id, tier, status, price, currency, created_at')
+        .eq('id', subscriptionId)
+        .maybeSingle();
+
+      if (!sub) {
+        continue;
+      }
+
+      const directLookupId = identifiers[0] || subscriptionId;
+
+      if (sub.status === 'active') {
+        console.log('Subscription already active for direct callback match:', sub.id);
+        return new Response(
+          JSON.stringify({ success: true, matched_by: 'subscription_id', matched_identifier: directLookupId, already_processed: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (sub.status !== 'past_due') {
+        console.log('Subscription found by direct callback match but not pending:', sub.id, 'status:', sub.status);
+        continue;
+      }
+
+      if (isSuccess) {
+        await activateSubscription(serviceClient, sub, directLookupId, callbackPhone);
+      } else {
+        await serviceClient
+          .from('subscriptions')
+          .update({ status: 'canceled' })
+          .eq('id', sub.id);
+        console.log('Subscription canceled for:', sub.user_id, 'matched by direct subscription id');
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, matched_by: 'subscription_id', matched_identifier: directLookupId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     for (const lookupId of identifiers) {
       const { data: sub } = await serviceClient
         .from('subscriptions')
-        .select('id, user_id, tier, price, currency, created_at')
+        .select('id, user_id, tier, status, price, currency, created_at')
         .eq('provider_sub_id', lookupId)
         .eq('status', 'past_due')
         .maybeSingle();
@@ -433,7 +496,7 @@ Deno.serve(async (req) => {
 
     const fallbackSub = await findSubscriptionByPhone(serviceClient, body);
     if (fallbackSub) {
-      const fallbackLookupId = identifiers[0] || 'phone-fallback';
+      const fallbackLookupId = identifiers[0] || fallbackSub.id || 'phone-fallback';
       console.log('Phone fallback matched subscription:', fallbackSub.id, 'for user:', fallbackSub.user_id);
 
       if (isSuccess) {
@@ -456,7 +519,7 @@ Deno.serve(async (req) => {
 
     const recentPendingSub = await findRecentPendingSubscriptionByAmount(serviceClient, body);
     if (recentPendingSub) {
-      const fallbackLookupId = identifiers[0] || 'recent-amount-fallback';
+      const fallbackLookupId = identifiers[0] || recentPendingSub.id || 'recent-amount-fallback';
       console.log('Recent pending amount fallback matched subscription:', recentPendingSub.id, 'for user:', recentPendingSub.user_id);
 
       if (isSuccess) {
@@ -475,9 +538,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.error('No pending subscription found by identifiers, phone fallback, or recent amount fallback');
+    console.error('No pending subscription found by subscription id, identifiers, phone fallback, or recent amount fallback');
     return new Response(
-      JSON.stringify({ error: 'Subscription not found', identifiers }),
+      JSON.stringify({ error: 'Subscription not found', subscriptionIds, identifiers }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {

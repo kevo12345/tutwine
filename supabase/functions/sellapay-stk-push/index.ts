@@ -55,6 +55,12 @@ function extractProviderSubscriptionId(stkData: any, fallbackReference: string) 
   );
 }
 
+function buildCallbackUrl(supabaseUrl: string, subscriptionId: string) {
+  const callbackUrl = new URL(`${supabaseUrl}/functions/v1/sellapay-callback`);
+  callbackUrl.searchParams.set('subscription_id', subscriptionId);
+  return callbackUrl.toString();
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -85,7 +91,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-    const { phone, amount, tier, reference } = await req.json();
+    const { phone, amount, tier } = await req.json();
 
     if (!phone || !amount || !tier) {
       return new Response(
@@ -96,10 +102,45 @@ Deno.serve(async (req) => {
 
     const cleanPhone = cleanKenyanPhoneNumber(phone);
     const sellapayToken = await getSellapayToken();
-    const subRef = reference || `SUB-${tier.toUpperCase()}-${userId.slice(0, 8)}-${Date.now()}`;
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
+    await serviceClient
+      .from('subscriptions')
+      .update({ status: 'canceled' })
+      .eq('user_id', userId)
+      .eq('status', 'past_due');
+
+    const pendingEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: pendingSubscription, error: pendingSubscriptionError } = await serviceClient
+      .from('subscriptions')
+      .insert({
+        user_id: userId,
+        tier,
+        status: 'past_due',
+        price: Number(amount),
+        currency: 'KES',
+        provider: 'sellapay',
+        payment_phone: cleanPhone,
+        started_at: new Date().toISOString(),
+        ends_at: pendingEndsAt,
+      })
+      .select('id')
+      .single();
+
+    if (pendingSubscriptionError || !pendingSubscription) {
+      console.error('Pending subscription insert error:', pendingSubscriptionError);
+      return new Response(
+        JSON.stringify({ error: 'Could not create pending subscription' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const subRef = pendingSubscription.id;
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback`;
+    const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
     const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
       method: 'POST',
@@ -122,46 +163,33 @@ Deno.serve(async (req) => {
 
     if (!stkRes.ok) {
       console.error('STK Push failed:', stkData);
+      await serviceClient
+        .from('subscriptions')
+        .update({ status: 'canceled' })
+        .eq('id', pendingSubscription.id);
+
       return new Response(
         JSON.stringify({ error: 'STK push failed', details: stkData }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    await serviceClient
-      .from('subscriptions')
-      .update({ status: 'canceled' })
-      .eq('user_id', userId)
-      .eq('status', 'past_due');
-
     const providerSubId = extractProviderSubscriptionId(stkData, subRef);
 
-    const { error: subError } = await serviceClient.from('subscriptions').insert({
-      user_id: userId,
-      tier,
-      status: 'past_due',
-      price: Number(amount),
-      currency: 'KES',
-      provider: 'sellapay',
-      provider_sub_id: providerSubId,
-      payment_phone: cleanPhone,
-      started_at: new Date().toISOString(),
-      ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    const { error: subError } = await serviceClient
+      .from('subscriptions')
+      .update({ provider_sub_id: providerSubId })
+      .eq('id', pendingSubscription.id);
 
     if (subError) {
-      console.error('Subscription insert error:', subError);
+      console.error('Subscription update error:', subError);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'STK push sent! Check your phone for the M-Pesa prompt.',
+        subscription_id: pendingSubscription.id,
         transaction_id: providerSubId,
         reference: subRef,
         status: stkData?.status ?? stkData?.message?.ResponseDescription ?? 'pending',
