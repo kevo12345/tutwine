@@ -153,7 +153,7 @@ export default function PricingPage() {
                       <CardTitle className="font-display text-lg">{info.label}</CardTitle>
                       <CardDescription>
                         <span className="text-2xl font-display font-bold text-foreground">KES {kesPrice}</span>
-                        <span className="text-muted-foreground">/mo</span>
+                        <span className="text-muted-foreground">/{tier.duration ? "2 wks" : "mo"}</span>
                       </CardDescription>
                     </div>
                   </div>
