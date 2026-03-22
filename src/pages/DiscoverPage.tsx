@@ -224,6 +224,13 @@ export default function DiscoverPage() {
       return;
     }
 
+    // Show like popup animation
+    if (action === "like") {
+      setLikedName(swipedProfile.display_name ?? "Someone");
+      setShowLikePopup(true);
+      setTimeout(() => setShowLikePopup(false), 1200);
+    }
+
     pendingSwipeIdsRef.current.add(swipedProfile.user_id);
     activePointerId.current = null;
     hasDraggedRef.current = false;
