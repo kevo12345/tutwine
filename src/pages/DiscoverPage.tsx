@@ -55,6 +55,8 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [viewProfile, setViewProfile] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showLikePopup, setShowLikePopup] = useState(false);
+  const [likedName, setLikedName] = useState("");
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [filters, setFilters] = useState<DiscoverFilters>(DEFAULT_FILTERS);
   const pendingSwipeIdsRef = useRef<Set<string>>(new Set());
