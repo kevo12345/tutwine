@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, ArrowLeft, Crown, Zap, Star, Loader2, Phone } from "lucide-react";
+import { Check, ArrowLeft, Crown, Zap, Star, Heart, Loader2, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TIER_PRICES } from "@/lib/constants";
 import { toast } from "sonner";

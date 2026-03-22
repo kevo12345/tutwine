@@ -1,5 +1,6 @@
 export const TIER_LIMITS = {
   free: { profileViews: Infinity, likes: Infinity, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: false },
+  simp: { profileViews: Infinity, likes: Infinity, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: true },
   basic: { profileViews: Infinity, likes: Infinity, boosts: 0, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: false, adFree: true },
   plus: { profileViews: Infinity, likes: Infinity, boosts: 1, seeWhoLiked: false, superLike: false, undoSwipe: false, readReceipts: false, videoChat: false, priorityDiscovery: false, advancedFilters: true, adFree: true },
   pro: { profileViews: Infinity, likes: Infinity, boosts: 7, seeWhoLiked: true, superLike: true, undoSwipe: true, readReceipts: true, videoChat: true, priorityDiscovery: true, advancedFilters: true, adFree: true },
@@ -8,6 +9,7 @@ export const TIER_LIMITS = {
 export type Tier = keyof typeof TIER_LIMITS;
 
 export const TIER_PRICES = {
+  simp: { usd: 1.5, label: "Simp" },
   basic: { usd: 3, label: "Basic" },
   plus: { usd: 5, label: "Plus" },
   pro: { usd: 10, label: "Pro" },
