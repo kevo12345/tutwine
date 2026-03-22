@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
