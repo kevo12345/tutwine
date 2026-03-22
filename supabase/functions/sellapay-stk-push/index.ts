@@ -113,7 +113,8 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .eq('status', 'past_due');
 
-    const pendingEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const durationDays = tier === 'simp' ? 14 : 30;
+    const pendingEndsAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
     const { data: pendingSubscription, error: pendingSubscriptionError } = await serviceClient
       .from('subscriptions')
       .insert({

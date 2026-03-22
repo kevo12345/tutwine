@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, ArrowLeft, Crown, Zap, Star, Loader2, Phone } from "lucide-react";
+import { Check, ArrowLeft, Crown, Zap, Star, Heart, Loader2, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TIER_PRICES } from "@/lib/constants";
 import { toast } from "sonner";
@@ -20,6 +20,13 @@ import {
 } from "@/components/ui/dialog";
 
 const tiers = [
+  {
+    key: "simp" as const,
+    icon: Heart,
+    features: ["100 profile views/day", "50 likes/day", "Standard filters", "Ad-free experience", "2 weeks only"],
+    color: "bg-pink-500/10 text-pink-500",
+    duration: "2 weeks",
+  },
   {
     key: "basic" as const,
     icon: Zap,
@@ -42,6 +49,7 @@ const tiers = [
 ];
 
 const KES_PRICES: Record<string, number> = {
+  simp: 200,
   basic: 400,
   plus: 650,
   pro: 1300,
@@ -121,7 +129,7 @@ export default function PricingPage() {
           <p className="mt-2 text-sm opacity-90">Get more matches, see who likes you, and stand out.</p>
         </div>
 
-        <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
+        <div className="space-y-4 lg:grid lg:grid-cols-4 lg:gap-4 lg:space-y-0">
           {tiers.map((tier) => {
             const info = TIER_PRICES[tier.key];
             const kesPrice = KES_PRICES[tier.key];
@@ -145,7 +153,7 @@ export default function PricingPage() {
                       <CardTitle className="font-display text-lg">{info.label}</CardTitle>
                       <CardDescription>
                         <span className="text-2xl font-display font-bold text-foreground">KES {kesPrice}</span>
-                        <span className="text-muted-foreground">/mo</span>
+                        <span className="text-muted-foreground">/{tier.duration ? "2 wks" : "mo"}</span>
                       </CardDescription>
                     </div>
                   </div>

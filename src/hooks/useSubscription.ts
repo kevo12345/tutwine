@@ -6,6 +6,7 @@ import { TIER_LIMITS } from "@/lib/constants";
 import { toast } from "sonner";
 
 const TIER_LABELS: Record<string, string> = {
+  simp: "Simp",
   basic: "Basic",
   plus: "Plus",
   pro: "Pro",
