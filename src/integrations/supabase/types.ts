@@ -605,7 +605,7 @@ export type Database = {
       message_type: "text" | "emoji" | "image"
       report_status: "pending" | "reviewed" | "resolved" | "dismissed"
       subscription_status: "active" | "canceled" | "expired" | "past_due"
-      subscription_tier: "free" | "basic" | "plus" | "pro"
+      subscription_tier: "free" | "basic" | "plus" | "pro" | "simp"
       swipe_action: "like" | "pass"
     }
     CompositeTypes: {
@@ -739,7 +739,7 @@ export const Constants = {
       message_type: ["text", "emoji", "image"],
       report_status: ["pending", "reviewed", "resolved", "dismissed"],
       subscription_status: ["active", "canceled", "expired", "past_due"],
-      subscription_tier: ["free", "basic", "plus", "pro"],
+      subscription_tier: ["free", "basic", "plus", "pro", "simp"],
       swipe_action: ["like", "pass"],
     },
   },
