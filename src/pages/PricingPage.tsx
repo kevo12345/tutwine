@@ -21,6 +21,13 @@ import {
 
 const tiers = [
   {
+    key: "simp" as const,
+    icon: Heart,
+    features: ["100 profile views/day", "50 likes/day", "Standard filters", "Ad-free experience", "2 weeks only"],
+    color: "bg-pink-500/10 text-pink-500",
+    duration: "2 weeks",
+  },
+  {
     key: "basic" as const,
     icon: Zap,
     features: ["100 profile views/day", "50 likes/day", "Standard filters", "Ad-free experience"],
@@ -42,6 +49,7 @@ const tiers = [
 ];
 
 const KES_PRICES: Record<string, number> = {
+  simp: 200,
   basic: 400,
   plus: 650,
   pro: 1300,
