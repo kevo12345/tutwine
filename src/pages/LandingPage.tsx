@@ -281,7 +281,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl">
           <h2 id="pricing-heading" className="text-center font-display text-3xl font-bold sm:text-4xl">Invest in your love life</h2>
           <p className="mt-3 text-center text-muted-foreground">Start free. Upgrade when you're ready for more matches.</p>
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {tiers.map((tier) => {
               const info = TIER_PRICES[tier.key];
               return (
@@ -295,7 +295,7 @@ export default function LandingPage() {
                     <CardTitle className="font-display">{info.label}</CardTitle>
                     <CardDescription>
                       <span className="text-3xl font-display font-bold text-foreground">${info.usd}</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-muted-foreground">{tier.key === "simp" ? "/2 wks" : "/month"}</span>
                       {tier.key === "plus" && (
                         <span className="ml-2 text-xs text-success font-medium">Best value</span>
                       )}
