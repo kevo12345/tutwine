@@ -53,14 +53,16 @@ export default function UserProfilePage() {
     if (!userId) return;
 
     const load = async () => {
-      const [{ data: profileData }, { count }, presence] = await Promise.all([
+      const [{ data: profileData }, { count }, presence, { data: subData }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).single(),
         supabase.from("swipes").select("*", { count: "exact", head: true }).eq("target_id", userId).eq("action", "like"),
         fetchUserPresence(userId),
+        supabase.from("subscriptions").select("tier").eq("user_id", userId).eq("status", "active").maybeSingle(),
       ]);
 
       setProfile(profileData);
       setLikesCount(count ?? 0);
+      setUserTier(subData?.tier ?? null);
       setIsOnline(presence.isOnline);
       setLastSeen(presence.lastSeen);
       setLoading(false);
