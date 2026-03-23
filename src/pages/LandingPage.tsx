@@ -17,6 +17,11 @@ const features = [
 
 const tiers = [
   {
+    key: "simp" as const,
+    features: ["100 profile views/day", "50 likes/day", "Standard filters", "Ad-free experience", "2 weeks only"],
+    popular: false,
+  },
+  {
     key: "basic" as const,
     features: ["100 profile views/day", "50 likes/day", "Standard filters", "Ad-free experience"],
     popular: false,
