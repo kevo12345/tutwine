@@ -5,7 +5,7 @@ import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, X, MessageCircle, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, X, MessageCircle, Lock, Loader2, Crown, Zap, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -14,6 +14,13 @@ import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
+
+const TIER_CONFIG: Record<string, { label: string; icon: typeof Crown; className: string }> = {
+  simp: { label: "Simp", icon: Heart, className: "bg-pink-500/15 text-pink-500 border-pink-500/30" },
+  basic: { label: "Basic", icon: Zap, className: "bg-info/15 text-info border-info/30" },
+  plus: { label: "Plus", icon: Crown, className: "bg-primary/15 text-primary border-primary/30" },
+  pro: { label: "Pro", icon: Star, className: "bg-accent/15 text-accent border-accent/30" },
+};
 
 function formatLastSeen(lastSeen: string | null): string {
   if (!lastSeen) return "";
