@@ -47,6 +47,7 @@ export default function UserProfilePage() {
   const [lastSeen, setLastSeen] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [userTier, setUserTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
