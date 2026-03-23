@@ -210,11 +210,21 @@ export default function UserProfilePage() {
 
         <div className="px-5 -mt-8 relative">
           {/* Name, age, verified */}
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h1 className="font-display text-2xl font-bold">
               {profile.display_name}{age ? `, ${age}` : ""}
             </h1>
             {profile.verified && <BadgeCheck className="h-5 w-5 text-info" />}
+            {userTier && TIER_CONFIG[userTier] && (() => {
+              const config = TIER_CONFIG[userTier];
+              const Icon = config.icon;
+              return (
+                <Badge className={`gap-1 text-xs border ${config.className}`}>
+                  <Icon className="h-3 w-3" />
+                  {config.label}
+                </Badge>
+              );
+            })()}
             {likesCount > 0 && (
               <Badge className="gap-1 text-xs bg-primary/80 text-primary-foreground border-0 ml-1">
                 <Heart className="h-3 w-3 fill-current" />
