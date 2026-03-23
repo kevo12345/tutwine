@@ -335,7 +335,7 @@ async function activateSubscription(
     provider_sub_id: lookupId,
     status: 'active',
     started_at: new Date().toISOString(),
-    ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    ends_at: new Date(Date.now() + (subscription.tier === 'simp' ? 14 : 30) * 24 * 60 * 60 * 1000).toISOString(),
   };
 
   if (paymentPhone) {
