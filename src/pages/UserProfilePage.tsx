@@ -5,7 +5,7 @@ import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, X, MessageCircle, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, MapPin, Circle, Heart, X, MessageCircle, Lock, Loader2, Crown, Zap, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -14,6 +14,13 @@ import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
+
+const TIER_CONFIG: Record<string, { label: string; icon: typeof Crown; className: string }> = {
+  simp: { label: "Simp", icon: Heart, className: "bg-pink-500/15 text-pink-500 border-pink-500/30" },
+  basic: { label: "Basic", icon: Zap, className: "bg-info/15 text-info border-info/30" },
+  plus: { label: "Plus", icon: Crown, className: "bg-primary/15 text-primary border-primary/30" },
+  pro: { label: "Pro", icon: Star, className: "bg-accent/15 text-accent border-accent/30" },
+};
 
 function formatLastSeen(lastSeen: string | null): string {
   if (!lastSeen) return "";
@@ -40,19 +47,22 @@ export default function UserProfilePage() {
   const [lastSeen, setLastSeen] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [userTier, setUserTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
 
     const load = async () => {
-      const [{ data: profileData }, { count }, presence] = await Promise.all([
+      const [{ data: profileData }, { count }, presence, { data: subData }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).single(),
         supabase.from("swipes").select("*", { count: "exact", head: true }).eq("target_id", userId).eq("action", "like"),
         fetchUserPresence(userId),
+        supabase.from("subscriptions").select("tier").eq("user_id", userId).eq("status", "active").maybeSingle(),
       ]);
 
       setProfile(profileData);
       setLikesCount(count ?? 0);
+      setUserTier(subData?.tier ?? null);
       setIsOnline(presence.isOnline);
       setLastSeen(presence.lastSeen);
       setLoading(false);
@@ -200,11 +210,21 @@ export default function UserProfilePage() {
 
         <div className="px-5 -mt-8 relative">
           {/* Name, age, verified */}
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h1 className="font-display text-2xl font-bold">
               {profile.display_name}{age ? `, ${age}` : ""}
             </h1>
             {profile.verified && <BadgeCheck className="h-5 w-5 text-info" />}
+            {userTier && TIER_CONFIG[userTier] && (() => {
+              const config = TIER_CONFIG[userTier];
+              const Icon = config.icon;
+              return (
+                <Badge className={`gap-1 text-xs border ${config.className}`}>
+                  <Icon className="h-3 w-3" />
+                  {config.label}
+                </Badge>
+              );
+            })()}
             {likesCount > 0 && (
               <Badge className="gap-1 text-xs bg-primary/80 text-primary-foreground border-0 ml-1">
                 <Heart className="h-3 w-3 fill-current" />
