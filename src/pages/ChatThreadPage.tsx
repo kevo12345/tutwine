@@ -100,8 +100,11 @@ export default function ChatThreadPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const myMessageCount = messages.filter((m) => m.sender_id === user?.id).length;
+  const canSend = !isFree || myMessageCount < 1;
+
   const sendMessage = async () => {
-    if (!newMsg.trim() || !user || !matchId || isFree) return;
+    if (!newMsg.trim() || !user || !matchId || !canSend) return;
     const content = newMsg.trim();
     setNewMsg("");
 
@@ -203,7 +206,7 @@ export default function ChatThreadPage() {
 
         {/* Input - with safe area for mobile */}
         <div className="border-t border-border bg-card px-2 py-2 sm:p-3 shrink-0 lg:rounded-b-2xl" style={{ paddingBottom: `max(0.5rem, env(safe-area-inset-bottom, 0px))` }}>
-          {isFree ? (
+          {isFree && !canSend ? (
             <div className="flex items-center justify-center gap-2 py-1">
               <Lock className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Upgrade to reply</span>
