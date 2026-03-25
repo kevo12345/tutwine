@@ -115,14 +115,11 @@ export default function ChatListPage() {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-          <Lock className="h-16 w-16 text-muted-foreground/30" />
+          <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
           <h2 className="mt-4 font-display text-xl font-bold">No messages yet</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Upgrade your plan to start chatting with your matches.
+            Visit a profile and send your first message!
           </p>
-          <Button className="mt-6 gradient-warm border-0 text-primary-foreground" onClick={() => navigate("/pricing")}>
-            Upgrade Now
-          </Button>
         </div>
       </AppLayout>
     );
