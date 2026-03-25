@@ -135,13 +135,6 @@ export default function UserProfilePage() {
   };
 
   const handleChat = async () => {
-    if (isFree) {
-      toast("Chat is a premium feature", {
-        description: "Upgrade to start chatting with your matches.",
-        action: { label: "Upgrade", onClick: () => navigate("/pricing") },
-      });
-      return;
-    }
     if (!userId || !user) return;
     // Find existing match between the two users
     const userA = user.id < userId ? user.id : userId;
