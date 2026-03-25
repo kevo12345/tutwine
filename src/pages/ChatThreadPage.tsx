@@ -100,8 +100,11 @@ export default function ChatThreadPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const myMessageCount = messages.filter((m) => m.sender_id === user?.id).length;
+  const canSend = !isFree || myMessageCount < 1;
+
   const sendMessage = async () => {
-    if (!newMsg.trim() || !user || !matchId || isFree) return;
+    if (!newMsg.trim() || !user || !matchId || !canSend) return;
     const content = newMsg.trim();
     setNewMsg("");
 
