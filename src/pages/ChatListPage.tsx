@@ -133,7 +133,7 @@ export default function ChatListPage() {
           {isFree && chats.length > 0 && (
             <div className="mb-4 flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2.5 text-sm text-muted-foreground">
               <Lock className="h-4 w-4 shrink-0" />
-              <span>You can read messages but need to <button onClick={() => navigate("/pricing")} className="font-medium text-primary underline">upgrade</button> to reply.</span>
+              <span>Free plan: 1 message per conversation. <button onClick={() => navigate("/pricing")} className="font-medium text-primary underline">Upgrade</button> for unlimited.</span>
             </div>
           )}
           {chats.length === 0 ? (
