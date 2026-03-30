@@ -42,7 +42,25 @@ export default function ProfilePage() {
   const { tier, subscription } = useSubscription();
   const [likesCount, setLikesCount] = useState(0);
 
-  useEffect(() => {
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "DELETE") return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-actions", {
+        body: { action: "delete_own_account" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      await supabase.auth.signOut();
+      window.location.href = "https://tutwine.com";
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete account");
+      setDeleting(false);
+    }
+  };
     if (!user) return;
     const fetchLikes = async () => {
       const { count } = await supabase
