@@ -234,45 +234,6 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Delete Account */}
-        <Card className="mt-3 border-0 shadow-card overflow-hidden">
-          <CardContent className="p-4">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-3 text-sm text-destructive hover:text-destructive">
-                  <Trash2 className="h-4 w-4" /> Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-3">
-                    <p>This action is <strong>permanent and cannot be undone</strong>. All your data, matches, messages, and photos will be deleted.</p>
-                    <p>Type <strong>DELETE</strong> to confirm:</p>
-                    <Input
-                      value={deleteConfirm}
-                      onChange={(e) => setDeleteConfirm(e.target.value)}
-                      placeholder="Type DELETE"
-                      className="mt-2"
-                    />
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeleteConfirm("")}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    disabled={deleteConfirm !== "DELETE" || deleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Delete Forever
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
       </div>
     </AppLayout>
   );
