@@ -61,6 +61,8 @@ export default function ProfilePage() {
       setDeleting(false);
     }
   };
+
+  useEffect(() => {
     if (!user) return;
     const fetchLikes = async () => {
       const { count } = await supabase
