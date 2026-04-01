@@ -39,12 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Check if URL has auth callback tokens (email verification redirect)
-    const hasAuthCallback = window.location.hash.includes("access_token") || 
-      window.location.search.includes("code=");
+    let resolved = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        resolved = true;
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -53,28 +52,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
         }
-
-        // If user was signed out (e.g. account deleted by admin), redirect to tutwine.com
-        if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" && !session) {
-          // Only redirect if we previously had a user (account was deleted, not just a fresh load)
-        }
-
         setLoading(false);
       }
     );
 
-    // If there's an auth callback in the URL, let onAuthStateChange handle it
-    // to avoid a race condition where getSession returns null before tokens are processed
-    if (!hasAuthCallback) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+    // Fallback: if onAuthStateChange hasn't fired quickly, use getSession
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!resolved) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
           fetchProfile(session.user.id);
         }
         setLoading(false);
-      });
-    }
+      }
+    });
 
     return () => subscription.unsubscribe();
   }, []);
