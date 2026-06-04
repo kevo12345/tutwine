@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.ellapay.co.ke/api/v1';
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
 
 async function getSellapayToken(): Promise<string> {
   const apiKey = Deno.env.get('SELLAPAY_API_KEY');
