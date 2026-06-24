@@ -477,7 +477,7 @@ export default function PricingPage() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <Label>Cryptocurrency</Label>
-                  <Select value={effectivePayCurrency} onValueChange={(value: PayCurrency) => setPayCurrency(value)} disabled={cryptoLoading}>
+                  <Select value={effectivePayCurrency} onValueChange={(value) => setPayCurrency(value as PayCurrency)} disabled={cryptoLoading}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
