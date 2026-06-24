@@ -81,14 +81,8 @@ const USD_PRICES: Record<string, number> = {
 };
 
 const CRYPTO_OPTIONS = [
-  { value: "usdttrc20", label: "USDT (TRC20) — low fees" },
-  { value: "usdterc20", label: "USDT (ERC20)" },
-  { value: "usdcerc20", label: "USDC (ERC20)" },
-  { value: "btc", label: "Bitcoin (BTC)" },
-  { value: "eth", label: "Ethereum (ETH)" },
-  { value: "trx", label: "Tron (TRX)" },
   { value: "ltc", label: "Litecoin (LTC)" },
-  { value: "bnbbsc", label: "BNB (BSC)" },
+  { value: "usdttrc20", label: "USDT (TRC20) — low fees" },
 ];
 
 type Method = null | "mpesa" | "crypto";
