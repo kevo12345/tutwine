@@ -15,16 +15,29 @@ async function getSellapayToken(): Promise<string> {
     throw new Error('SellaPay credentials not configured');
   }
 
-  const res = await fetch(`${SELLAPAY_BASE}/authorize`, {
-    method: 'POST',
-    headers: {
-      'X-API-KEY': apiKey,
-      'X-API-SECRET': apiSecret,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({}),
-  });
+  async function tryAuth(method: 'GET' | 'POST') {
+    const init: RequestInit = {
+      method,
+      headers: {
+        'X-API-KEY': apiKey!,
+        'X-API-SECRET': apiSecret!,
+        'Accept': 'application/json',
+        ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      },
+      ...(method === 'POST' ? { body: JSON.stringify({}) } : {}),
+    };
+    const r = await fetch(`${SELLAPAY_BASE}/authorize`, init);
+    const t = await r.text();
+    console.log(`SellaPay /authorize [${method}] status:`, r.status, 'body:', t?.slice(0, 500));
+    return { res: r, raw: t };
+  }
+
+  // Try GET first (SellaPay's documented contract), fall back to POST.
+  let { res, raw } = await tryAuth('GET');
+  if (!res.ok || !raw || raw.trim().length === 0) {
+    ({ res, raw } = await tryAuth('POST'));
+  }
+
 
   const raw = await res.text();
   console.log('SellaPay /authorize status:', res.status, 'body:', raw?.slice(0, 500));
