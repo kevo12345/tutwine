@@ -149,6 +149,38 @@ export type Database = {
         }
         Relationships: []
       }
+      live_overlay_messages: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_overlay_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_passes: {
         Row: {
           amount_paid_usd: number
@@ -836,6 +868,10 @@ export type Database = {
           user_id: string
           verified: boolean
         }[]
+      }
+      has_live_access: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
