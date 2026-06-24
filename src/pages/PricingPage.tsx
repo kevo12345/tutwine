@@ -165,6 +165,11 @@ export default function PricingPage() {
 
   const handleCryptoPayment = async () => {
     if (!selectedTier || !payCurrency) return;
+    const ALLOWED = ["ltc", "usdttrc20"];
+    if (!ALLOWED.includes(payCurrency.toLowerCase())) {
+      toast.error("Only Litecoin (LTC) and USDT (TRC20) are supported. Please pick one of these coins to continue.");
+      return;
+    }
     setCryptoLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("nowpayments-create-payment", {
@@ -179,11 +184,16 @@ export default function PricingPage() {
           network: data.network,
         });
       } else {
-        toast.error(data?.error || "Could not create crypto payment.");
+        const msg: string = data?.error || "";
+        if (msg.toLowerCase().includes("unsupported pay_currency")) {
+          toast.error("Only Litecoin (LTC) and USDT (TRC20) are supported. Please pick one of these coins to continue.");
+        } else {
+          toast.error(msg || "Could not create crypto payment.");
+        }
       }
     } catch (err) {
       console.error("Crypto payment error:", err);
-      toast.error("Could not create crypto payment. Try a different coin.");
+      toast.error("Could not create crypto payment. Please choose Litecoin (LTC) or USDT (TRC20).");
     } finally {
       setCryptoLoading(false);
     }
