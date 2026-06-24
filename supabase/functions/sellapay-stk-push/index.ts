@@ -162,26 +162,23 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkPayload = {
-      Amount: Number(amount),
-      Phone: cleanPhone,
-      phone: cleanPhone,
-      amount: Number(amount),
-      note: `TutWine ${tier} subscription`,
-      reference: subRef,
-      description: `TutWine ${tier} subscription`,
-      callbackUrl,
-      callback_url: callbackUrl,
-    };
+    const stkUrl = new URL(sellapayActionUrl('requestStkPush'));
+    stkUrl.searchParams.set('Amount', String(Number(amount)));
+    stkUrl.searchParams.set('Phone', cleanPhone);
+    stkUrl.searchParams.set('amount', String(Number(amount)));
+    stkUrl.searchParams.set('phone', cleanPhone);
+    stkUrl.searchParams.set('reference', subRef);
+    stkUrl.searchParams.set('note', `TutWine ${tier} subscription`);
+    stkUrl.searchParams.set('description', `TutWine ${tier} subscription`);
+    stkUrl.searchParams.set('callbackUrl', callbackUrl);
+    stkUrl.searchParams.set('callback_url', callbackUrl);
 
-    const stkRes = await fetch(sellapayActionUrl('requestStkPush'), {
+    const stkRes = await fetch(stkUrl.toString(), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(stkPayload),
     });
 
     const stkRaw = await stkRes.text();
