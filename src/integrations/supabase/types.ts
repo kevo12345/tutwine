@@ -149,6 +149,113 @@ export type Database = {
         }
         Relationships: []
       }
+      live_passes: {
+        Row: {
+          amount_paid_usd: number
+          created_at: string
+          currency: string
+          duration_hours: number
+          expires_at: string | null
+          id: string
+          provider: string
+          provider_ref: string | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["live_status"]
+          updated_at: string
+          viewer_id: string
+        }
+        Insert: {
+          amount_paid_usd: number
+          created_at?: string
+          currency?: string
+          duration_hours: number
+          expires_at?: string | null
+          id?: string
+          provider: string
+          provider_ref?: string | null
+          session_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["live_status"]
+          updated_at?: string
+          viewer_id: string
+        }
+        Update: {
+          amount_paid_usd?: number
+          created_at?: string
+          currency?: string
+          duration_hours?: number
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          session_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["live_status"]
+          updated_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_passes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_sessions: {
+        Row: {
+          amount_paid_usd: number
+          created_at: string
+          currency: string
+          daily_room_name: string | null
+          daily_room_url: string | null
+          duration_hours: number
+          expires_at: string | null
+          host_id: string
+          id: string
+          provider: string
+          provider_ref: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["live_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_paid_usd: number
+          created_at?: string
+          currency?: string
+          daily_room_name?: string | null
+          daily_room_url?: string | null
+          duration_hours: number
+          expires_at?: string | null
+          host_id: string
+          id?: string
+          provider: string
+          provider_ref?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["live_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_paid_usd?: number
+          created_at?: string
+          currency?: string
+          daily_room_name?: string | null
+          daily_room_url?: string | null
+          duration_hours?: number
+          expires_at?: string | null
+          host_id?: string
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["live_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -667,6 +774,20 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_active_live_sessions: {
+        Args: never
+        Returns: {
+          daily_room_url: string
+          display_name: string
+          duration_hours: number
+          expires_at: string
+          host_id: string
+          id: string
+          photos: string[]
+          started_at: string
+          viewer_count: number
+        }[]
+      }
       get_profile_public: {
         Args: { _target: string }
         Returns: {
@@ -762,6 +883,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       gender_type: "man" | "woman" | "non-binary" | "other"
+      live_status:
+        | "pending_payment"
+        | "active"
+        | "ended"
+        | "expired"
+        | "canceled"
       message_type: "text" | "emoji" | "image"
       report_status: "pending" | "reviewed" | "resolved" | "dismissed"
       subscription_status: "active" | "canceled" | "expired" | "past_due"
@@ -896,6 +1023,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       gender_type: ["man", "woman", "non-binary", "other"],
+      live_status: [
+        "pending_payment",
+        "active",
+        "ended",
+        "expired",
+        "canceled",
+      ],
       message_type: ["text", "emoji", "image"],
       report_status: ["pending", "reviewed", "resolved", "dismissed"],
       subscription_status: ["active", "canceled", "expired", "past_due"],

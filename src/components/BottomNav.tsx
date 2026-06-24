@@ -1,17 +1,18 @@
-import { Heart, MessageCircle, Search, Sparkles, Eye, User } from "lucide-react";
+import { Heart, MessageCircle, Search, Radio, Eye, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLikesCount } from "@/hooks/useLikesCount";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useActiveLiveSessions } from "@/hooks/useActiveLiveSessions";
 
 const navItems = [
   { icon: Search, label: "Discover", path: "/discover" },
   { icon: Heart, label: "Matches", path: "/matches" },
   { icon: Eye, label: "Likes", path: "/likes", badge: "likes" },
   { icon: MessageCircle, label: "Chat", path: "/chat", badge: "chat" },
-  { icon: Sparkles, label: "Boost", path: "/pricing" },
+  { icon: Radio, label: "Live", path: "/live", badge: "live" },
 ];
 
 export function BottomNav() {
@@ -20,18 +21,21 @@ export function BottomNav() {
   const { profile } = useAuth();
   const { count: likesCount, hasNewLike } = useLikesCount();
   const { count: unreadCount } = useUnreadMessages();
+  const { sessions } = useActiveLiveSessions();
   const profilePhoto = profile?.photos?.[0];
   const profileActive = location.pathname === "/profile";
+  const liveCount = sessions.length;
 
   return (
     <nav className="border-t border-border bg-card/95 backdrop-blur-lg shrink-0" style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}>
       <div className="mx-auto flex max-w-lg items-center justify-around px-1 py-1.5 sm:px-2 sm:py-2">
         {navItems.map(({ icon: Icon, label, path, badge }) => {
-          const active = location.pathname === path;
+          const active = location.pathname.startsWith(path);
           const showLikesBadge = badge === "likes" && likesCount > 0;
           const showChatBadge = badge === "chat" && unreadCount > 0;
-          const badgeCount = badge === "likes" ? likesCount : badge === "chat" ? unreadCount : 0;
-          const showBadge = showLikesBadge || showChatBadge;
+          const showLiveBadge = badge === "live" && liveCount > 0;
+          const badgeCount = badge === "likes" ? likesCount : badge === "chat" ? unreadCount : badge === "live" ? liveCount : 0;
+          const showBadge = showLikesBadge || showChatBadge || showLiveBadge;
           return (
             <button
               key={path}
@@ -45,7 +49,8 @@ export function BottomNav() {
                 <Icon className={cn("h-5 w-5", active && "fill-primary/20")} strokeWidth={active ? 2.5 : 2} />
                 {showBadge && (
                   <span className={cn(
-                    "absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground transition-transform",
+                    "absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-primary-foreground transition-transform",
+                    showLiveBadge ? "bg-red-500 animate-pulse" : "bg-primary",
                     showLikesBadge && hasNewLike && "animate-[pulse_0.6s_cubic-bezier(0.4,0,0.6,1)_3] scale-110"
                   )}>
                     {badgeCount > 99 ? "99+" : badgeCount}
@@ -56,7 +61,6 @@ export function BottomNav() {
             </button>
           );
         })}
-        {/* Profile tab */}
         <button
           onClick={() => navigate("/profile")}
           className={cn(

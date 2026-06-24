@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createHmac } from 'node:crypto';
+import { tryActivateLiveSession, tryActivateLivePass } from '../_shared/live-activation.ts';
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -126,6 +128,22 @@ Deno.serve(async (req) => {
     });
     return new Response(JSON.stringify({ error: 'No identifier' }), {
       status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Live (Go Live) routing: try first
+  const liveCandidates = [orderId, paymentId].filter(Boolean) as string[];
+  const isSuccessLive = SUCCESS_STATUSES.includes(status);
+  if (await tryActivateLiveSession(serviceClient, liveCandidates, isSuccessLive)) {
+    await logIpn(serviceClient, { ...baseLog, signature_valid: signatureValid, activation_result: 'live_session' });
+    return new Response(JSON.stringify({ success: true, matched_by: 'live_session' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  if (await tryActivateLivePass(serviceClient, liveCandidates, isSuccessLive)) {
+    await logIpn(serviceClient, { ...baseLog, signature_valid: signatureValid, activation_result: 'live_pass' });
+    return new Response(JSON.stringify({ success: true, matched_by: 'live_pass' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

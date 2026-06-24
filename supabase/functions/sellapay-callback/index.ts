@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { tryActivateLiveSession, tryActivateLivePass } from '../_shared/live-activation.ts';
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -398,6 +400,39 @@ Deno.serve(async (req) => {
     }
 
     console.log('SellaPay callback parsed:', JSON.stringify(body));
+
+    const serviceClientEarly = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const isSuccessEarly = isSuccessfulPayment(body);
+
+    // ---- Live (Go Live) routing: take precedence over subscription matching ----
+    const liveSessionIdsRaw: string[] = [
+      body?.live_session_id, body?.data?.live_session_id, body?.message?.live_session_id,
+    ].filter((v) => typeof v === 'string' && UUID_REGEX.test(v as string)) as string[];
+    const livePassIdsRaw: string[] = [
+      body?.live_pass_id, body?.data?.live_pass_id, body?.message?.live_pass_id,
+    ].filter((v) => typeof v === 'string' && UUID_REGEX.test(v as string)) as string[];
+
+    // Also consider generic reference id when it matches a live row
+    const allRefIds: string[] = Array.from(new Set([
+      ...getCandidateSubscriptionIds(body),
+      ...liveSessionIdsRaw,
+      ...livePassIdsRaw,
+    ]));
+
+    if (await tryActivateLiveSession(serviceClientEarly, allRefIds, isSuccessEarly)) {
+      return new Response(JSON.stringify({ success: true, matched_by: 'live_session' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (await tryActivateLivePass(serviceClientEarly, allRefIds, isSuccessEarly)) {
+      return new Response(JSON.stringify({ success: true, matched_by: 'live_pass' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
 
     const subscriptionIds = getCandidateSubscriptionIds(body);
     const identifiers = getCandidateIdentifiers(body);

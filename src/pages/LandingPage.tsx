@@ -28,12 +28,12 @@ const tiers = [
   },
   {
     key: "plus" as const,
-    features: ["Unlimited views", "200 likes/day", "1 weekly boost", "Priority support", "Advanced filters"],
+    features: ["Unlimited views", "200 likes/day", "Priority support", "Advanced filters"],
     popular: true,
   },
   {
     key: "pro" as const,
-    features: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Video chat"],
+    features: ["Unlimited everything", "See who liked you", "Priority in discovery", "Read receipts", "Video chat"],
     popular: false,
   },
 ];
