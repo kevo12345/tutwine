@@ -208,6 +208,68 @@ export type Database = {
           },
         ]
       }
+      nowpayments_ipn_log: {
+        Row: {
+          activation_result: string
+          error: string | null
+          id: string
+          matched_subscription_id: string | null
+          order_id: string | null
+          pay_amount: number | null
+          pay_currency: string | null
+          payment_id: string | null
+          payment_status: string | null
+          price_amount: number | null
+          price_currency: string | null
+          raw_payload: Json | null
+          received_at: string
+          signature_present: boolean
+          signature_valid: boolean
+        }
+        Insert: {
+          activation_result?: string
+          error?: string | null
+          id?: string
+          matched_subscription_id?: string | null
+          order_id?: string | null
+          pay_amount?: number | null
+          pay_currency?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          price_amount?: number | null
+          price_currency?: string | null
+          raw_payload?: Json | null
+          received_at?: string
+          signature_present?: boolean
+          signature_valid?: boolean
+        }
+        Update: {
+          activation_result?: string
+          error?: string | null
+          id?: string
+          matched_subscription_id?: string | null
+          order_id?: string | null
+          pay_amount?: number | null
+          pay_currency?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          price_amount?: number | null
+          price_currency?: string | null
+          raw_payload?: Json | null
+          received_at?: string
+          signature_present?: boolean
+          signature_valid?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nowpayments_ipn_log_matched_subscription_id_fkey"
+            columns: ["matched_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           bio: string | null
