@@ -53,8 +53,7 @@ export default function LikesPage() {
   });
 
 
-  const calcAge = (dob: string | null) =>
-    dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null;
+
 
   const handleLikeBack = async (e: React.MouseEvent, liker: Liker) => {
     e.stopPropagation();
