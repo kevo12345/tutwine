@@ -121,8 +121,8 @@ export default function LiveRoomPage() {
 
     (async () => {
       const sinceIso = new Date(Date.now() - OVERLAY_TTL_MS).toISOString();
-      const { data } = await supabase
-        .from("live_overlay_messages" as any)
+      const { data } = await (supabase as any)
+        .from("live_overlay_messages")
         .select("id, author_id, content, created_at")
         .eq("session_id", sessionId)
         .gte("created_at", sinceIso)
@@ -130,6 +130,7 @@ export default function LiveRoomPage() {
       const hydrated = await hydrateNames((data ?? []) as OverlayMsg[]);
       setOverlays(hydrated);
     })();
+
 
     const channel = supabase
       .channel(`live_overlay_${sessionId}`)
@@ -167,9 +168,10 @@ export default function LiveRoomPage() {
       return;
     }
     setSending(true);
-    const { error } = await supabase
-      .from("live_overlay_messages" as any)
+    const { error } = await (supabase as any)
+      .from("live_overlay_messages")
       .insert({ session_id: sessionId, author_id: user.id, content: trimmed });
+
     setSending(false);
     if (error) {
       toast.error("Could not post — try again");
