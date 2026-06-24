@@ -62,6 +62,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    const ALLOWED_CURRENCIES = ['ltc', 'usdttrc20'];
+    if (!ALLOWED_CURRENCIES.includes(String(pay_currency).toLowerCase())) {
+      return new Response(
+        JSON.stringify({ error: 'Unsupported pay_currency. Allowed: ltc, usdttrc20' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const amountUsd = USD_PRICES[tier];
     if (!amountUsd) {
       return new Response(
