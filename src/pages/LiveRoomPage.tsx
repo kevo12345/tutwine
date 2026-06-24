@@ -18,13 +18,12 @@ export default function LiveRoomPage() {
   useEffect(() => {
     if (!sessionId || !user) return;
     (async () => {
-      const { data: session } = await supabase
-        .from("live_sessions")
-        .select("id, host_id, daily_room_url, expires_at, status")
-        .eq("id", sessionId)
-        .maybeSingle();
+      const { data: rows, error } = await (supabase as any).rpc("get_live_session_room", {
+        _session_id: sessionId,
+      });
+      const session = Array.isArray(rows) ? rows[0] : rows;
 
-      if (!session || session.status !== "active" || !session.daily_room_url) {
+      if (error || !session || session.status !== "active" || !session.daily_room_url) {
         toast.error("This live stream is no longer available");
         navigate("/live", { replace: true });
         return;
@@ -47,7 +46,6 @@ export default function LiveRoomPage() {
           navigate("/live", { replace: true });
           return;
         }
-        // viewer time-out is the earlier of host and pass
         myExpiresAt = new Date(Math.min(new Date(pass.expires_at).getTime(), new Date(session.expires_at).getTime())).toISOString();
       }
 
@@ -55,6 +53,7 @@ export default function LiveRoomPage() {
       setExpiresAt(myExpiresAt);
       setLoading(false);
     })();
+
   }, [sessionId, user, navigate]);
 
   useEffect(() => {
