@@ -38,10 +38,6 @@ async function getSellapayToken(): Promise<string> {
     ({ res, raw } = await tryAuth('POST'));
   }
 
-
-  const raw = await res.text();
-  console.log('SellaPay /authorize status:', res.status, 'body:', raw?.slice(0, 500));
-
   let data: any = null;
   if (raw && raw.trim().length > 0) {
     try {
