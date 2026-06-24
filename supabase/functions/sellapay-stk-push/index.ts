@@ -278,6 +278,18 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error:', error);
     const msg = error instanceof Error ? error.message : 'Unknown error';
+    if (msg.startsWith('SellaPay auth failed')) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'M-Pesa provider authentication failed. SellaPay is not returning an access token for the configured credentials/API endpoint.',
+          details: msg,
+          provider: 'sellapay',
+          fallback: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     return new Response(
       JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
