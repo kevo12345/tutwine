@@ -12,7 +12,7 @@ export const TIER_PRICES = {
   simp: { usd: 1.5, label: "Simp" },
   basic: { usd: 3, label: "Basic" },
   plus: { usd: 5, label: "Plus" },
-  pro: { usd: 10, label: "Pro" },
+  pro: { usd: 12, label: "Pro" },
 } as const;
 
 export const GENDER_OPTIONS = ["Man", "Woman", "Non-binary", "Other"] as const;

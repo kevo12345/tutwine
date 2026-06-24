@@ -17,7 +17,7 @@ const USD_PRICES: Record<string, number> = {
   simp: 1.5,
   basic: 3,
   plus: 5,
-  pro: 10,
+  pro: 12,
 };
 
 
