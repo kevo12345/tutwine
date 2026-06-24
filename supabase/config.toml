@@ -13,3 +13,7 @@ project_id = "erhmkxbcubdopxbryetm"
     verify_jwt = false
   [functions.sellapay-stk-push]
     verify_jwt = false
+  [functions.nowpayments-create-payment]
+    verify_jwt = false
+  [functions.nowpayments-callback]
+    verify_jwt = false
