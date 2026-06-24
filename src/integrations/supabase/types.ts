@@ -777,7 +777,6 @@ export type Database = {
       get_active_live_sessions: {
         Args: never
         Returns: {
-          daily_room_url: string
           display_name: string
           duration_hours: number
           expires_at: string
