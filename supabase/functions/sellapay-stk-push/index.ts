@@ -8,9 +8,7 @@ const corsHeaders = {
 const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
 
 function sellapayActionUrl(action: string) {
-  const url = new URL(`${SELLAPAY_BASE}/index.php`);
-  url.searchParams.set('action', action);
-  return url.toString();
+  return `${SELLAPAY_BASE}/index.php?action=${action}`;
 }
 
 async function getSellapayToken(): Promise<string> {
@@ -164,15 +162,17 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch(sellapayActionUrl('requestStkPush'), {
+    const stkRes = await fetch('https://pay.sellapay.co.ke/api/v1/requestStkPush', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
-        phone: cleanPhone,
         amount: Number(amount),
+        phone: cleanPhone,
+        note: `TutWine ${tier} subscription`,
         reference: subRef,
         description: `TutWine ${tier} subscription`,
         callbackUrl,
