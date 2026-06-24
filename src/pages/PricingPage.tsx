@@ -80,9 +80,11 @@ const USD_PRICES: Record<string, number> = {
   pro: 10,
 };
 
-const CRYPTO_OPTIONS = [
+type PayCurrency = "ltc" | "usdttrc20";
+
+const CRYPTO_OPTIONS: Array<{ value: PayCurrency; label: string }> = [
   { value: "ltc", label: "Litecoin (LTC)" },
-  { value: "usdttrc20", label: "USDT (TRC20) — low fees" },
+  { value: "usdttrc20", label: "USDT (TRC20)" },
 ];
 
 // NOWPayments rejects USDT-TRC20 invoices below ~$8 USD with AMOUNT_MINIMAL_ERROR.
@@ -111,13 +113,15 @@ export default function PricingPage() {
   const [mpesaLoading, setMpesaLoading] = useState(false);
 
   // Crypto state — default to LTC, the only coin that supports all tiers
-  const [payCurrency, setPayCurrency] = useState("ltc");
+  const [payCurrency, setPayCurrency] = useState<PayCurrency>("ltc");
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [cryptoPayment, setCryptoPayment] = useState<CryptoPayment | null>(null);
   const [copied, setCopied] = useState(false);
 
   const selectedUsd = selectedTier ? USD_PRICES[selectedTier] ?? 0 : 0;
   const usdtBelowMin = selectedUsd > 0 && selectedUsd < USDT_MIN_USD;
+  const effectivePayCurrency: PayCurrency = usdtBelowMin && payCurrency === "usdttrc20" ? "ltc" : payCurrency;
+  const availableCryptoOptions = CRYPTO_OPTIONS.filter((opt) => opt.value !== "usdttrc20" || !usdtBelowMin);
 
   // If user previously chose USDT but selected a cheap tier, fall back to LTC.
   useEffect(() => {
@@ -185,17 +189,15 @@ export default function PricingPage() {
       toast.error("Only Litecoin (LTC) and USDT (TRC20) are supported. Please pick one of these coins to continue.");
       return;
     }
-    if (payCurrency === "usdttrc20" && usdtBelowMin) {
-      toast.error(
-        `USDT (TRC20) needs at least $${USDT_MIN_USD}. Switch to Litecoin (LTC) for this plan, or pick a higher tier.`,
-      );
+    const currencyForPayment: PayCurrency = payCurrency === "usdttrc20" && usdtBelowMin ? "ltc" : payCurrency;
+    if (currencyForPayment !== payCurrency) {
       setPayCurrency("ltc");
-      return;
+      toast.info(`USDT (TRC20) needs at least $${USDT_MIN_USD}. Generating a Litecoin (LTC) address instead.`);
     }
     setCryptoLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("nowpayments-create-payment", {
-        body: { tier: selectedTier, pay_currency: payCurrency },
+        body: { tier: selectedTier, pay_currency: currencyForPayment },
       });
       if (error) throw error;
       if (data?.success) {
@@ -222,7 +224,28 @@ export default function PricingPage() {
       }
     } catch (err) {
       console.error("Crypto payment error:", err);
-      toast.error("Could not create crypto payment. Please choose Litecoin (LTC) or USDT (TRC20).");
+      let serverMessage = "";
+      let serverCode = "";
+      const context = (err as { context?: Response })?.context;
+      if (context) {
+        try {
+          const payload = await context.clone().json();
+          serverMessage = typeof payload?.error === "string" ? payload.error : "";
+          serverCode = typeof payload?.code === "string" ? payload.code : "";
+        } catch {
+          // Keep the user-facing fallback below.
+        }
+      }
+      const lower = serverMessage.toLowerCase();
+      if (serverCode === "USDT_MIN_AMOUNT" || lower.includes("usdt (trc20) requires")) {
+        setPayCurrency("ltc");
+        toast.error(serverMessage || `USDT (TRC20) needs at least $${USDT_MIN_USD}. Please use Litecoin (LTC) for this plan.`);
+      } else if (lower.includes("amount_minimal") || lower.includes("less than minimal") || lower.includes("minimal payment")) {
+        setPayCurrency("ltc");
+        toast.error("This coin is below the network minimum for this plan. Please use Litecoin (LTC) instead.");
+      } else {
+        toast.error(serverMessage || "Could not create crypto payment. Please try Litecoin (LTC).");
+      }
     } finally {
       setCryptoLoading(false);
     }
@@ -352,8 +375,11 @@ export default function PricingPage() {
                     </div>
                   </div>
                 </button>
-                <button
-                  onClick={() => setMethod("crypto")}
+                    <button
+                      onClick={() => {
+                        if (usdtBelowMin) setPayCurrency("ltc");
+                        setMethod("crypto");
+                      }}
                   className="w-full rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary hover:shadow-card"
                 >
                   <div className="flex items-center gap-3">
@@ -361,9 +387,9 @@ export default function PricingPage() {
                       <Bitcoin className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold">Crypto (NOWPayments)</div>
+                      <div className="font-semibold">Crypto</div>
                       <div className="text-xs text-muted-foreground">
-                        ${selectedTier ? USD_PRICES[selectedTier] : ""} • Worldwide • BTC, USDT, ETH and more
+                        ${selectedTier ? USD_PRICES[selectedTier] : ""} • Worldwide • Litecoin and USDT (TRC20) only
                       </div>
                     </div>
                   </div>
@@ -451,27 +477,23 @@ export default function PricingPage() {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <Label>Cryptocurrency</Label>
-                  <Select value={payCurrency} onValueChange={setPayCurrency} disabled={cryptoLoading}>
+                  <Select value={effectivePayCurrency} onValueChange={(value) => setPayCurrency(value as PayCurrency)} disabled={cryptoLoading}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CRYPTO_OPTIONS.map((opt) => {
-                        const disabled = opt.value === "usdttrc20" && usdtBelowMin;
-                        return (
-                          <SelectItem key={opt.value} value={opt.value} disabled={disabled}>
-                            {opt.label}
-                            {disabled && ` — min $${USDT_MIN_USD}`}
-                          </SelectItem>
-                        );
-                      })}
+                      {availableCryptoOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 {usdtBelowMin && (
                   <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                     <p className="text-xs text-amber-700 dark:text-amber-400">
-                      USDT (TRC20) needs an invoice of at least ${USDT_MIN_USD}. This plan is ${selectedUsd}, so please use Litecoin (LTC) — or pick a higher-priced plan to unlock USDT.
+                      USDT (TRC20) needs an invoice of at least ${USDT_MIN_USD}. This plan is ${selectedUsd}, so Litecoin (LTC) is selected automatically.
                     </p>
                   </div>
                 )}
