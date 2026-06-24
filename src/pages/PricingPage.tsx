@@ -185,6 +185,13 @@ export default function PricingPage() {
       toast.error("Only Litecoin (LTC) and USDT (TRC20) are supported. Please pick one of these coins to continue.");
       return;
     }
+    if (payCurrency === "usdttrc20" && usdtBelowMin) {
+      toast.error(
+        `USDT (TRC20) needs at least $${USDT_MIN_USD}. Switch to Litecoin (LTC) for this plan, or pick a higher tier.`,
+      );
+      setPayCurrency("ltc");
+      return;
+    }
     setCryptoLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("nowpayments-create-payment", {
@@ -200,8 +207,15 @@ export default function PricingPage() {
         });
       } else {
         const msg: string = data?.error || "";
-        if (msg.toLowerCase().includes("unsupported pay_currency")) {
+        const lower = msg.toLowerCase();
+        if (data?.code === "USDT_MIN_AMOUNT" || lower.includes("usdt (trc20) requires")) {
+          toast.error(msg);
+          setPayCurrency("ltc");
+        } else if (lower.includes("unsupported pay_currency")) {
           toast.error("Only Litecoin (LTC) and USDT (TRC20) are supported. Please pick one of these coins to continue.");
+        } else if (lower.includes("amount_minimal") || lower.includes("less than minimal")) {
+          toast.error("This amount is below the network minimum. Try Litecoin (LTC) or pick a higher-priced plan.");
+          setPayCurrency("ltc");
         } else {
           toast.error(msg || "Could not create crypto payment.");
         }
@@ -213,6 +227,7 @@ export default function PricingPage() {
       setCryptoLoading(false);
     }
   };
+
 
   const copyToClipboard = async (text: string) => {
     try {
