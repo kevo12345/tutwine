@@ -9,75 +9,53 @@ import { Button } from "@/components/ui/button";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
 import { Heart, Loader2, MapPin, BadgeCheck, X } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-type Profile = Tables<"profiles">;
+// Safe row returned by the who_liked_me SQL function (no phone/coords/DOB).
+type Liker = {
+  user_id: string;
+  display_name: string | null;
+  photos: string[] | null;
+  bio: string | null;
+  interests: string[] | null;
+  gender: string | null;
+  city: string | null;
+  country: string | null;
+  state: string | null;
+  verified: boolean | null;
+  age: number | null;
+  liked_at: string;
+};
 
 export default function LikesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<Liker | null>(null);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
   const [matchId, setMatchId] = useState("");
   const [likingBack, setLikingBack] = useState<string | null>(null);
 
-  const { data: likers = [], isLoading } = useQuery({
+  const { data: likers = [], isLoading } = useQuery<Liker[]>({
     queryKey: ["who-liked-me", user?.id],
     queryFn: async () => {
       if (!user) return [];
-
-      const { data: swipes } = await supabase
-        .from("swipes")
-        .select("swiper_id")
-        .eq("target_id", user.id)
-        .eq("action", "like");
-
-      if (!swipes?.length) return [];
-
-      // Exclude users I already matched with
-      const { data: matches } = await supabase
-        .from("matches")
-        .select("user_a, user_b")
-        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`);
-
-      const matchedIds = new Set(
-        (matches ?? []).map((m) => (m.user_a === user.id ? m.user_b : m.user_a))
-      );
-
-      // Exclude users I already passed on
-      const { data: mySwipes } = await supabase
-        .from("swipes")
-        .select("target_id")
-        .eq("swiper_id", user.id)
-        .eq("action", "pass");
-
-      const passedIds = new Set((mySwipes ?? []).map((s) => s.target_id));
-
-      const likerIds = swipes
-        .map((s) => s.swiper_id)
-        .filter((id) => !matchedIds.has(id) && !passedIds.has(id));
-
-      if (!likerIds.length) return [];
-
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("user_id", likerIds)
-        .eq("suspended", false);
-
-      return profiles ?? [];
+      const { data, error } = await supabase.rpc("who_liked_me");
+      if (error) {
+        console.error("who_liked_me error:", error);
+        return [];
+      }
+      return (data ?? []) as Liker[];
     },
     enabled: !!user,
   });
 
-  const calcAge = (dob: string | null) =>
-    dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null;
 
-  const handleLikeBack = async (e: React.MouseEvent, liker: Profile) => {
+
+
+  const handleLikeBack = async (e: React.MouseEvent, liker: Liker) => {
     e.stopPropagation();
     if (!user || likingBack) return;
     setLikingBack(liker.user_id);
@@ -116,7 +94,7 @@ export default function LikesPage() {
     setLikingBack(null);
   };
 
-  const handlePass = async (e: React.MouseEvent, liker: Profile) => {
+  const handlePass = async (e: React.MouseEvent, liker: Liker) => {
     e.stopPropagation();
     if (!user) return;
 
@@ -144,7 +122,7 @@ export default function LikesPage() {
     ? {
         id: selectedProfile.user_id,
         displayName: selectedProfile.display_name ?? "Unknown",
-        age: calcAge(selectedProfile.date_of_birth) ?? 0,
+        age: selectedProfile.age ?? 0,
         gender: selectedProfile.gender ?? "other",
         bio: selectedProfile.bio ?? "",
         interests: selectedProfile.interests ?? [],
@@ -180,7 +158,7 @@ export default function LikesPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {likers.map((liker) => {
-              const age = calcAge(liker.date_of_birth);
+              const age = liker.age;
               return (
                 <Card
                   key={liker.user_id}

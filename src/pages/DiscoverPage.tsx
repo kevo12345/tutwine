@@ -12,9 +12,28 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Tables } from "@/integrations/supabase/types";
 
-type Profile = Tables<"profiles">;
+// Row shape returned by the discover_profiles SQL function.
+// Sensitive fields (phone, exact coords, date_of_birth, geohash) are intentionally NOT returned.
+type DiscoverProfileRow = {
+  user_id: string;
+  display_name: string | null;
+  photos: string[] | null;
+  bio: string | null;
+  interests: string[] | null;
+  gender: string | null;
+  city: string | null;
+  country: string | null;
+  state: string | null;
+  verified: boolean | null;
+  age: number | null;
+  distance_km: number | string | null;
+  active_tier: string | null;
+  like_count: number | null;
+  hide_distance: boolean | null;
+  hide_state: boolean | null;
+  created_at: string;
+};
 
 const DEFAULT_FILTERS: DiscoverFilters = {
   gender: "any",
@@ -26,28 +45,14 @@ const DEFAULT_FILTERS: DiscoverFilters = {
 const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop";
 const SWIPE_TRIGGER_PX = 80;
 const TAP_CANCEL_PX = 12;
-
-const getAge = (dateOfBirth: string | null) => {
-  if (!dateOfBirth) return 0;
-  return Math.floor((Date.now() - new Date(dateOfBirth).getTime()) / 31557600000);
-};
-
-const calcDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-};
+const PAGE_SIZE = 50;
 
 export default function DiscoverPage() {
   const navigate = useNavigate();
   const { user, profile: myProfile } = useAuth();
   const { limits } = useSubscription();
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [profileTiers, setProfileTiers] = useState<Record<string, string>>({});
-  const [profileLikes, setProfileLikes] = useState<Record<string, number>>({});
+  const [profiles, setProfiles] = useState<DiscoverProfileRow[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
@@ -69,94 +74,47 @@ export default function DiscoverPage() {
 
   const fetchProfiles = useCallback(async () => {
     if (!user) return;
+    setLoading(true);
 
-    const { data: swipedIds } = await supabase
-      .from("swipes")
-      .select("target_id")
-      .eq("swiper_id", user.id);
+    const args = {
+      _my_lat: myProfile?.latitude ?? null,
+      _my_lng: myProfile?.longitude ?? null,
+      _max_distance_km: filters.maxDistanceKm,
+      _min_age: filters.minAge,
+      _max_age: filters.maxAge ?? 120,
+      _gender: filters.gender === "any" ? null : filters.gender,
+      _limit: PAGE_SIZE,
+      _offset: 0,
+    };
 
-    const excludeIds = [user.id, ...(swipedIds?.map((s) => s.target_id) ?? [])];
-
-    let { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("onboarding_complete", true)
-      .eq("suspended", false)
-      .not("user_id", "in", `(${excludeIds.join(",")})`)
-      .not("display_name", "is", null)
-      .order("created_at", { ascending: false });
-
-    let validProfiles = (data ?? []).filter((p) => p.photos && p.photos.length > 0 && p.display_name);
-
-    if (validProfiles.length === 0) {
-      const { data: allData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("onboarding_complete", true)
-        .eq("suspended", false)
-        .neq("user_id", user.id)
-        .not("display_name", "is", null)
-        .order("created_at", { ascending: false });
-
-      validProfiles = (allData ?? []).filter((p) => p.photos && p.photos.length > 0 && p.display_name);
+    let { data, error } = await supabase.rpc("discover_profiles", args as any);
+    if (error) {
+      console.error("discover_profiles error:", error);
     }
 
-    setProfiles(validProfiles);
+    let rows = (data ?? []).filter(
+      (p: DiscoverProfileRow) => p.photos && p.photos.length > 0 && p.display_name,
+    );
+
+    // Fallback: if no results, widen filters (no gender, no distance cap)
+    if (rows.length === 0) {
+      const wideArgs = { ...args, _gender: null, _max_distance_km: 99999, _min_age: 18, _max_age: 120 };
+      const { data: wide } = await supabase.rpc("discover_profiles", wideArgs as any);
+      rows = (wide ?? []).filter(
+        (p: DiscoverProfileRow) => p.photos && p.photos.length > 0 && p.display_name,
+      );
+    }
+
+    setProfiles(rows as DiscoverProfileRow[]);
     setCurrentIndex(0);
-
-    if (validProfiles.length > 0) {
-      const userIds = validProfiles.map((p) => p.user_id);
-      const { data: subs } = await supabase
-        .from("subscriptions")
-        .select("user_id, tier")
-        .in("user_id", userIds)
-        .eq("status", "active");
-      const tierMap: Record<string, string> = {};
-      subs?.forEach((s) => {
-        tierMap[s.user_id] = s.tier;
-      });
-      setProfileTiers(tierMap);
-
-      const { data: likeCounts } = await supabase
-        .from("swipes")
-        .select("target_id")
-        .in("target_id", userIds)
-        .eq("action", "like");
-      const likeMap: Record<string, number> = {};
-      likeCounts?.forEach((s) => {
-        likeMap[s.target_id] = (likeMap[s.target_id] ?? 0) + 1;
-      });
-      setProfileLikes(likeMap);
-    }
-
     setLoading(false);
-  }, [user]);
+  }, [user, myProfile?.latitude, myProfile?.longitude, filters]);
 
   useEffect(() => {
     fetchProfiles();
   }, [fetchProfiles]);
 
-
-  const filteredProfiles = useMemo(() => {
-    return profiles.filter((profile) => {
-      const age = getAge(profile.date_of_birth);
-      const matchesGender = filters.gender === "any" || profile.gender === filters.gender;
-      const matchesAge = age >= filters.minAge && (filters.maxAge == null || age <= filters.maxAge);
-
-      if (!matchesGender || !matchesAge) return false;
-
-      const hasCoordinates =
-        myProfile?.latitude != null &&
-        myProfile?.longitude != null &&
-        profile.latitude != null &&
-        profile.longitude != null;
-
-      if (!hasCoordinates) return true;
-
-      const distance = calcDistanceKm(myProfile.latitude!, myProfile.longitude!, profile.latitude!, profile.longitude!);
-      return distance <= filters.maxDistanceKm;
-    });
-  }, [filters, myProfile, profiles]);
+  const filteredProfiles = profiles;
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -167,7 +125,6 @@ export default function DiscoverPage() {
       setCurrentIndex(0);
       return;
     }
-
     if (currentIndex >= filteredProfiles.length) {
       setCurrentIndex(0);
     }
@@ -190,30 +147,27 @@ export default function DiscoverPage() {
     filters.maxDistanceKm !== DEFAULT_FILTERS.maxDistanceKm,
   ].filter(Boolean).length;
 
-  const toCardProfile = (profile: Profile) => ({
+  const toCardProfile = (profile: DiscoverProfileRow) => ({
     id: profile.user_id,
     displayName: profile.display_name ?? "Unknown",
-    age: getAge(profile.date_of_birth),
+    age: profile.age ?? 0,
     gender: profile.gender ?? "other",
     bio: profile.bio ?? "",
     interests: profile.interests ?? [],
     photos: (profile.photos?.length ? profile.photos : [FALLBACK_PHOTO]) as string[],
-    distance:
-      myProfile?.latitude != null &&
-      myProfile?.longitude != null &&
-      profile.latitude != null &&
-      profile.longitude != null
-        ? calcDistanceKm(myProfile.latitude, myProfile.longitude, profile.latitude, profile.longitude)
-        : null,
+    distance: profile.distance_km != null ? Math.round(Number(profile.distance_km)) : null,
     city: profile.city ?? "",
     state: profile.state ?? "",
     verified: profile.verified ?? false,
-    tier: profileTiers[profile.user_id] ?? "free",
-    likesCount: profileLikes[profile.user_id] ?? 0,
+    tier: profile.active_tier ?? "free",
+    likesCount: profile.like_count ?? 0,
   });
 
   const profileForCard = currentProfile ? toCardProfile(currentProfile) : null;
   const noMoreProfiles = filteredProfiles.length === 0;
+
+
+
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user) return;

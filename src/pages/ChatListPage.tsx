@@ -12,9 +12,16 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
+type SafeProfile = {
+  user_id: string;
+  display_name: string | null;
+  photos: string[] | null;
+  verified: boolean | null;
+};
+
 interface ChatItem {
   matchId: string;
-  profile: Tables<"profiles">;
+  profile: SafeProfile;
   lastMessage?: string;
   lastMessageAt?: string;
   unread: number;
@@ -48,7 +55,7 @@ export default function ChatListPage() {
     for (const m of matches) {
       const otherUserId = m.user_a === user.id ? m.user_b : m.user_a;
 
-      const [{ data: outgoingLike }, { data: incomingLike }, { data: profile }, { data: lastMsg }, { count }] = await Promise.all([
+      const [{ data: outgoingLike }, { data: incomingLike }, { data: profileRows }, { data: lastMsg }, { count }] = await Promise.all([
         supabase
           .from("swipes")
           .select("id")
@@ -63,7 +70,7 @@ export default function ChatListPage() {
           .eq("target_id", user.id)
           .eq("action", "like")
           .maybeSingle(),
-        supabase.from("profiles").select("*").eq("user_id", otherUserId).single(),
+        supabase.rpc("get_profile_public", { _target: otherUserId }),
         supabase
           .from("messages")
           .select("content, created_at")
@@ -79,6 +86,7 @@ export default function ChatListPage() {
           .is("read_at", null),
       ]);
 
+      const profile = ((profileRows ?? []) as SafeProfile[])[0];
       if (!outgoingLike || !incomingLike || !profile) continue;
 
       items.push({

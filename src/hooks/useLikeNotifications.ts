@@ -26,12 +26,10 @@ export function useLikeNotifications() {
           const swipe = payload.new as { swiper_id: string; action: string };
           if (swipe.action !== "like") return;
 
-          // Fetch the liker's profile for their name
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name, photos")
-            .eq("user_id", swipe.swiper_id)
-            .single();
+          // Fetch the liker's safe profile for their name
+          const { data: rows } = await supabase
+            .rpc("get_profile_public", { _target: swipe.swiper_id });
+          const profile = (rows ?? [])[0] as { display_name: string | null } | undefined;
 
           const name = profile?.display_name ?? "Someone";
 

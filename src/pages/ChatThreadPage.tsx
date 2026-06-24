@@ -23,7 +23,7 @@ export default function ChatThreadPage() {
   const isFree = tier === "free";
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
-  const [otherProfile, setOtherProfile] = useState<Tables<"profiles"> | null>(null);
+  const [otherProfile, setOtherProfile] = useState<{ user_id: string; display_name: string | null; photos: string[] | null; verified: boolean | null; bio: string | null; interests: string[] | null; city: string | null; state: string | null; gender: string | null; age: number | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showProfile, setShowProfile] = useState(false);
@@ -53,11 +53,9 @@ export default function ChatThreadPage() {
 
       const otherUserId = match.user_a === user.id ? match.user_b : match.user_a;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", otherUserId)
-        .single();
+      const { data: profileRows } = await supabase
+        .rpc("get_profile_public", { _target: otherUserId });
+      const profile = ((profileRows ?? []) as any[])[0] ?? null;
       setOtherProfile(profile);
 
       const { data: msgs } = await supabase
@@ -246,7 +244,7 @@ export default function ChatThreadPage() {
         profile={otherProfile ? {
           id: otherProfile.user_id,
           displayName: otherProfile.display_name ?? "Unknown",
-          age: otherProfile.date_of_birth ? Math.floor((Date.now() - new Date(otherProfile.date_of_birth).getTime()) / 31557600000) : 0,
+          age: otherProfile.age ?? 0,
           gender: otherProfile.gender ?? "other",
           bio: otherProfile.bio ?? "",
           interests: otherProfile.interests ?? [],

@@ -632,9 +632,90 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      discover_profiles: {
+        Args: {
+          _gender: Database["public"]["Enums"]["gender_type"]
+          _limit: number
+          _max_age: number
+          _max_distance_km: number
+          _min_age: number
+          _my_lat: number
+          _my_lng: number
+          _offset: number
+        }
+        Returns: {
+          active_tier: Database["public"]["Enums"]["subscription_tier"]
+          age: number
+          bio: string
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          distance_km: number
+          gender: Database["public"]["Enums"]["gender_type"]
+          hide_distance: boolean
+          hide_state: boolean
+          interests: string[]
+          like_count: number
+          photos: string[]
+          state: string
+          user_id: string
+          verified: boolean
+        }[]
+      }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_profile_public: {
+        Args: { _target: string }
+        Returns: {
+          active_tier: Database["public"]["Enums"]["subscription_tier"]
+          age: number
+          bio: string
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          hide_distance: boolean
+          hide_state: boolean
+          interested_in: Database["public"]["Enums"]["gender_type"][]
+          interests: string[]
+          like_count: number
+          onboarding_complete: boolean
+          photos: string[]
+          state: string
+          suspended: boolean
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }[]
+      }
+      get_profiles_public: {
+        Args: { _targets: string[] }
+        Returns: {
+          active_tier: Database["public"]["Enums"]["subscription_tier"]
+          age: number
+          bio: string
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          hide_distance: boolean
+          hide_state: boolean
+          interested_in: Database["public"]["Enums"]["gender_type"][]
+          interests: string[]
+          like_count: number
+          onboarding_complete: boolean
+          photos: string[]
+          state: string
+          suspended: boolean
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }[]
       }
       has_role: {
         Args: {
@@ -658,6 +739,23 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      who_liked_me: {
+        Args: never
+        Returns: {
+          age: number
+          bio: string
+          city: string
+          country: string
+          display_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          interests: string[]
+          liked_at: string
+          photos: string[]
+          state: string
+          user_id: string
+          verified: boolean
         }[]
       }
     }

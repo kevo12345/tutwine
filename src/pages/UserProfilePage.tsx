@@ -11,9 +11,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { fetchUserPresence } from "@/hooks/usePresence";
 import { toast } from "sonner";
-import { Tables } from "@/integrations/supabase/types";
-
-type Profile = Tables<"profiles">;
+// Safe row returned by get_profile_public RPC (no phone/coords/DOB).
+type Profile = {
+  user_id: string;
+  display_name: string | null;
+  photos: string[] | null;
+  bio: string | null;
+  interests: string[] | null;
+  gender: string | null;
+  interested_in: string[] | null;
+  city: string | null;
+  country: string | null;
+  state: string | null;
+  verified: boolean | null;
+  suspended: boolean | null;
+  hide_distance: boolean | null;
+  hide_state: boolean | null;
+  onboarding_complete: boolean | null;
+  created_at: string;
+  updated_at: string;
+  age: number | null;
+  like_count: number | null;
+  active_tier: string | null;
+};
 
 const TIER_CONFIG: Record<string, { label: string; icon: typeof Crown; className: string }> = {
   simp: { label: "Simp", icon: Heart, className: "bg-pink-500/15 text-pink-500 border-pink-500/30" },
@@ -53,16 +73,15 @@ export default function UserProfilePage() {
     if (!userId) return;
 
     const load = async () => {
-      const [{ data: profileData }, { count }, presence, { data: subData }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).single(),
-        supabase.from("swipes").select("*", { count: "exact", head: true }).eq("target_id", userId).eq("action", "like"),
+      const [{ data: profileRows }, presence] = await Promise.all([
+        supabase.rpc("get_profile_public", { _target: userId }),
         fetchUserPresence(userId),
-        supabase.from("subscriptions").select("tier").eq("user_id", userId).eq("status", "active").maybeSingle(),
       ]);
+      const profileData = ((profileRows ?? []) as Profile[])[0] ?? null;
 
       setProfile(profileData);
-      setLikesCount(count ?? 0);
-      setUserTier(subData?.tier ?? null);
+      setLikesCount(profileData?.like_count ?? 0);
+      setUserTier(profileData?.active_tier ?? null);
       setIsOnline(presence.isOnline);
       setLastSeen(presence.lastSeen);
       setLoading(false);
@@ -108,26 +127,11 @@ export default function UserProfilePage() {
   }
 
   const photos = (profile.photos?.length ? profile.photos : []) as string[];
-  const age = profile.date_of_birth
-    ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / 31557600000)
-    : null;
+  const age = profile.age;
   const location = [profile.city, profile.state].filter(Boolean).join(", ");
-  const distance = (myProfile?.latitude && myProfile?.longitude && profile.latitude && profile.longitude)
-    ? Math.round(
-        6371 * 2 * Math.atan2(
-          Math.sqrt(
-            Math.sin(((profile.latitude - myProfile.latitude) * Math.PI / 180) / 2) ** 2 +
-            Math.cos(myProfile.latitude * Math.PI / 180) * Math.cos(profile.latitude * Math.PI / 180) *
-            Math.sin(((profile.longitude - myProfile.longitude) * Math.PI / 180) / 2) ** 2
-          ),
-          Math.sqrt(1 - (
-            Math.sin(((profile.latitude - myProfile.latitude) * Math.PI / 180) / 2) ** 2 +
-            Math.cos(myProfile.latitude * Math.PI / 180) * Math.cos(profile.latitude * Math.PI / 180) *
-            Math.sin(((profile.longitude - myProfile.longitude) * Math.PI / 180) / 2) ** 2
-          ))
-        )
-      )
-    : null;
+  // Distance computation moved server-side (via discover_profiles RPC). Coordinates
+  // are no longer exposed cross-user, so individual profile pages don't show distance.
+  const distance: number | null = null;
 
   const openPhoto = (index: number) => {
     setLightboxIndex(index);
