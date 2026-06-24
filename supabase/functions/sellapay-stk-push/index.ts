@@ -21,16 +21,33 @@ async function getSellapayToken(): Promise<string> {
       'X-API-KEY': apiKey,
       'X-API-SECRET': apiSecret,
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify({}),
   });
 
-  const data = await res.json();
-  if (!res.ok || !data.access_token) {
-    throw new Error(`SellaPay auth failed: ${JSON.stringify(data)}`);
+  const raw = await res.text();
+  console.log('SellaPay /authorize status:', res.status, 'body:', raw?.slice(0, 500));
+
+  let data: any = null;
+  if (raw && raw.trim().length > 0) {
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      throw new Error(`SellaPay auth returned non-JSON (status ${res.status}): ${raw.slice(0, 200)}`);
+    }
   }
 
-  return data.access_token;
+  if (!res.ok || !data) {
+    throw new Error(`SellaPay auth failed (status ${res.status}): ${raw?.slice(0, 200) || 'empty response'}`);
+  }
+
+  const accessToken = data.access_token || data.token || data?.data?.access_token || data?.data?.token;
+  if (!accessToken) {
+    throw new Error(`SellaPay auth: no access_token in response: ${JSON.stringify(data).slice(0, 200)}`);
+  }
+
+  return accessToken;
 }
 
 function cleanKenyanPhoneNumber(phone: string) {
