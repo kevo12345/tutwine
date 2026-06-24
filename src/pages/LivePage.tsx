@@ -237,18 +237,40 @@ export default function LivePage() {
               <div>
                 <Label className="text-xs uppercase text-muted-foreground">Coin</Label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  {(["usdttrc20", "ltc"] as const).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setPayCurrency(c)}
-                      className={`rounded-xl border px-2 py-2 text-sm font-semibold transition ${
-                        payCurrency === c ? "border-primary bg-primary/10 text-primary" : "border-border"
-                      }`}
-                    >
-                      {c === "usdttrc20" ? "USDT (TRC20)" : "Litecoin"}
-                    </button>
-                  ))}
+                  {(["usdttrc20", "ltc"] as const).map((c) => {
+                    const disabled = c === "usdttrc20" && usdtBelowMin;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => {
+                          if (disabled) {
+                            toast.error(
+                              `USDT (TRC20) needs at least $${USDT_MIN_USD}. Pick a longer duration or pay with Litecoin / M-Pesa.`
+                            );
+                            return;
+                          }
+                          setPayCurrency(c);
+                        }}
+                        className={`rounded-xl border px-2 py-2 text-sm font-semibold transition ${
+                          disabled
+                            ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground opacity-60"
+                            : payCurrency === c
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        {c === "usdttrc20" ? "USDT (TRC20)" : "Litecoin"}
+                      </button>
+                    );
+                  })}
                 </div>
+                {usdtBelowMin && (
+                  <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                    USDT (TRC20) requires at least ${USDT_MIN_USD}. For this duration, pay with Litecoin or switch to M-Pesa.
+                  </p>
+                )}
               </div>
             )}
 
