@@ -625,12 +625,111 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          active_tier: Database["public"]["Enums"]["subscription_tier"] | null
+          age: number | null
+          bio: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          hide_distance: boolean | null
+          hide_state: boolean | null
+          interested_in: Database["public"]["Enums"]["gender_type"][] | null
+          interests: string[] | null
+          like_count: number | null
+          onboarding_complete: boolean | null
+          photos: string[] | null
+          state: string | null
+          suspended: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          active_tier?: never
+          age?: never
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          hide_distance?: boolean | null
+          hide_state?: boolean | null
+          interested_in?: Database["public"]["Enums"]["gender_type"][] | null
+          interests?: string[] | null
+          like_count?: never
+          onboarding_complete?: boolean | null
+          photos?: string[] | null
+          state?: never
+          suspended?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          active_tier?: never
+          age?: never
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          hide_distance?: boolean | null
+          hide_state?: boolean | null
+          interested_in?: Database["public"]["Enums"]["gender_type"][] | null
+          interests?: string[] | null
+          like_count?: never
+          onboarding_complete?: boolean | null
+          photos?: string[] | null
+          state?: never
+          suspended?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      discover_profiles: {
+        Args: {
+          _gender: Database["public"]["Enums"]["gender_type"]
+          _limit: number
+          _max_age: number
+          _max_distance_km: number
+          _min_age: number
+          _my_lat: number
+          _my_lng: number
+          _offset: number
+        }
+        Returns: {
+          active_tier: Database["public"]["Enums"]["subscription_tier"]
+          age: number
+          bio: string
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          distance_km: number
+          gender: Database["public"]["Enums"]["gender_type"]
+          hide_distance: boolean
+          hide_state: boolean
+          interests: string[]
+          like_count: number
+          photos: string[]
+          state: string
+          user_id: string
+          verified: boolean
+        }[]
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -658,6 +757,23 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      who_liked_me: {
+        Args: never
+        Returns: {
+          age: number
+          bio: string
+          city: string
+          country: string
+          display_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          interests: string[]
+          liked_at: string
+          photos: string[]
+          state: string
+          user_id: string
+          verified: boolean
         }[]
       }
     }
