@@ -32,12 +32,12 @@ export default function PaymentsPage() {
 
       if (subs && subs.length > 0) {
         const userIds = subs.map((s) => s.user_id);
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, display_name")
-          .in("user_id", userIds);
+        const { data: profiles } = await supabase.rpc("get_profiles_public", {
+          _targets: userIds,
+        });
 
-        const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name]));
+        const profileMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.display_name]));
+
 
         setSubscriptions(
           subs.map((s) => ({ ...s, display_name: profileMap.get(s.user_id) ?? "Unknown" }))

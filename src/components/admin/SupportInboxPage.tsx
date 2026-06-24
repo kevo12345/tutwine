@@ -49,11 +49,11 @@ export default function SupportInboxPage() {
 
       if (convos && convos.length > 0) {
         const userIds = [...new Set(convos.map((c) => c.user_id))];
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, display_name")
-          .in("user_id", userIds);
-        const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name]));
+        const { data: profiles } = await supabase.rpc("get_profiles_public", {
+          _targets: userIds,
+        });
+        const profileMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.display_name]));
+
 
         // Get last message for each conversation
         const enriched = await Promise.all(

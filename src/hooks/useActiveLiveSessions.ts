@@ -6,12 +6,12 @@ export interface ActiveLiveSession {
   host_id: string;
   display_name: string | null;
   photos: string[] | null;
-  daily_room_url: string | null;
   duration_hours: number;
   started_at: string;
   expires_at: string;
   viewer_count: number;
 }
+
 
 export function useActiveLiveSessions() {
   const [sessions, setSessions] = useState<ActiveLiveSession[]>([]);
