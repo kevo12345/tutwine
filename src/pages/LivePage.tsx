@@ -100,8 +100,12 @@ export default function LivePage() {
   };
 
   return (
-    <AppLayout title="Live" subtitle="Go live or join a live stream">
-      <div className="flex-1 overflow-y-auto px-3 pb-6 pt-2">
+    <AppLayout>
+      <div className="px-3 pb-6 pt-3">
+        <div className="mb-3 px-1">
+          <h1 className="text-2xl font-bold tracking-tight">Live</h1>
+          <p className="text-sm text-muted-foreground">Go live or join a live stream</p>
+        </div>
         {/* Hero / Go Live CTA */}
         <div className="mb-4 rounded-3xl bg-gradient-to-br from-primary via-primary to-accent p-4 text-primary-foreground shadow-lg">
           <div className="mb-2 flex items-center gap-2">
