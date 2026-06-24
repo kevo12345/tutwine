@@ -12,6 +12,9 @@ const corsHeaders = {
 const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
 const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
+// NOWPayments rejects USDT-TRC20 invoices below this amount (AMOUNT_MINIMAL_ERROR).
+// Block server-side so a UI bypass returns a clear, actionable error.
+const USDT_TRC20_MIN_USD = 8;
 
 function priceForHours(hours: number): number {
   const h = Math.max(1, Math.floor(hours));
@@ -158,6 +161,17 @@ Deno.serve(async (req) => {
     if (!ALLOWED_CRYPTO.includes(cur)) {
       await cancelRow(service, kind, rowId);
       return new Response(JSON.stringify({ error: 'Only LTC and USDT (TRC20) are supported' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (cur === 'usdttrc20' && amountUsd < USDT_TRC20_MIN_USD) {
+      await cancelRow(service, kind, rowId);
+      return new Response(
+        JSON.stringify({
+          error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD}. This duration is only $${amountUsd.toFixed(2)} — please choose Litecoin, pay with M-Pesa, or pick a longer duration.`,
+          code: 'USDT_MIN_AMOUNT',
+          min_usd: USDT_TRC20_MIN_USD,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     const npKey = Deno.env.get('NOWPAYMENTS_API_KEY');
     if (!npKey) {
