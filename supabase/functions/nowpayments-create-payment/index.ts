@@ -8,6 +8,10 @@ const corsHeaders = {
 
 const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 
+// NOWPayments requires invoices to be above provider-side minimums.
+// USDT-TRC20 typically rejects anything under ~$8 USD with AMOUNT_MINIMAL_ERROR.
+const USDT_TRC20_MIN_USD = 8;
+
 // USD prices (kept in sync with src/lib/constants.ts TIER_PRICES)
 const USD_PRICES: Record<string, number> = {
   simp: 1.5,
@@ -15,6 +19,7 @@ const USD_PRICES: Record<string, number> = {
   plus: 5,
   pro: 10,
 };
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -77,6 +82,19 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Pre-check: USDT (TRC20) has a provider-side minimum; block early with a clear message
+    if (String(pay_currency).toLowerCase() === 'usdttrc20' && amountUsd < USDT_TRC20_MIN_USD) {
+      return new Response(
+        JSON.stringify({
+          error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD}. Choose Litecoin (LTC) for this plan, or upgrade to a higher tier.`,
+          code: 'USDT_MIN_AMOUNT',
+          min_usd: USDT_TRC20_MIN_USD,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
 
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
