@@ -162,23 +162,26 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkBody = new URLSearchParams({
+    const stkPayload = {
+      Amount: Number(amount),
+      Phone: cleanPhone,
       phone: cleanPhone,
-      amount: String(Number(amount)),
+      amount: Number(amount),
+      note: `TutWine ${tier} subscription`,
       reference: subRef,
       description: `TutWine ${tier} subscription`,
       callbackUrl,
       callback_url: callbackUrl,
-    });
+    };
 
     const stkRes = await fetch(sellapayActionUrl('requestStkPush'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: stkBody.toString(),
+      body: JSON.stringify(stkPayload),
     });
 
     const stkRaw = await stkRes.text();
