@@ -127,26 +127,11 @@ export default function UserProfilePage() {
   }
 
   const photos = (profile.photos?.length ? profile.photos : []) as string[];
-  const age = profile.date_of_birth
-    ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / 31557600000)
-    : null;
+  const age = profile.age;
   const location = [profile.city, profile.state].filter(Boolean).join(", ");
-  const distance = (myProfile?.latitude && myProfile?.longitude && profile.latitude && profile.longitude)
-    ? Math.round(
-        6371 * 2 * Math.atan2(
-          Math.sqrt(
-            Math.sin(((profile.latitude - myProfile.latitude) * Math.PI / 180) / 2) ** 2 +
-            Math.cos(myProfile.latitude * Math.PI / 180) * Math.cos(profile.latitude * Math.PI / 180) *
-            Math.sin(((profile.longitude - myProfile.longitude) * Math.PI / 180) / 2) ** 2
-          ),
-          Math.sqrt(1 - (
-            Math.sin(((profile.latitude - myProfile.latitude) * Math.PI / 180) / 2) ** 2 +
-            Math.cos(myProfile.latitude * Math.PI / 180) * Math.cos(profile.latitude * Math.PI / 180) *
-            Math.sin(((profile.longitude - myProfile.longitude) * Math.PI / 180) / 2) ** 2
-          ))
-        )
-      )
-    : null;
+  // Distance computation moved server-side (via discover_profiles RPC). Coordinates
+  // are no longer exposed cross-user, so individual profile pages don't show distance.
+  const distance: number | null = null;
 
   const openPhoto = (index: number) => {
     setLightboxIndex(index);
