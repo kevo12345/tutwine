@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createHmac } from 'node:crypto';
+import { tryActivateLiveSession, tryActivateLivePass } from '../_shared/live-activation.ts';
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
