@@ -162,6 +162,17 @@ Deno.serve(async (req) => {
       await cancelRow(service, kind, rowId);
       return new Response(JSON.stringify({ error: 'Only LTC and USDT (TRC20) are supported' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    if (cur === 'usdttrc20' && amountUsd < USDT_TRC20_MIN_USD) {
+      await cancelRow(service, kind, rowId);
+      return new Response(
+        JSON.stringify({
+          error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD}. This duration is only $${amountUsd.toFixed(2)} — please choose Litecoin, pay with M-Pesa, or pick a longer duration.`,
+          code: 'USDT_MIN_AMOUNT',
+          min_usd: USDT_TRC20_MIN_USD,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const npKey = Deno.env.get('NOWPAYMENTS_API_KEY');
     if (!npKey) {
       await cancelRow(service, kind, rowId);
