@@ -303,9 +303,9 @@ export default function PricingPage() {
                     <div>
                       <CardTitle className="font-display text-lg">{info.label}</CardTitle>
                       <CardDescription>
-                        <span className="text-2xl font-display font-bold text-foreground">KES {kesPrice}</span>
+                        <span className="text-2xl font-display font-bold text-foreground">${USD_PRICES[tier.key]}</span>
                         <span className="text-muted-foreground">/{tier.duration ? "2 wks" : "mo"}</span>
-                        <span className="block text-xs text-muted-foreground">or ${USD_PRICES[tier.key]} in crypto</span>
+                        <span className="block text-xs text-muted-foreground">≈ KES {kesPrice} via M-Pesa</span>
                       </CardDescription>
                     </div>
                   </div>
