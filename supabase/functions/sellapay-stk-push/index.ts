@@ -5,7 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
+
+function sellapayActionUrl(action: string) {
+  const url = new URL(`${SELLAPAY_BASE}/index.php`);
+  url.searchParams.set('action', action);
+  return url.toString();
+}
 
 async function getSellapayToken(): Promise<string> {
   const apiKey = Deno.env.get('SELLAPAY_API_KEY');
@@ -15,7 +21,7 @@ async function getSellapayToken(): Promise<string> {
     throw new Error('SellaPay credentials not configured');
   }
 
-  const res = await fetch(`${SELLAPAY_BASE}/authorize`, {
+  const res = await fetch(sellapayActionUrl('authorize'), {
     method: 'POST',
     headers: {
       'X-API-KEY': apiKey,
@@ -27,7 +33,7 @@ async function getSellapayToken(): Promise<string> {
   });
 
   const raw = await res.text();
-  console.log('SellaPay /authorize status:', res.status, 'body:', raw?.slice(0, 500) || 'empty');
+  console.log('SellaPay authorize status:', res.status, 'body:', raw?.slice(0, 500) || 'empty');
 
   if (!res.ok) {
     throw new Error(`SellaPay auth failed: status ${res.status} ${raw?.slice(0, 200) || 'empty response'}`);
@@ -158,7 +164,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
+    const stkRes = await fetch(sellapayActionUrl('requestStkPush'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
