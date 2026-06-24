@@ -132,6 +132,22 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Live (Go Live) routing: try first
+  const liveCandidates = [orderId, paymentId].filter(Boolean) as string[];
+  const isSuccessLive = SUCCESS_STATUSES.includes(status);
+  if (await tryActivateLiveSession(serviceClient, liveCandidates, isSuccessLive)) {
+    await logIpn(serviceClient, { ...baseLog, signature_valid: signatureValid, activation_result: 'live_session' });
+    return new Response(JSON.stringify({ success: true, matched_by: 'live_session' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  if (await tryActivateLivePass(serviceClient, liveCandidates, isSuccessLive)) {
+    await logIpn(serviceClient, { ...baseLog, signature_valid: signatureValid, activation_result: 'live_pass' });
+    return new Response(JSON.stringify({ success: true, matched_by: 'live_pass' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   // Try by order_id (our subscription UUID) first, then by provider_sub_id (payment_id)
   let sub: any = null;
   if (orderId) {
