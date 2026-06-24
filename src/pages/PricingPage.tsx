@@ -456,19 +456,31 @@ export default function PricingPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CRYPTO_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
+                      {CRYPTO_OPTIONS.map((opt) => {
+                        const disabled = opt.value === "usdttrc20" && usdtBelowMin;
+                        return (
+                          <SelectItem key={opt.value} value={opt.value} disabled={disabled}>
+                            {opt.label}
+                            {disabled && ` — min $${USDT_MIN_USD}`}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
+                {usdtBelowMin && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      USDT (TRC20) needs an invoice of at least ${USDT_MIN_USD}. This plan is ${selectedUsd}, so please use Litecoin (LTC) — or pick a higher-priced plan to unlock USDT.
+                    </p>
+                  </div>
+                )}
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground">
                     We'll generate a one-time deposit address. Your subscription activates automatically after the network confirms the payment (usually a few minutes).
                   </p>
                 </div>
+
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setMethod(null)} disabled={cryptoLoading} className="flex-1">
                     Back
