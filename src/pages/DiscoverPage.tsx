@@ -163,6 +163,11 @@ export default function DiscoverPage() {
     likesCount: profile.like_count ?? 0,
   });
 
+  const profileForCard = currentProfile ? toCardProfile(currentProfile) : null;
+  const noMoreProfiles = filteredProfiles.length === 0;
+
+
+
 
   const handleSwipe = useCallback(async (action: "like" | "pass") => {
     if (!currentProfile || !user) return;
