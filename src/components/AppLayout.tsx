@@ -1,5 +1,7 @@
 import { ReactNode, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
+import { LiveSuggestionBanner } from "./LiveSuggestionBanner";
 import { usePresence } from "@/hooks/usePresence";
 import { useLocationPrompt } from "@/hooks/useLocationPrompt";
 import { useLikeNotifications } from "@/hooks/useLikeNotifications";
@@ -73,8 +75,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
   useLikeNotifications();
   const { hasLocation, requestLocation, locationStatus } = useLocationPrompt();
   const { profile } = useAuth();
+  const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+
+  const showLiveBanner = ["/discover", "/likes", "/chat"].some((p) => location.pathname === p || location.pathname.startsWith(p + "/")) && location.pathname !== "/live";
+
+
 
   const showBanner =
     profile?.onboarding_complete &&
@@ -134,6 +141,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       )}
+      {showLiveBanner && <div className="pt-2"><LiveSuggestionBanner /></div>}
       <main className="flex-1 min-h-0 relative overflow-y-auto mx-auto w-full max-w-lg pb-0 -webkit-overflow-scrolling-touch" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
       <BottomNav />
 
