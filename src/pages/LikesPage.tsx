@@ -56,7 +56,7 @@ export default function LikesPage() {
   const calcAge = (dob: string | null) =>
     dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null;
 
-  const handleLikeBack = async (e: React.MouseEvent, liker: Profile) => {
+  const handleLikeBack = async (e: React.MouseEvent, liker: Liker) => {
     e.stopPropagation();
     if (!user || likingBack) return;
     setLikingBack(liker.user_id);
@@ -95,7 +95,7 @@ export default function LikesPage() {
     setLikingBack(null);
   };
 
-  const handlePass = async (e: React.MouseEvent, liker: Profile) => {
+  const handlePass = async (e: React.MouseEvent, liker: Liker) => {
     e.stopPropagation();
     if (!user) return;
 
@@ -123,7 +123,7 @@ export default function LikesPage() {
     ? {
         id: selectedProfile.user_id,
         displayName: selectedProfile.display_name ?? "Unknown",
-        age: calcAge(selectedProfile.date_of_birth) ?? 0,
+        age: selectedProfile.age ?? 0,
         gender: selectedProfile.gender ?? "other",
         bio: selectedProfile.bio ?? "",
         interests: selectedProfile.interests ?? [],
@@ -159,7 +159,7 @@ export default function LikesPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {likers.map((liker) => {
-              const age = calcAge(liker.date_of_birth);
+              const age = liker.age;
               return (
                 <Card
                   key={liker.user_id}
