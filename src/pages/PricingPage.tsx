@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -85,6 +85,10 @@ const CRYPTO_OPTIONS = [
   { value: "usdttrc20", label: "USDT (TRC20) — low fees" },
 ];
 
+// NOWPayments rejects USDT-TRC20 invoices below ~$8 USD with AMOUNT_MINIMAL_ERROR.
+const USDT_MIN_USD = 8;
+
+
 type Method = null | "mpesa" | "crypto";
 
 type CryptoPayment = {
@@ -106,19 +110,30 @@ export default function PricingPage() {
   const [phone, setPhone] = useState("");
   const [mpesaLoading, setMpesaLoading] = useState(false);
 
-  // Crypto state
-  const [payCurrency, setPayCurrency] = useState("usdttrc20");
+  // Crypto state — default to LTC, the only coin that supports all tiers
+  const [payCurrency, setPayCurrency] = useState("ltc");
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [cryptoPayment, setCryptoPayment] = useState<CryptoPayment | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const selectedUsd = selectedTier ? USD_PRICES[selectedTier] ?? 0 : 0;
+  const usdtBelowMin = selectedUsd > 0 && selectedUsd < USDT_MIN_USD;
+
+  // If user previously chose USDT but selected a cheap tier, fall back to LTC.
+  useEffect(() => {
+    if (payCurrency === "usdttrc20" && usdtBelowMin) {
+      setPayCurrency("ltc");
+    }
+  }, [payCurrency, usdtBelowMin]);
 
   const resetDialog = () => {
     setMethod(null);
     setPhone("");
     setCryptoPayment(null);
-    setPayCurrency("usdttrc20");
+    setPayCurrency("ltc");
     setCopied(false);
   };
+
 
   const handleSelectPlan = (tierKey: string) => {
     if (!user) {
