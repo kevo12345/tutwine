@@ -33,10 +33,20 @@ export default function LivePage() {
   const [hours, setHours] = useState<number>(1);
   const [provider, setProvider] = useState<"sellapay" | "nowpayments">("sellapay");
   const [phone, setPhone] = useState("");
-  const [payCurrency, setPayCurrency] = useState<"ltc" | "usdttrc20">("usdttrc20");
+  const [payCurrency, setPayCurrency] = useState<"ltc" | "usdttrc20">("ltc");
   const [submitting, setSubmitting] = useState(false);
   const usd = useMemo(() => priceForLiveHours(hours), [hours]);
   const kes = useMemo(() => Math.max(1, Math.round(usd * 130)), [usd]);
+  // NOWPayments USDT-TRC20 invoices typically require ~$8+ USD; smaller amounts are rejected by the provider.
+  const USDT_MIN_USD = 8;
+  const usdtBelowMin = usd < USDT_MIN_USD;
+
+  // Auto-fall back to LTC if the selected duration puts USDT below the provider minimum.
+  useEffect(() => {
+    if (provider === "nowpayments" && payCurrency === "usdttrc20" && usdtBelowMin) {
+      setPayCurrency("ltc");
+    }
+  }, [provider, payCurrency, usdtBelowMin]);
 
   // Auto-redirect host if they have an active session
   useEffect(() => {
