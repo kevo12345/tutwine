@@ -83,16 +83,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Pre-check: USDT (TRC20) has a provider-side minimum; block early with a clear message
-    if (String(pay_currency).toLowerCase() === 'usdttrc20' && amountUsd < USDT_TRC20_MIN_USD) {
-      return new Response(
-        JSON.stringify({
-          error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD}. Choose Litecoin (LTC) for this plan, or upgrade to a higher tier.`,
-          code: 'USDT_MIN_AMOUNT',
-          min_usd: USDT_TRC20_MIN_USD,
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Pre-check: USDT (TRC20) has a provider-side minimum that fluctuates.
+    // Query NOWPayments live for the current minimum in USD and compare.
+    if (String(pay_currency).toLowerCase() === 'usdttrc20') {
+      try {
+        const minRes = await fetch(
+          `${NOWPAYMENTS_BASE}/min-amount?currency_from=usdttrc20&currency_to=usdttrc20&fiat_equivalent=usd`,
+          { headers: { 'x-api-key': apiKey } }
+        );
+        const minData = await minRes.json();
+        const liveMinUsd = Number(minData?.fiat_equivalent ?? minData?.min_amount ?? 0);
+        const effectiveMin = Math.max(USDT_TRC20_MIN_USD, isFinite(liveMinUsd) ? Math.ceil(liveMinUsd) : 0);
+        console.log('USDT-TRC20 min check:', { liveMinUsd, effectiveMin, amountUsd });
+        if (amountUsd < effectiveMin) {
+          return new Response(
+            JSON.stringify({
+              error: `USDT (TRC20) currently requires at least $${effectiveMin}. Choose Litecoin (LTC) for this plan.`,
+              code: 'USDT_MIN_AMOUNT',
+              min_usd: effectiveMin,
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } catch (e) {
+        console.error('USDT min-amount lookup failed, falling back to static min:', e);
+        if (amountUsd < USDT_TRC20_MIN_USD) {
+          return new Response(
+            JSON.stringify({
+              error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD}. Choose Litecoin (LTC) for this plan.`,
+              code: 'USDT_MIN_AMOUNT',
+              min_usd: USDT_TRC20_MIN_USD,
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
     }
 
 
