@@ -15,51 +15,91 @@ async function getSellapayToken(): Promise<string> {
     throw new Error('SellaPay credentials not configured');
   }
 
-  async function tryAuth(method: 'GET' | 'POST') {
-    const init: RequestInit = {
-      method,
+  const authAttempts: RequestInit[] = [
+    {
+      method: 'GET',
       headers: {
-        'X-API-KEY': apiKey!,
-        'X-API-SECRET': apiSecret!,
+        'X-API-KEY': apiKey,
+        'X-API-SECRET': apiSecret,
         'Accept': 'application/json',
-        ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
       },
-      ...(method === 'POST' ? { body: JSON.stringify({}) } : {}),
-    };
-    const r = await fetch(`${SELLAPAY_BASE}/authorize`, init);
-    const t = await r.text();
-    console.log(`SellaPay /authorize [${method}] status:`, r.status, 'body:', t?.slice(0, 500));
-    return { res: r, raw: t };
-  }
+    },
+    {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey,
+        'X-API-Secret': apiSecret,
+        'Accept': 'application/json',
+      },
+    },
+    {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'X-API-SECRET': apiSecret,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    },
+    {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret }),
+    },
+    {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ apiKey, apiSecret }),
+    },
+    {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ api_key: apiKey, api_secret: apiSecret }).toString(),
+    },
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`${apiKey}:${apiSecret}`)}`,
+        'Accept': 'application/json',
+      },
+    },
+  ];
 
-  // Try GET first (SellaPay's documented contract), fall back to POST.
-  let { res, raw } = await tryAuth('GET');
-  if (!res.ok || !raw || raw.trim().length === 0) {
-    ({ res, raw } = await tryAuth('POST'));
-  }
+  const failures: string[] = [];
+  for (const [index, init] of authAttempts.entries()) {
+    const res = await fetch(`${SELLAPAY_BASE}/authorize`, init);
+    const raw = await res.text();
+    const preview = raw?.slice(0, 500) || 'empty response';
+    console.log(`SellaPay /authorize attempt ${index + 1} [${init.method}] status:`, res.status, 'body:', preview);
 
-  let data: any = null;
-  if (raw && raw.trim().length > 0) {
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      if (res.ok && /^[A-Za-z0-9._-]{20,}$/.test(raw.trim())) {
-        return raw.trim();
+    if (raw && raw.trim().length > 0) {
+      try {
+        const data = JSON.parse(raw);
+        const accessToken = data.access_token || data.token || data?.data?.access_token || data?.data?.token;
+        if (res.ok && accessToken) return accessToken;
+        failures.push(`attempt ${index + 1}: status ${res.status}, no token`);
+      } catch (_e) {
+        if (res.ok && /^[A-Za-z0-9._-]{20,}$/.test(raw.trim())) {
+          return raw.trim();
+        }
+        failures.push(`attempt ${index + 1}: status ${res.status}, non-JSON`);
       }
-      throw new Error(`SellaPay auth returned non-JSON (status ${res.status}): ${raw.slice(0, 200)}`);
+    } else {
+      failures.push(`attempt ${index + 1}: status ${res.status}, empty response`);
     }
   }
 
-  if (!res.ok || !data) {
-    throw new Error(`SellaPay auth failed (status ${res.status}): ${raw?.slice(0, 200) || 'empty response'}`);
-  }
-
-  const accessToken = data.access_token || data.token || data?.data?.access_token || data?.data?.token;
-  if (!accessToken) {
-    throw new Error(`SellaPay auth: no access_token in response: ${JSON.stringify(data).slice(0, 200)}`);
-  }
-
-  return accessToken;
+  throw new Error(`SellaPay auth failed: ${failures.join('; ')}`);
 }
 
 function cleanKenyanPhoneNumber(phone: string) {
