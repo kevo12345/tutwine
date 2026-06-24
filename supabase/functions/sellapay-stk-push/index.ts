@@ -38,15 +38,14 @@ async function getSellapayToken(): Promise<string> {
     ({ res, raw } = await tryAuth('POST'));
   }
 
-
-  const raw = await res.text();
-  console.log('SellaPay /authorize status:', res.status, 'body:', raw?.slice(0, 500));
-
   let data: any = null;
   if (raw && raw.trim().length > 0) {
     try {
       data = JSON.parse(raw);
     } catch (e) {
+      if (res.ok && /^[A-Za-z0-9._-]{20,}$/.test(raw.trim())) {
+        return raw.trim();
+      }
       throw new Error(`SellaPay auth returned non-JSON (status ${res.status}): ${raw.slice(0, 200)}`);
     }
   }
@@ -189,10 +188,19 @@ Deno.serve(async (req) => {
       }),
     });
 
-    const stkData = await stkRes.json();
+    const stkRaw = await stkRes.text();
+    let stkData: any = null;
+    if (stkRaw && stkRaw.trim().length > 0) {
+      try {
+        stkData = JSON.parse(stkRaw);
+      } catch (_e) {
+        stkData = { raw: stkRaw };
+      }
+    }
+    console.log('STK Push status:', stkRes.status, 'body:', stkRaw?.slice(0, 500));
     console.log('STK Push response:', JSON.stringify(stkData));
 
-    if (!stkRes.ok) {
+    if (!stkRes.ok || !stkData) {
       console.error('STK Push failed:', stkData);
       await serviceClient
         .from('subscriptions')
@@ -200,7 +208,7 @@ Deno.serve(async (req) => {
         .eq('id', pendingSubscription.id);
 
       return new Response(
-        JSON.stringify({ error: 'STK push failed', details: stkData }),
+        JSON.stringify({ error: 'STK push failed', details: stkData || stkRaw || 'empty response' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
