@@ -244,7 +244,7 @@ export default function ChatThreadPage() {
         profile={otherProfile ? {
           id: otherProfile.user_id,
           displayName: otherProfile.display_name ?? "Unknown",
-          age: otherProfile.date_of_birth ? Math.floor((Date.now() - new Date(otherProfile.date_of_birth).getTime()) / 31557600000) : 0,
+          age: otherProfile.age ?? 0,
           gender: otherProfile.gender ?? "other",
           bio: otherProfile.bio ?? "",
           interests: otherProfile.interests ?? [],
