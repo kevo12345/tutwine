@@ -12,6 +12,9 @@ const corsHeaders = {
 const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
 const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
+// NOWPayments rejects USDT-TRC20 invoices below this amount (AMOUNT_MINIMAL_ERROR).
+// Block server-side so a UI bypass returns a clear, actionable error.
+const USDT_TRC20_MIN_USD = 8;
 
 function priceForHours(hours: number): number {
   const h = Math.max(1, Math.floor(hours));
