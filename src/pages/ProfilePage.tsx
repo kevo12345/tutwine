@@ -25,8 +25,8 @@ import {
 
 const TIER_FEATURES: Record<string, string[]> = {
   basic: ["100 profile views/day", "50 likes/day", "Ad-free experience"],
-  plus: ["Unlimited profile views", "200 likes/day", "1 weekly boost", "Advanced filters", "Ad-free experience"],
-  pro: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe", "Video chat", "Super Like"],
+  plus: ["Unlimited profile views", "200 likes/day", "Advanced filters", "Ad-free experience"],
+  pro: ["Unlimited everything", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe", "Video chat", "Super Like"],
 };
 
 const TIER_ICONS: Record<string, React.ElementType> = { basic: Zap, plus: Crown, pro: Star };

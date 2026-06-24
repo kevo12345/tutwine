@@ -54,14 +54,14 @@ const tiers = [
   {
     key: "plus" as const,
     icon: Crown,
-    features: ["Unlimited profile views", "200 likes/day", "1 weekly boost", "Priority support", "Advanced filters"],
+    features: ["Unlimited profile views", "200 likes/day", "Priority support", "Advanced filters"],
     color: "bg-primary/10 text-primary",
     popular: true,
   },
   {
     key: "pro" as const,
     icon: Star,
-    features: ["Unlimited everything", "Daily boost", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe", "Video chat"],
+    features: ["Unlimited everything", "See who liked you", "Priority in discovery", "Read receipts", "Undo last swipe", "Video chat"],
     color: "bg-accent/10 text-accent",
   },
 ];

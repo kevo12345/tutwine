@@ -50,9 +50,10 @@ const faqs = [
         a: "Pro subscribers can see who liked them in the 'Likes' tab. Free and Basic users will see that someone liked them but the profile details may be limited.",
       },
       {
-        q: "How does the 'Boost' feature work?",
-        a: "Boosting places your profile at the top of other users' discovery feeds for a period of time, increasing your visibility and chances of getting matches.",
+        q: "How does 'Go Live' work?",
+        a: "From the Live tab, tap Go Live, choose how long you want to broadcast, and pay for the time you need. Pricing is $1.50/hr for the first 2 hours and $0.35/hr after that. Other users can join your stream by paying for their own viewing time. Your live session ends automatically when the paid time runs out.",
       },
+
     ],
   },
   {
