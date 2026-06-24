@@ -5,12 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
 
 function sellapayActionUrl(action: string) {
-  const url = new URL(`${SELLAPAY_BASE}/index.php`);
-  url.searchParams.set('action', action);
-  return url.toString();
+  return `${SELLAPAY_BASE}/${action}`;
 }
 
 async function getSellapayToken(): Promise<string> {
