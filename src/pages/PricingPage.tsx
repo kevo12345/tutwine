@@ -77,7 +77,7 @@ const USD_PRICES: Record<string, number> = {
   simp: 1.5,
   basic: 3,
   plus: 5,
-  pro: 10,
+  pro: 12,
 };
 
 type PayCurrency = "ltc" | "usdttrc20";
@@ -87,8 +87,9 @@ const CRYPTO_OPTIONS: Array<{ value: PayCurrency; label: string }> = [
   { value: "usdttrc20", label: "USDT (TRC20)" },
 ];
 
-// NOWPayments rejects USDT-TRC20 invoices below ~$8 USD with AMOUNT_MINIMAL_ERROR.
-const USDT_MIN_USD = 8;
+// NOWPayments USDT-TRC20 provider minimum fluctuates around $12 USD.
+// Server-side enforces the live minimum; client uses this as a conservative floor.
+const USDT_MIN_USD = 12;
 
 
 type Method = null | "mpesa" | "crypto";
