@@ -425,7 +425,7 @@ export default function DiscoverPage() {
                   const nextProfile = filteredProfiles[nextEffectiveIndex];
                   return (
                     <div className="absolute inset-0 scale-[0.95] opacity-50">
-                      <ProfileCard profile={toCardProfile(nextProfile)} isOnline={onlineIds.has(nextProfile.user_id)} />
+                      <ProfileCard profile={toCardProfile(nextProfile)} isOnline={onlineIds.has(nextProfile.user_id)} lastSeenAt={lastSeenMap.get(nextProfile.user_id)} />
                     </div>
                   );
                 })()}
