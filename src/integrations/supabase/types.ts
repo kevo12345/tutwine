@@ -802,6 +802,7 @@ export type Database = {
           verified: boolean
         }[]
       }
+      email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
