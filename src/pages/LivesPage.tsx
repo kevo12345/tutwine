@@ -399,10 +399,18 @@ function StartLiveDialog({
             )}
           </Button>
         </DialogFooter>
+
+        <BeautySettingsPanel
+          value={beauty}
+          onChange={setBeauty}
+          open={beautyOpen}
+          onOpenChange={setBeautyOpen}
+        />
       </DialogContent>
     </Dialog>
   );
 }
+
 
 function HostControls({ live }: { live: Live }) {
   const qc = useQueryClient();
