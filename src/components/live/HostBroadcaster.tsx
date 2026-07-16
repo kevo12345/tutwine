@@ -40,7 +40,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
 
     (async () => {
       try {
-        await call.join({ url: roomUrl, token });
+        await call.join(token ? { url: roomUrl, token } : { url: roomUrl });
         setJoined(true);
       } catch (e: any) {
         toast.error(e?.message ?? "Failed to join live");
