@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MailCheck, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { signInWithProvider } from "@/lib/oauth-helper";
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirectTo = params.get("redirect");
   const { signUp, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
@@ -21,8 +23,11 @@ export default function SignupPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) navigate("/discover", { replace: true });
-  }, [user, navigate]);
+    if (user) {
+      if (redirectTo && redirectTo.startsWith("/")) navigate(redirectTo, { replace: true });
+      else navigate("/discover", { replace: true });
+    }
+  }, [user, navigate, redirectTo]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
