@@ -12,6 +12,8 @@ import NowPaymentsIpnPage from "@/components/admin/NowPaymentsIpnPage";
 import SupportInboxPage from "@/components/admin/SupportInboxPage";
 import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
 import GiftCatalogPage from "@/components/admin/GiftCatalogPage";
+import WithdrawalsPage from "@/components/admin/WithdrawalsPage";
+
 import { useAdminData } from "@/hooks/useAdminData";
 
 export default function AdminPage() {
@@ -53,6 +55,8 @@ export default function AdminPage() {
         <Route path="support" element={<SupportInboxPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="gift-catalog" element={<GiftCatalogPage />} />
+        <Route path="withdrawals" element={<WithdrawalsPage />} />
+
       </Routes>
     </AdminLayout>
   );
