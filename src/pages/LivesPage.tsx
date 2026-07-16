@@ -161,52 +161,24 @@ export default function LivesPage() {
 }
 
 function GoLiveButton({
-  canGoLive,
-  loading,
   hasActive,
   onClick,
 }: {
-  canGoLive: boolean;
-  loading: boolean;
   hasActive: boolean;
   onClick: () => void;
 }) {
-  const navigate = useNavigate();
-  const disabled = loading || !canGoLive || hasActive;
   const label = hasActive ? "You're live" : "Go Live";
-  const btn = (
+  return (
     <Button
-      onClick={canGoLive && !hasActive ? onClick : undefined}
-      disabled={disabled}
+      onClick={hasActive ? undefined : onClick}
+      disabled={hasActive}
       className="gradient-warm border-0 text-primary-foreground shadow-glow"
     >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : canGoLive ? (
-        <>
-          <Radio className="mr-1.5 h-4 w-4" /> {label}
-        </>
-      ) : (
-        <>
-          <Lock className="mr-1.5 h-4 w-4" /> Go Live
-        </>
-      )}
+      <Radio className="mr-1.5 h-4 w-4" /> {label}
     </Button>
   );
-  if (canGoLive || loading) return btn;
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span onClick={() => navigate("/pricing")}>{btn}</span>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-[220px] text-center">
-          An active subscription is required to host a live. Tap to view plans.
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
 }
+
 
 function StartLiveDialog({
   open,
