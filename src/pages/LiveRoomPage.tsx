@@ -31,6 +31,8 @@ export default function LiveRoomPage() {
   const [now, setNow] = useState(Date.now());
   const [isHost, setIsHost] = useState(false);
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
+  const [hostName, setHostName] = useState<string | null>(null);
   const nameCache = useRef<Map<string, string | null>>(new Map());
 
 
