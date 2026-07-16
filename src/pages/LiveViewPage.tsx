@@ -410,15 +410,12 @@ export default function LiveViewPage() {
   );
 }
 
-function TicketRemainingPill({ secsLeft, joinedAt }: { secsLeft: number; joinedAt: number | null }) {
-  const elapsedMs = joinedAt ? Date.now() - joinedAt : 0;
-  const inIntro = elapsedMs < 2 * 60 * 60 * 1000;
-  const rate = inIntro ? "$1.50/hr" : "$0.35/hr";
+function TicketRemainingPill({ secsLeft }: { secsLeft: number; joinedAt: number | null }) {
   return (
     <span className="mt-0.5 flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
       <Clock className="h-3 w-3" />
       <span className="tabular-nums">{formatSecs(secsLeft)}</span>
-      <span className="opacity-70">left · {rate}</span>
+      <span className="opacity-70">left · $1/hr</span>
     </span>
   );
 }
