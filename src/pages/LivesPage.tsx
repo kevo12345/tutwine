@@ -234,6 +234,9 @@ function StartLiveDialog({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
+  const [beautyOpen, setBeautyOpen] = useState(false);
+
 
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
