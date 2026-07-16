@@ -54,7 +54,7 @@ export default function GoLiveSetupPage() {
       let thumbnail_url: string | null = null;
       if (thumbFile) {
         const ext = thumbFile.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `live-thumbnails/${user.id}/${crypto.randomUUID()}.${ext}`;
+        const path = `${user.id}/live-thumbnails/${crypto.randomUUID()}.${ext}`;
         const up = await supabase.storage.from("photos").upload(path, thumbFile, {
           cacheControl: "3600",
           upsert: false,
