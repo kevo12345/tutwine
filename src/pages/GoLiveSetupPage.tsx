@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
+import { requestAvPermissions } from "@/lib/media-permissions";
 
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
@@ -49,6 +50,9 @@ export default function GoLiveSetupPage() {
       toast.error("Live session must be at least 1 hour");
       return;
     }
+    // Ask for camera + mic while we still have the direct user gesture.
+    const granted = await requestAvPermissions();
+    if (!granted) return;
     setStarting(true);
     try {
       let thumbnail_url: string | null = null;
