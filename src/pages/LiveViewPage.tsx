@@ -208,7 +208,7 @@ export default function LiveViewPage() {
 
   // Ticker for expiry checks & renewals
   useEffect(() => {
-    const id = window.setInterval(() => setNowTick(Date.now()), 15_000);
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
