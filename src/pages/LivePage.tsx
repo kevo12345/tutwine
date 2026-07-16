@@ -311,7 +311,7 @@ export default function LivePage() {
             )}
 
             <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay $${usd.toFixed(2)} & ${sheet?.kind === "host" ? "Go Live" : "Join"}`}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay $${usd.toFixed(2)} & Join`}
             </Button>
             <p className="text-center text-[11px] text-muted-foreground">
               Access expires automatically when your paid time runs out.
