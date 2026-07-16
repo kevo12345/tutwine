@@ -124,7 +124,7 @@ export default function LivePage() {
           </div>
           <h2 className="mb-1 text-xl font-bold">Start your own live stream</h2>
           <p className="mb-3 text-sm opacity-90">
-            From $1.50/hr · $0.35/hr after 2 hours. Pay once, broadcast until time runs out.
+            Hosting is free — you keep 60% of gifts sent by viewers.
           </p>
           <Button onClick={openHost} variant="secondary" className="w-full font-semibold">
             Go Live now
