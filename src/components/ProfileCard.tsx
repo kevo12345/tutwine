@@ -51,18 +51,6 @@ export function ProfileCard({ profile, style, className, onTap, isOnline, lastSe
       />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
 
-      {isOnline ? (
-        <Badge className="absolute top-3 left-3 gap-1 text-xs backdrop-blur-sm bg-success/25 text-success border-success/40">
-          <Circle className="h-2 w-2 fill-current" />
-          Online
-        </Badge>
-      ) : lastSeenText ? (
-        <Badge className="absolute top-3 left-3 gap-1 text-xs backdrop-blur-sm bg-muted/40 text-muted-foreground border-muted/30">
-          <Clock className="h-3 w-3" />
-          Seen {lastSeenText}
-        </Badge>
-      ) : null}
-
       <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
         {tier && (
           <Badge className={`${tier.className} gap-1 text-xs backdrop-blur-sm`}>
@@ -79,13 +67,24 @@ export function ProfileCard({ profile, style, className, onTap, isOnline, lastSe
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-5 text-primary-foreground">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h2 className="font-display text-2xl font-bold">
             {profile.displayName}, {profile.age}
           </h2>
           {profile.verified && (
             <BadgeCheck className="h-5 w-5 text-info" />
           )}
+          {isOnline ? (
+            <Badge className="gap-1 text-xs backdrop-blur-sm bg-success/25 text-success border-success/40">
+              <Circle className="h-2 w-2 fill-current" />
+              Online
+            </Badge>
+          ) : lastSeenText ? (
+            <Badge className="gap-1 text-xs backdrop-blur-sm bg-muted/40 text-muted-foreground border-muted/30">
+              <Clock className="h-3 w-3" />
+              Seen {lastSeenText}
+            </Badge>
+          ) : null}
         </div>
         <div className="mt-1 flex items-center gap-1 text-sm opacity-90">
           <MapPin className="h-3.5 w-3.5" />
