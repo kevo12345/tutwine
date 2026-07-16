@@ -53,6 +53,7 @@ export default function DiscoverPage() {
   const { limits } = useSubscription();
 
   const [profiles, setProfiles] = useState<DiscoverProfileRow[]>([]);
+  const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
@@ -113,6 +114,38 @@ export default function DiscoverPage() {
   useEffect(() => {
     fetchProfiles();
   }, [fetchProfiles]);
+
+  // Fetch online presence for loaded profiles (60s freshness), refresh every 45s
+  useEffect(() => {
+    const ids = profiles.map((p) => p.user_id);
+    if (ids.length === 0) {
+      setOnlineIds(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("user_presence")
+        .select("user_id, is_online, last_seen_at")
+        .in("user_id", ids);
+      if (cancelled) return;
+      const now = Date.now();
+      const next = new Set<string>();
+      (data ?? []).forEach((r: any) => {
+        const fresh = r.last_seen_at && now - new Date(r.last_seen_at).getTime() < 90_000;
+        if (r.is_online && fresh) next.add(r.user_id);
+      });
+      setOnlineIds(next);
+    };
+
+    load();
+    const iv = setInterval(load, 45_000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [profiles]);
 
   const filteredProfiles = profiles;
 
@@ -387,7 +420,7 @@ export default function DiscoverPage() {
                   const nextProfile = filteredProfiles[nextEffectiveIndex];
                   return (
                     <div className="absolute inset-0 scale-[0.95] opacity-50">
-                      <ProfileCard profile={toCardProfile(nextProfile)} />
+                      <ProfileCard profile={toCardProfile(nextProfile)} isOnline={onlineIds.has(nextProfile.user_id)} />
                     </div>
                   );
                 })()}
@@ -429,7 +462,7 @@ export default function DiscoverPage() {
                           }
                         }}
                       >
-                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
+                        <ProfileCard profile={profileForCard} isOnline={onlineIds.has(currentProfile.user_id)} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
                       </div>
                     </div>
                   </div>

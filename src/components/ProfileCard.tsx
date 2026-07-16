@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { MapPin, BadgeCheck, Crown, Zap, Star, Heart } from "lucide-react";
+import { MapPin, BadgeCheck, Crown, Zap, Star, Heart, Circle } from "lucide-react";
 import type { MockProfile } from "@/lib/mock-data";
 
 interface ProfileCardProps {
@@ -7,6 +7,7 @@ interface ProfileCardProps {
   style?: React.CSSProperties;
   className?: string;
   onTap?: () => void;
+  isOnline?: boolean;
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; label: string; className: string }> = {
@@ -15,7 +16,7 @@ const tierConfig: Record<string, { icon: React.ElementType; label: string; class
   pro: { icon: Star, label: "Pro", className: "bg-accent/20 text-accent border-accent/30" },
 };
 
-export function ProfileCard({ profile, style, className, onTap }: ProfileCardProps) {
+export function ProfileCard({ profile, style, className, onTap, isOnline }: ProfileCardProps) {
   const tier = profile.tier && profile.tier !== "free" ? tierConfig[profile.tier] : null;
   const photoUrl = profile.photos[0] || "";
 
@@ -34,6 +35,13 @@ export function ProfileCard({ profile, style, className, onTap }: ProfileCardPro
         style={{ imageRendering: "auto" }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
+
+      {isOnline && (
+        <Badge className="absolute top-3 left-3 gap-1 text-xs backdrop-blur-sm bg-success/25 text-success border-success/40">
+          <Circle className="h-2 w-2 fill-current" />
+          Online
+        </Badge>
+      )}
 
       <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
         {tier && (
