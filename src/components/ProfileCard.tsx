@@ -16,7 +16,7 @@ const tierConfig: Record<string, { icon: React.ElementType; label: string; class
   pro: { icon: Star, label: "Pro", className: "bg-accent/20 text-accent border-accent/30" },
 };
 
-export function ProfileCard({ profile, style, className, onTap }: ProfileCardProps) {
+export function ProfileCard({ profile, style, className, onTap, isOnline }: ProfileCardProps) {
   const tier = profile.tier && profile.tier !== "free" ? tierConfig[profile.tier] : null;
   const photoUrl = profile.photos[0] || "";
 
