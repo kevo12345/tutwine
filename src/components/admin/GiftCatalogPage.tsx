@@ -234,3 +234,48 @@ export default function GiftCatalogPage() {
     </div>
   );
 }
+
+function SortableRow({
+  gift,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  gift: Gift;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: gift.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <Card ref={setNodeRef} style={style} className="p-3 flex items-center gap-2">
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground p-1"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="text-3xl w-10 text-center">{gift.emoji}</span>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium">{gift.label}</div>
+        <div className="text-xs text-muted-foreground">
+          key: <code>{gift.key}</code> · {gift.token_price} tokens · order {gift.sort_order}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch checked={gift.active} onCheckedChange={onToggle} />
+        <Button variant="ghost" size="icon" onClick={onEdit}><Pencil className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={onDelete}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+      </div>
+    </Card>
+  );
+}
+
