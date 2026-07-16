@@ -35,8 +35,13 @@ import {
   StopCircle,
   Lock,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BeautyCamera } from "@/components/live/BeautyCamera";
+import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
+import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
+
 
 type Live = {
   id: string;
