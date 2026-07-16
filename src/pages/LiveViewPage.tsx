@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { GiftSheet } from "@/components/live/GiftSheet";
+import { HostBroadcaster } from "@/components/live/HostBroadcaster";
+
 
 const TICKET_PRICE_TOKENS = 1;
 const RENEWAL_LEAD_MS = 2 * 60 * 1000; // start attempting 2 min before expiry
@@ -331,12 +333,17 @@ export default function LiveViewPage() {
           />
         )}
         {phase === "ready" && roomUrl && token && (
-          <iframe
-            className="h-full w-full"
-            src={`${roomUrl}?t=${token}`}
-            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-          />
+          isHost ? (
+            <HostBroadcaster roomUrl={roomUrl} token={token} />
+          ) : (
+            <iframe
+              className="h-full w-full"
+              src={`${roomUrl}?t=${token}`}
+              allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+            />
+          )
         )}
+
 
         {/* Floating actions */}
         {phase === "ready" && live && (

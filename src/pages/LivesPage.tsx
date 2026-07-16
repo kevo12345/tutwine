@@ -35,8 +35,13 @@ import {
   StopCircle,
   Lock,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BeautyCamera } from "@/components/live/BeautyCamera";
+import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
+import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
+
 
 type Live = {
   id: string;
@@ -229,6 +234,9 @@ function StartLiveDialog({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
+  const [beautyOpen, setBeautyOpen] = useState(false);
+
 
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -350,7 +358,26 @@ function StartLiveDialog({
               />
             </label>
           </div>
+
+          <div className="space-y-1">
+            <Label>Camera preview</Label>
+            <div className="relative overflow-hidden rounded-xl border bg-black aspect-[9/16] max-h-[280px] mx-auto">
+              <BeautyCamera settings={beauty} className="absolute inset-0 h-full w-full" />
+              <div className="absolute bottom-2 right-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={beauty.enabled ? "default" : "secondary"}
+                  className="h-8 rounded-full gap-1.5"
+                  onClick={() => setBeautyOpen(true)}
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Beauty
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={starting}>
@@ -372,10 +399,18 @@ function StartLiveDialog({
             )}
           </Button>
         </DialogFooter>
+
+        <BeautySettingsPanel
+          value={beauty}
+          onChange={setBeauty}
+          open={beautyOpen}
+          onOpenChange={setBeautyOpen}
+        />
       </DialogContent>
     </Dialog>
   );
 }
+
 
 function HostControls({ live }: { live: Live }) {
   const qc = useQueryClient();
