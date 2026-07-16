@@ -54,6 +54,7 @@ export default function DiscoverPage() {
 
   const [profiles, setProfiles] = useState<DiscoverProfileRow[]>([]);
   const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
+  const [lastSeenMap, setLastSeenMap] = useState<Map<string, string>>(new Map());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
@@ -115,11 +116,12 @@ export default function DiscoverPage() {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  // Fetch online presence for loaded profiles (60s freshness), refresh every 45s
+  // Fetch online presence for loaded profiles, refresh every 45s
   useEffect(() => {
     const ids = profiles.map((p) => p.user_id);
     if (ids.length === 0) {
       setOnlineIds(new Set());
+      setLastSeenMap(new Map());
       return;
     }
 
@@ -131,12 +133,15 @@ export default function DiscoverPage() {
         .in("user_id", ids);
       if (cancelled) return;
       const now = Date.now();
-      const next = new Set<string>();
+      const nextOnline = new Set<string>();
+      const nextLastSeen = new Map<string, string>();
       (data ?? []).forEach((r: any) => {
         const fresh = r.last_seen_at && now - new Date(r.last_seen_at).getTime() < 90_000;
-        if (r.is_online && fresh) next.add(r.user_id);
+        if (r.is_online && fresh) nextOnline.add(r.user_id);
+        if (r.last_seen_at) nextLastSeen.set(r.user_id, r.last_seen_at);
       });
-      setOnlineIds(next);
+      setOnlineIds(nextOnline);
+      setLastSeenMap(nextLastSeen);
     };
 
     load();
@@ -420,7 +425,7 @@ export default function DiscoverPage() {
                   const nextProfile = filteredProfiles[nextEffectiveIndex];
                   return (
                     <div className="absolute inset-0 scale-[0.95] opacity-50">
-                      <ProfileCard profile={toCardProfile(nextProfile)} isOnline={onlineIds.has(nextProfile.user_id)} />
+                      <ProfileCard profile={toCardProfile(nextProfile)} isOnline={onlineIds.has(nextProfile.user_id)} lastSeenAt={lastSeenMap.get(nextProfile.user_id)} />
                     </div>
                   );
                 })()}
@@ -462,7 +467,7 @@ export default function DiscoverPage() {
                           }
                         }}
                       >
-                        <ProfileCard profile={profileForCard} isOnline={onlineIds.has(currentProfile.user_id)} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
+                        <ProfileCard profile={profileForCard} isOnline={onlineIds.has(currentProfile.user_id)} lastSeenAt={lastSeenMap.get(currentProfile.user_id)} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
                       </div>
                     </div>
                   </div>
