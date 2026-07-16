@@ -17,10 +17,9 @@ const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
 const USDT_TRC20_MIN_USD = 8;
 
 function priceForHours(hours: number): number {
+  // Viewers pay $1/hr (1 token per hour). Hosting is free (blocked above).
   const h = Math.max(1, Math.floor(hours));
-  const base = Math.min(h, 2) * 1.5;
-  const extra = Math.max(0, h - 2) * 0.35;
-  return Math.round((base + extra) * 100) / 100;
+  return h * 1;
 }
 
 function cleanKenyanPhone(phone: string) {
