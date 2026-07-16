@@ -62,18 +62,8 @@ export default function LivesPage() {
   const qc = useQueryClient();
   const [openStart, setOpenStart] = useState(false);
 
-  // Subscription gate
-  const { data: canGoLive, isLoading: subLoading } = useQuery({
-    queryKey: ["can-go-live", user?.id],
-    queryFn: async () => {
-      if (!user) return false;
-      const { data } = await supabase.rpc("has_active_subscription", {
-        _user_id: user.id,
-      });
-      return !!data;
-    },
-    enabled: !!user,
-  });
+  // Hosting a live is free — anyone signed in can go live.
+
 
   // My currently-live/paused stream (host controls)
   const { data: myLive } = useQuery({
@@ -135,11 +125,10 @@ export default function LivesPage() {
             </p>
           </div>
           <GoLiveButton
-            canGoLive={!!canGoLive}
-            loading={subLoading}
             hasActive={!!myLive}
             onClick={() => setOpenStart(true)}
           />
+
         </div>
 
         {myLive && <HostControls live={myLive} />}
@@ -172,52 +161,24 @@ export default function LivesPage() {
 }
 
 function GoLiveButton({
-  canGoLive,
-  loading,
   hasActive,
   onClick,
 }: {
-  canGoLive: boolean;
-  loading: boolean;
   hasActive: boolean;
   onClick: () => void;
 }) {
-  const navigate = useNavigate();
-  const disabled = loading || !canGoLive || hasActive;
   const label = hasActive ? "You're live" : "Go Live";
-  const btn = (
+  return (
     <Button
-      onClick={canGoLive && !hasActive ? onClick : undefined}
-      disabled={disabled}
+      onClick={hasActive ? undefined : onClick}
+      disabled={hasActive}
       className="gradient-warm border-0 text-primary-foreground shadow-glow"
     >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : canGoLive ? (
-        <>
-          <Radio className="mr-1.5 h-4 w-4" /> {label}
-        </>
-      ) : (
-        <>
-          <Lock className="mr-1.5 h-4 w-4" /> Go Live
-        </>
-      )}
+      <Radio className="mr-1.5 h-4 w-4" /> {label}
     </Button>
   );
-  if (canGoLive || loading) return btn;
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span onClick={() => navigate("/pricing")}>{btn}</span>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-[220px] text-center">
-          An active subscription is required to host a live. Tap to view plans.
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
 }
+
 
 function StartLiveDialog({
   open,
