@@ -61,7 +61,22 @@ Deno.serve(async (req) => {
       if (live.status !== "live" && live.status !== "paused") {
         return json({ error: "stream not active" }, 409);
       }
+      // Viewers must hold an unexpired ticket (host bypasses this check above).
+      if (live.host_id !== user.id) {
+        const { data: ticket, error: ticketErr } = await admin
+          .from("live_tickets")
+          .select("id, expires_at")
+          .eq("live_id", liveId)
+          .eq("user_id", user.id)
+          .gt("expires_at", new Date().toISOString())
+          .order("expires_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (ticketErr) return json({ error: "ticket check failed" }, 500);
+        if (!ticket) return json({ error: "ticket required", hint: "purchase_live_ticket" }, 402);
+      }
     }
+
 
     // Provision room on first host call
     let roomName = live.daily_room_name;
