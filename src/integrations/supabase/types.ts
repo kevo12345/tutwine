@@ -149,6 +149,38 @@ export type Database = {
         }
         Relationships: []
       }
+      live_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          live_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          live_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          live_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_chat_messages_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "lives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_overlay_messages: {
         Row: {
           author_id: string
@@ -177,6 +209,41 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_participants: {
+        Row: {
+          id: string
+          is_muted: boolean
+          joined_at: string
+          live_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_muted?: boolean
+          joined_at?: string
+          live_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_muted?: boolean
+          joined_at?: string
+          live_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_participants_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "lives"
             referencedColumns: ["id"]
           },
         ]
@@ -287,6 +354,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      live_tickets: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          live_id: string
+          price_tokens: number
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          live_id: string
+          price_tokens: number
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          live_id?: string
+          price_tokens?: number
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_tickets_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "lives"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lives: {
         Row: {
@@ -1012,6 +1117,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      like_live: { Args: { _live_id: string }; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1020,6 +1126,14 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      purchase_live_ticket: {
+        Args: { _live_id: string }
+        Returns: {
+          expires_at: string
+          new_balance: number
+          ticket_id: string
+        }[]
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

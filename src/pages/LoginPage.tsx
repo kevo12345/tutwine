@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Heart, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,8 @@ import { signInWithProvider } from "@/lib/oauth-helper";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirectTo = params.get("redirect");
   const { signIn, user, profile } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,8 @@ export default function LoginPage() {
 
       if (roleData) {
         navigate("/admin", { replace: true });
+      } else if (redirectTo && redirectTo.startsWith("/")) {
+        navigate(redirectTo, { replace: true });
       } else if (profile.onboarding_complete) {
         navigate("/discover", { replace: true });
       } else {
@@ -39,7 +43,7 @@ export default function LoginPage() {
       }
     };
     redirect();
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, redirectTo]);
 
   
 
