@@ -128,6 +128,28 @@ export default function SettingsPage() {
           </Card>
         </div>
 
+        {/* Payouts */}
+        <div className="mb-6">
+          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Payouts</h2>
+          <Card className="border-0 shadow-card overflow-hidden">
+            <CardContent className="p-4 space-y-3">
+              <Label htmlFor="ltc" className="text-sm">Litecoin Wallet Address</Label>
+              <Input
+                id="ltc"
+                value={wallet}
+                onChange={(e) => setWallet(e.target.value)}
+                placeholder="Your LTC address (required for withdrawals)"
+              />
+              <Button size="sm" onClick={handleSaveWallet} disabled={savingWallet}>
+                {savingWallet && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Save wallet
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+
+
         {/* Account Actions */}
         <div className="mb-6">
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">Account Actions</h2>
