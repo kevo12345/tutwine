@@ -29,7 +29,10 @@ export default function LiveRoomPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [isHost, setIsHost] = useState(false);
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const nameCache = useRef<Map<string, string | null>>(new Map());
+
 
   // Authorize + fetch room URL
   useEffect(() => {
