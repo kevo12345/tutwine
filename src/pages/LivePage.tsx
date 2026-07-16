@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LIVE_DURATION_OPTIONS, priceForLiveHours } from "@/lib/constants";
 import { toast } from "sonner";
+import { requestAvPermissions } from "@/lib/media-permissions";
 
 type Kind = "host" | "viewer";
 
@@ -191,7 +192,10 @@ export default function LivePage() {
               return (
                 <button
                   key={s.id}
-                  onClick={() => navigate(`/live/${s.id}`)}
+                  onClick={async () => {
+                    const ok = await requestAvPermissions();
+                    if (ok) navigate(`/live/${s.id}`);
+                  }}
                   className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition active:scale-[0.98]"
                 >
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
