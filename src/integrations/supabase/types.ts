@@ -149,6 +149,42 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          emoji: string
+          id: string
+          key: string
+          label: string
+          sort_order: number
+          token_price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          emoji: string
+          id?: string
+          key: string
+          label: string
+          sort_order?: number
+          token_price: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          emoji?: string
+          id?: string
+          key?: string
+          label?: string
+          sort_order?: number
+          token_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gifts: {
         Row: {
           created_at: string
