@@ -1227,6 +1227,7 @@ export type Database = {
           id: string
           photos: string[]
           started_at: string
+          thumbnail_url: string
           viewer_count: number
         }[]
       }
