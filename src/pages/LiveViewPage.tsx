@@ -451,16 +451,12 @@ function JoinLivePayDialog({
 
         <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">First 2 hours</span>
-            <span className="font-semibold">$1.50/hr</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">After 2 hours</span>
-            <span className="font-semibold text-primary">$0.35/hr</span>
+            <span className="text-muted-foreground">Rate</span>
+            <span className="font-semibold">$1/hr</span>
           </div>
           <p className="pt-1 text-[11px] text-muted-foreground">
-            Pay once per hour with <span className="font-medium text-foreground">{TICKET_PRICE_TOKENS} token</span>.
-            The reduced rate kicks in automatically once you've watched for 2 hours.
+            Each hour costs <span className="font-medium text-foreground">{TICKET_PRICE_TOKENS} token</span> (1 token = $1).
+            You can leave and rejoin anytime while your ticket is active.
           </p>
         </div>
 
