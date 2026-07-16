@@ -28,7 +28,7 @@ async function provisionDailyRoom(name: string, expSeconds: number): Promise<str
         enable_network_ui: false,
         enable_people_ui: false,
         enable_video_processing_ui: false,
-ausible_ui: false,
+enable_knocking: false,
         start_video_off: false,
         start_audio_off: false,
       },
