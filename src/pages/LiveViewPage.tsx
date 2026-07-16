@@ -29,6 +29,7 @@ import {
   MessageSquareOff,
 } from "lucide-react";
 import { toast } from "sonner";
+import { GiftSheet } from "@/components/live/GiftSheet";
 
 const TICKET_PRICE_TOKENS = 1;
 const RENEWAL_LEAD_MS = 2 * 60 * 1000; // start attempting 2 min before expiry
@@ -361,6 +362,7 @@ export default function LiveViewPage() {
                   <LiveChat liveId={live.id} canPost={hasActiveSub} />
                 </SheetContent>
               </Sheet>
+              <GiftSheet liveId={live.id} hostIsSelf={isHost} />
             </div>
           </div>
         )}

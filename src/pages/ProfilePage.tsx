@@ -138,14 +138,22 @@ export default function ProfilePage() {
               EMRAND: {(profile as any).emrand_id}
             </div>
           )}
-          <button
-            onClick={() => navigate("/buy-tokens")}
-            className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 text-xs font-semibold text-warning-foreground hover:bg-warning/20"
-          >
-            <Coins className="h-3.5 w-3.5 text-warning" />
-            <span className="text-foreground">{Number((profile as any)?.token_balance ?? 0)} tokens</span>
-            <span className="text-muted-foreground">· Buy</span>
-          </button>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => navigate("/buy-tokens")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 text-xs font-semibold text-warning-foreground hover:bg-warning/20"
+            >
+              <Coins className="h-3.5 w-3.5 text-warning" />
+              <span className="text-foreground">{Number((profile as any)?.token_balance ?? 0)} tokens</span>
+              <span className="text-muted-foreground">· Buy</span>
+            </button>
+            <button
+              onClick={() => navigate("/host/earnings")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-foreground hover:bg-primary/10"
+            >
+              💰 Host earnings
+            </button>
+          </div>
           {(profile?.city || profile?.state) && (
 <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
