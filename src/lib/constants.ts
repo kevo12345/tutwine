@@ -27,13 +27,11 @@ export const DISTANCE_OPTIONS = [5, 10, 20, 50, 100] as const;
 export const AGE_RANGE = { min: 18, max: 80 } as const;
 
 // ===== Go Live pricing =====
-// Hours 1–2 cost $1.50 each. Hours 3+ cost $0.35 each.
+// Joining a live costs $1/hr (1 token per hour). Hosting is free.
 export const LIVE_DURATION_OPTIONS = [1, 2, 3, 5, 10] as const;
 export type LiveDurationHours = (typeof LIVE_DURATION_OPTIONS)[number];
 
 export function priceForLiveHours(hours: number): number {
   const h = Math.max(1, Math.floor(hours));
-  const base = Math.min(h, 2) * 1.5;
-  const extra = Math.max(0, h - 2) * 0.35;
-  return Math.round((base + extra) * 100) / 100;
+  return h * 1;
 }
