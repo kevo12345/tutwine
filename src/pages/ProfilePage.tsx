@@ -133,6 +133,11 @@ export default function ProfilePage() {
               </Badge>
             )}
           </div>
+          {(profile as any)?.emrand_id && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs font-semibold tracking-wider text-primary">
+              EMRAND: {(profile as any).emrand_id}
+            </div>
+          )}
           {(profile?.city || profile?.state) && (
 <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
