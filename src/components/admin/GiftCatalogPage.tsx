@@ -129,22 +129,24 @@ export default function GiftCatalogPage() {
           {gifts.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">No gifts yet — add one.</p>
           )}
-          {gifts.map((g) => (
-            <Card key={g.id} className="p-3 flex items-center gap-3">
-              <span className="text-3xl w-10 text-center">{g.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium">{g.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  key: <code>{g.key}</code> · {g.token_price} tokens · order {g.sort_order}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={g.active} onCheckedChange={() => toggleActive(g)} />
-                <Button variant="ghost" size="icon" onClick={() => openEdit(g)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => remove(g)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-              </div>
-            </Card>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={gifts.map((g) => g.id)} strategy={verticalListSortingStrategy}>
+              {gifts.map((g) => (
+                <SortableRow
+                  key={g.id}
+                  gift={g}
+                  onToggle={() => toggleActive(g)}
+                  onEdit={() => openEdit(g)}
+                  onDelete={() => remove(g)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {savingOrder && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving order…
+            </p>
+          )}
         </div>
       )}
 
