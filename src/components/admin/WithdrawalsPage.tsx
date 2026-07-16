@@ -493,12 +493,12 @@ export default function WithdrawalsPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {bulkAction === "approve"
-                ? `Approve ${selected.size} withdrawals?`
-                : `Reject ${selected.size} withdrawals?`}
+                ? `Approve ${selected.size} withdrawal${selected.size === 1 ? "" : "s"}?`
+                : `Reject ${selected.size} withdrawal${selected.size === 1 ? "" : "s"}?`}
             </DialogTitle>
             <DialogDescription>
               {bulkAction === "approve"
@@ -506,6 +506,68 @@ export default function WithdrawalsPage() {
                 : "Each rejected amount is returned to the host's available earnings. Their original 72h cooldown still applies."}
             </DialogDescription>
           </DialogHeader>
+
+          {(() => {
+            const items = filtered.filter((r) => selected.has(r.id));
+            const total = items.reduce((s, r) => s + Number(r.amount || 0), 0);
+            const byHost = new Map<
+              string,
+              { emrand: string | null; name: string | null; count: number; total: number }
+            >();
+            for (const r of items) {
+              const key = r.user_id;
+              const cur =
+                byHost.get(key) ??
+                {
+                  emrand: r.profile?.emrand_id ?? null,
+                  name: r.profile?.display_name ?? null,
+                  count: 0,
+                  total: 0,
+                };
+              cur.count += 1;
+              cur.total += Number(r.amount || 0);
+              byHost.set(key, cur);
+            }
+            const hosts = Array.from(byHost.values());
+            return (
+              <div className="rounded-md border bg-muted/30">
+                <div className="flex items-center justify-between px-3 py-2 text-xs font-medium border-b bg-muted/50">
+                  <span>
+                    {items.length} row{items.length === 1 ? "" : "s"} · {hosts.length} host
+                    {hosts.length === 1 ? "" : "s"}
+                  </span>
+                  <span>
+                    Total:{" "}
+                    <strong className="text-foreground">{total.toFixed(2)}</strong>
+                  </span>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y">
+                  {hosts.map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-3 px-3 py-2 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <code className="font-semibold text-primary/80">
+                          #{h.emrand ?? "—"}
+                        </code>
+                        <span className="text-muted-foreground truncate">
+                          {h.name ?? "Unknown"}
+                        </span>
+                        {h.count > 1 && (
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            ×{h.count}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-semibold shrink-0">{h.total.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <Input
             placeholder="Optional note applied to all"
             value={note}
@@ -527,11 +589,12 @@ export default function WithdrawalsPage() {
               variant={bulkAction === "reject" ? "destructive" : "default"}
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Confirm
+              {bulkAction === "approve" ? "Approve all" : "Reject all"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
