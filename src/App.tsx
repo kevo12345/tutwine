@@ -90,6 +90,7 @@ const App = () => (
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/live" element={<ProtectedRoute><LivePage /></ProtectedRoute>} />
+              <Route path="/live/start" element={<ProtectedRoute><GoLiveSetupPage /></ProtectedRoute>} />
               <Route path="/live/:sessionId" element={<ProtectedRoute><LiveRoomPage /></ProtectedRoute>} />
               <Route path="/buy-tokens" element={<ProtectedRoute><BuyTokensPage /></ProtectedRoute>} />
               <Route path="/lives" element={<ProtectedRoute><LivesPage /></ProtectedRoute>} />
