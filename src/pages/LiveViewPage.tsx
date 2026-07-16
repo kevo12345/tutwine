@@ -362,6 +362,7 @@ export default function LiveViewPage() {
                   <LiveChat liveId={live.id} canPost={hasActiveSub} />
                 </SheetContent>
               </Sheet>
+              <GiftSheet liveId={live.id} hostIsSelf={isHost} />
             </div>
           </div>
         )}
