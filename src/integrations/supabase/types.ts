@@ -1231,6 +1231,18 @@ export type Database = {
           viewer_count: number
         }[]
       }
+      get_live_session_room: {
+        Args: { _session_id: string }
+        Returns: {
+          daily_room_url: string
+          expires_at: string
+          host_id: string
+          id: string
+          started_at: string
+          status: string
+          thumbnail_url: string
+        }[]
+      }
       get_profile_public: {
         Args: { _target: string }
         Returns: {
