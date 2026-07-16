@@ -58,8 +58,12 @@ export default function LivePage() {
   }, [sessions, user, sheet]);
 
   const openHost = () => {
-    setSheet({ kind: "host" });
-    setHours(1);
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    // Hosting is free — go to the setup page (thumbnail + duration) and start directly.
+    navigate("/live/start");
   };
   const openViewer = (s: ActiveLiveSession) => {
     if (s.host_id === user?.id) {
