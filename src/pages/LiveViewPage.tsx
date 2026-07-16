@@ -410,15 +410,12 @@ export default function LiveViewPage() {
   );
 }
 
-function TicketRemainingPill({ secsLeft, joinedAt }: { secsLeft: number; joinedAt: number | null }) {
-  const elapsedMs = joinedAt ? Date.now() - joinedAt : 0;
-  const inIntro = elapsedMs < 2 * 60 * 60 * 1000;
-  const rate = inIntro ? "$1.50/hr" : "$0.35/hr";
+function TicketRemainingPill({ secsLeft }: { secsLeft: number; joinedAt: number | null }) {
   return (
     <span className="mt-0.5 flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
       <Clock className="h-3 w-3" />
       <span className="tabular-nums">{formatSecs(secsLeft)}</span>
-      <span className="opacity-70">left · {rate}</span>
+      <span className="opacity-70">left · $1/hr</span>
     </span>
   );
 }
@@ -454,16 +451,12 @@ function JoinLivePayDialog({
 
         <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">First 2 hours</span>
-            <span className="font-semibold">$1.50/hr</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">After 2 hours</span>
-            <span className="font-semibold text-primary">$0.35/hr</span>
+            <span className="text-muted-foreground">Rate</span>
+            <span className="font-semibold">$1/hr</span>
           </div>
           <p className="pt-1 text-[11px] text-muted-foreground">
-            Pay once per hour with <span className="font-medium text-foreground">{TICKET_PRICE_TOKENS} token</span>.
-            The reduced rate kicks in automatically once you've watched for 2 hours.
+            Each hour costs <span className="font-medium text-foreground">{TICKET_PRICE_TOKENS} token</span> (1 token = $1).
+            You can leave and rejoin anytime while your ticket is active.
           </p>
         </div>
 
