@@ -297,8 +297,9 @@ export default function LiveViewPage() {
             <span className="text-xs font-semibold line-clamp-1">{live?.title ?? ""}</span>
           </div>
           {ticket && phase === "ready" && !isHost && (
-            <span className="text-[10px] opacity-70">Ticket · {formatSecs(secsLeft)} left</span>
+            <TicketRemainingPill secsLeft={secsLeft} joinedAt={joinedAt} />
           )}
+
         </div>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-xs"><Users className="h-3.5 w-3.5" />{live?.viewer_count ?? 0}</span>
