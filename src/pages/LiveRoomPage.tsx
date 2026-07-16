@@ -284,14 +284,18 @@ export default function LiveRoomPage() {
 
       {/* Video + overlays */}
       <div className="relative z-10 flex-1">
-        {roomUrl && (
-          <iframe
-            className="absolute inset-0 h-full w-full"
-            src={roomUrl}
-            allow="camera; microphone; autoplay; display-capture; fullscreen"
-            style={{ border: 0 }}
-          />
-        )}
+        {roomUrl && (() => {
+          const userName = encodeURIComponent(profile?.display_name ?? (isHost ? "Host" : "Guest"));
+          const src = `${roomUrl}${roomUrl.includes("?") ? "&" : "?"}embed=true&userName=${userName}`;
+          return (
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src={src}
+              allow="camera; microphone; autoplay; display-capture; fullscreen"
+              style={{ border: 0 }}
+            />
+          );
+        })()}
 
         {/* Overlay stack — pinned bottom-left over the video */}
         <div className="pointer-events-none absolute bottom-2 left-0 right-0 flex max-h-[55%] flex-col-reverse gap-1.5 overflow-hidden px-3 pb-2">
