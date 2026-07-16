@@ -7,8 +7,25 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Gift = {
   id: string;
@@ -38,6 +55,11 @@ export default function GiftCatalogPage() {
   const [editing, setEditing] = useState<Gift | null>(null);
   const [form, setForm] = useState<z.input<typeof giftSchema>>(empty);
   const [saving, setSaving] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   async function load() {
     setLoading(true);
@@ -81,6 +103,30 @@ export default function GiftCatalogPage() {
     void load();
   }
 
+  async function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = gifts.findIndex((g) => g.id === active.id);
+    const newIndex = gifts.findIndex((g) => g.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(gifts, oldIndex, newIndex).map((g, i) => ({ ...g, sort_order: (i + 1) * 10 }));
+    setGifts(reordered);
+    setSavingOrder(true);
+    // Persist only rows whose sort_order changed
+    const changed = reordered.filter((g, i) => g.sort_order !== gifts[i]?.sort_order || g.id !== gifts[i]?.id);
+    const results = await Promise.all(
+      changed.map((g) =>
+        supabase.from("gift_catalog").update({ sort_order: g.sort_order }).eq("id", g.id),
+      ),
+    );
+    setSavingOrder(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      toast.error("Couldn't save order");
+      void load();
+    }
+  }
+
   async function remove(g: Gift) {
     if (!confirm(`Delete "${g.label}"? This cannot be undone.`)) return;
     const { error } = await supabase.from("gift_catalog").delete().eq("id", g.id);
@@ -112,22 +158,24 @@ export default function GiftCatalogPage() {
           {gifts.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">No gifts yet — add one.</p>
           )}
-          {gifts.map((g) => (
-            <Card key={g.id} className="p-3 flex items-center gap-3">
-              <span className="text-3xl w-10 text-center">{g.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium">{g.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  key: <code>{g.key}</code> · {g.token_price} tokens · order {g.sort_order}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={g.active} onCheckedChange={() => toggleActive(g)} />
-                <Button variant="ghost" size="icon" onClick={() => openEdit(g)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => remove(g)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-              </div>
-            </Card>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={gifts.map((g) => g.id)} strategy={verticalListSortingStrategy}>
+              {gifts.map((g) => (
+                <SortableRow
+                  key={g.id}
+                  gift={g}
+                  onToggle={() => toggleActive(g)}
+                  onEdit={() => openEdit(g)}
+                  onDelete={() => remove(g)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {savingOrder && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving order…
+            </p>
+          )}
         </div>
       )}
 
@@ -186,3 +234,48 @@ export default function GiftCatalogPage() {
     </div>
   );
 }
+
+function SortableRow({
+  gift,
+  onToggle,
+  onEdit,
+  onDelete,
+}: {
+  gift: Gift;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: gift.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <Card ref={setNodeRef} style={style} className="p-3 flex items-center gap-2">
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground p-1"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="text-3xl w-10 text-center">{gift.emoji}</span>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium">{gift.label}</div>
+        <div className="text-xs text-muted-foreground">
+          key: <code>{gift.key}</code> · {gift.token_price} tokens · order {gift.sort_order}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch checked={gift.active} onCheckedChange={onToggle} />
+        <Button variant="ghost" size="icon" onClick={onEdit}><Pencil className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" onClick={onDelete}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+      </div>
+    </Card>
+  );
+}
+
