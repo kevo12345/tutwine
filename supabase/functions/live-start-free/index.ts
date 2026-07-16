@@ -20,7 +20,7 @@ async function provisionDailyRoom(name: string, expSeconds: number): Promise<str
     body: JSON.stringify({
       name,
       privacy: 'public',
-      properties: { exp: expSeconds, enable_chat: true, enable_screenshare: false, max_participants: 50 },
+      properties: { exp: expSeconds, enable_chat: true, enable_screenshare: false },
     }),
   });
   if (!res.ok) {
