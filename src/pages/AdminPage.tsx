@@ -55,6 +55,8 @@ export default function AdminPage() {
         <Route path="support" element={<SupportInboxPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="gift-catalog" element={<GiftCatalogPage />} />
+        <Route path="withdrawals" element={<WithdrawalsPage />} />
+
       </Routes>
     </AdminLayout>
   );
