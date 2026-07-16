@@ -70,10 +70,10 @@ export default function GiftCatalogPage() {
       return;
     }
     setSaving(true);
-    const payload = parsed.data;
+    const payload = parsed.data as Required<z.infer<typeof giftSchema>>;
     const { error } = editing
       ? await supabase.from("gift_catalog").update(payload).eq("id", editing.id)
-      : await supabase.from("gift_catalog").insert([payload]);
+      : await supabase.from("gift_catalog").insert([payload as any]);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Gift updated" : "Gift added");
