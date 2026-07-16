@@ -245,7 +245,7 @@ export function LivePanel({
             />
           )}
 
-          {user && (
+          {user && !isHost && (
             <LiveBottomBar
               sessionId={sessionId}
               userId={user.id}
