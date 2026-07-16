@@ -23,6 +23,7 @@ const navItems = [
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Crypto IPN", url: "/admin/nowpayments", icon: Bitcoin },
   { title: "Support", url: "/admin/support", icon: MessageCircle },
+  { title: "Gift Catalog", url: "/admin/gift-catalog", icon: Gift },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
