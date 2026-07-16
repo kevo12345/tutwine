@@ -13,6 +13,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -27,7 +35,9 @@ import {
   Lock,
   Shield,
   MessageSquareOff,
+  Clock,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { GiftSheet } from "@/components/live/GiftSheet";
 import { HostBroadcaster } from "@/components/live/HostBroadcaster";
@@ -59,8 +69,10 @@ export default function LiveViewPage() {
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [phase, setPhase] = useState<
-    "loading" | "signup" | "ended" | "notfound" | "buying" | "insufficient" | "expired" | "ready"
+    "loading" | "signup" | "ended" | "notfound" | "confirm" | "buying" | "insufficient" | "expired" | "ready"
   >("loading");
+  const [joinedAt, setJoinedAt] = useState<number | null>(null);
+
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -101,7 +113,7 @@ export default function LiveViewPage() {
   // Once we have live+user, secure a ticket then join room
   useEffect(() => {
     if (!live || !user || live.status === "ended" || phase === "ended" || phase === "notfound") return;
-    if (phase === "signup" || phase === "ready" || phase === "buying" || phase === "insufficient" || phase === "expired") return;
+    if (phase === "signup" || phase === "ready" || phase === "confirm" || phase === "buying" || phase === "insufficient" || phase === "expired") return;
     void ensureTicketAndJoin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live?.id, user?.id]);
@@ -128,20 +140,27 @@ export default function LiveViewPage() {
 
     if (existing) {
       setTicket(existing as Ticket);
+      if (!joinedAt) setJoinedAt(Date.now());
       await joinRoom("viewer");
       return;
     }
 
-    // Need to buy one
-    setPhase("buying");
+    // No ticket — ask the viewer to confirm the purchase (pricing modal)
+    setPhase("confirm");
+  }
+
+  async function confirmAndBuy() {
     if (balance < TICKET_PRICE_TOKENS) {
       setPhase("insufficient");
       return;
     }
+    setPhase("buying");
     const purchased = await buyTicket();
     if (!purchased) return;
+    if (!joinedAt) setJoinedAt(Date.now());
     await joinRoom("viewer");
   }
+
 
   async function buyTicket(): Promise<boolean> {
     if (!live) return false;
@@ -278,8 +297,9 @@ export default function LiveViewPage() {
             <span className="text-xs font-semibold line-clamp-1">{live?.title ?? ""}</span>
           </div>
           {ticket && phase === "ready" && !isHost && (
-            <span className="text-[10px] opacity-70">Ticket · {formatSecs(secsLeft)} left</span>
+            <TicketRemainingPill secsLeft={secsLeft} joinedAt={joinedAt} />
           )}
+
         </div>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-xs"><Users className="h-3.5 w-3.5" />{live?.viewer_count ?? 0}</span>
@@ -374,9 +394,105 @@ export default function LiveViewPage() {
           </div>
         )}
       </div>
+
+      <JoinLivePayDialog
+        open={phase === "confirm"}
+        balance={balance}
+        onCancel={() => navigate("/lives")}
+        onConfirm={() => void confirmAndBuy()}
+        onBuyTokens={() => navigate("/buy-tokens")}
+      />
     </div>
   );
 }
+
+function TicketRemainingPill({ secsLeft, joinedAt }: { secsLeft: number; joinedAt: number | null }) {
+  const elapsedMs = joinedAt ? Date.now() - joinedAt : 0;
+  const inIntro = elapsedMs < 2 * 60 * 60 * 1000;
+  const rate = inIntro ? "$1.50/hr" : "$0.35/hr";
+  return (
+    <span className="mt-0.5 flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
+      <Clock className="h-3 w-3" />
+      <span className="tabular-nums">{formatSecs(secsLeft)}</span>
+      <span className="opacity-70">left · {rate}</span>
+    </span>
+  );
+}
+
+function JoinLivePayDialog({
+  open,
+  balance,
+  onCancel,
+  onConfirm,
+  onBuyTokens,
+}: {
+  open: boolean;
+  balance: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+  onBuyTokens: () => void;
+}) {
+  const canAfford = balance >= TICKET_PRICE_TOKENS;
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onCancel();
+      }}
+    >
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-display">Join this live</DialogTitle>
+          <DialogDescription>
+            Tickets cover 1 hour of watch time. You can leave and rejoin anytime while your ticket is active.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">First 2 hours</span>
+            <span className="font-semibold">$1.50/hr</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">After 2 hours</span>
+            <span className="font-semibold text-primary">$0.35/hr</span>
+          </div>
+          <p className="pt-1 text-[11px] text-muted-foreground">
+            Pay once per hour with <span className="font-medium text-foreground">{TICKET_PRICE_TOKENS} token</span>.
+            The reduced rate kicks in automatically once you've watched for 2 hours.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Your balance</span>
+          <span className="flex items-center gap-1 font-medium text-foreground">
+            <Coins className="h-3.5 w-3.5 text-primary" /> {balance} token{balance === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+          {canAfford ? (
+            <Button
+              onClick={onConfirm}
+              className="gradient-warm border-0 text-primary-foreground"
+            >
+              Pay {TICKET_PRICE_TOKENS} token · Join
+            </Button>
+          ) : (
+            <Button
+              onClick={onBuyTokens}
+              className="gradient-warm border-0 text-primary-foreground"
+            >
+              Buy tokens
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 // ---------------------------------------------------------------------------
 // Chat
