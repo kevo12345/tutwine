@@ -411,12 +411,14 @@ export type Database = {
       }
       profiles: {
         Row: {
+          available_earnings: number
           bio: string | null
           city: string | null
           country: string | null
           created_at: string
           date_of_birth: string | null
           display_name: string | null
+          emrand_id: string | null
           gender: Database["public"]["Enums"]["gender_type"] | null
           geohash: string | null
           hide_distance: boolean | null
@@ -425,9 +427,11 @@ export type Database = {
           interested_in: Database["public"]["Enums"]["gender_type"][] | null
           interests: string[] | null
           latitude: number | null
+          litecoin_wallet_address: string | null
           longitude: number | null
           onboarding_complete: boolean | null
           onboarding_step: number | null
+          pending_withdrawals: number
           phone: string | null
           photos: string[] | null
           preferred_age_max: number | null
@@ -435,17 +439,21 @@ export type Database = {
           preferred_distance_km: number | null
           state: string | null
           suspended: boolean
+          token_balance: number
+          total_lifetime_earnings: number
           updated_at: string
           user_id: string
           verified: boolean | null
         }
         Insert: {
+          available_earnings?: number
           bio?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
           display_name?: string | null
+          emrand_id?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
           geohash?: string | null
           hide_distance?: boolean | null
@@ -454,9 +462,11 @@ export type Database = {
           interested_in?: Database["public"]["Enums"]["gender_type"][] | null
           interests?: string[] | null
           latitude?: number | null
+          litecoin_wallet_address?: string | null
           longitude?: number | null
           onboarding_complete?: boolean | null
           onboarding_step?: number | null
+          pending_withdrawals?: number
           phone?: string | null
           photos?: string[] | null
           preferred_age_max?: number | null
@@ -464,17 +474,21 @@ export type Database = {
           preferred_distance_km?: number | null
           state?: string | null
           suspended?: boolean
+          token_balance?: number
+          total_lifetime_earnings?: number
           updated_at?: string
           user_id: string
           verified?: boolean | null
         }
         Update: {
+          available_earnings?: number
           bio?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
           display_name?: string | null
+          emrand_id?: string | null
           gender?: Database["public"]["Enums"]["gender_type"] | null
           geohash?: string | null
           hide_distance?: boolean | null
@@ -483,9 +497,11 @@ export type Database = {
           interested_in?: Database["public"]["Enums"]["gender_type"][] | null
           interests?: string[] | null
           latitude?: number | null
+          litecoin_wallet_address?: string | null
           longitude?: number | null
           onboarding_complete?: boolean | null
           onboarding_step?: number | null
+          pending_withdrawals?: number
           phone?: string | null
           photos?: string[] | null
           preferred_age_max?: number | null
@@ -493,6 +509,8 @@ export type Database = {
           preferred_distance_km?: number | null
           state?: string | null
           suspended?: boolean
+          token_balance?: number
+          total_lifetime_earnings?: number
           updated_at?: string
           user_id?: string
           verified?: boolean | null
@@ -767,6 +785,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_emrand_id: { Args: { _user_id: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
