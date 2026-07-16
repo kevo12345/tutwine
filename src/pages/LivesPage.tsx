@@ -224,6 +224,7 @@ function StartLiveDialog({
   onStarted: () => void;
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -266,10 +267,26 @@ function StartLiveDialog({
         .single();
       if (error) throw error;
 
+      // Provision Daily.co room for the new live (host call creates it)
+      const { error: fnErr } = await supabase.functions.invoke(
+        "live-daily-room",
+        { body: { live_id: data.id, role: "host" } },
+      );
+      if (fnErr) {
+        // Roll back so a stream without a room doesn't appear in discovery
+        await supabase
+          .from("lives")
+          .update({ status: "ended", ended_at: new Date().toISOString() })
+          .eq("id", data.id);
+        throw fnErr;
+      }
+
       toast.success("You're live!");
       setTitle("");
       setFile(null);
       onStarted();
+      // Jump host straight into the stream
+      navigate(`/lives/${data.share_link}`);
     } catch (e: any) {
       toast.error(e?.message ?? "Could not start live");
     } finally {

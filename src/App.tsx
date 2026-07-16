@@ -36,6 +36,7 @@ const LivePage = lazy(() => import("./pages/LivePage"));
 const LiveRoomPage = lazy(() => import("./pages/LiveRoomPage"));
 const BuyTokensPage = lazy(() => import("./pages/BuyTokensPage"));
 const LivesPage = lazy(() => import("./pages/LivesPage"));
+const LiveViewPage = lazy(() => import("./pages/LiveViewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -90,7 +91,7 @@ const App = () => (
               <Route path="/live/:sessionId" element={<ProtectedRoute><LiveRoomPage /></ProtectedRoute>} />
               <Route path="/buy-tokens" element={<ProtectedRoute><BuyTokensPage /></ProtectedRoute>} />
               <Route path="/lives" element={<ProtectedRoute><LivesPage /></ProtectedRoute>} />
-              <Route path="/lives/:shareLink" element={<ProtectedRoute><LivesPage /></ProtectedRoute>} />
+              <Route path="/lives/:shareLink" element={<ProtectedRoute><LiveViewPage /></ProtectedRoute>} />
               <Route path="/admin/*" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
               <Route path="/install" element={<InstallPage />} />
               <Route path="/terms" element={<TermsPage />} />

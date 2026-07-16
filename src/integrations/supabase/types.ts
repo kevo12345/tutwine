@@ -292,6 +292,8 @@ export type Database = {
         Row: {
           banner_url: string | null
           created_at: string
+          daily_room_name: string | null
+          daily_room_url: string | null
           ended_at: string | null
           host_id: string
           id: string
@@ -306,6 +308,8 @@ export type Database = {
         Insert: {
           banner_url?: string | null
           created_at?: string
+          daily_room_name?: string | null
+          daily_room_url?: string | null
           ended_at?: string | null
           host_id: string
           id?: string
@@ -320,6 +324,8 @@ export type Database = {
         Update: {
           banner_url?: string | null
           created_at?: string
+          daily_room_name?: string | null
+          daily_room_url?: string | null
           ended_at?: string | null
           host_id?: string
           id?: string
