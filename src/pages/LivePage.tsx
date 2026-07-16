@@ -116,20 +116,54 @@ export default function LivePage() {
           <h1 className="text-2xl font-bold tracking-tight">Live</h1>
           <p className="text-sm text-muted-foreground">Go live or join a live stream</p>
         </div>
-        {/* Hero / Go Live CTA */}
-        <div className="mb-4 rounded-3xl bg-gradient-to-br from-primary via-primary to-accent p-4 text-primary-foreground shadow-lg">
-          <div className="mb-2 flex items-center gap-2">
-            <Radio className="h-5 w-5" />
-            <span className="text-sm font-semibold uppercase tracking-wide">Go Live</span>
+        {/* Hero CTAs: Go Live (host) + Join Live (viewer) */}
+        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          {/* Go Live (host) */}
+          <div className="rounded-3xl bg-gradient-to-br from-primary via-primary to-accent p-4 text-primary-foreground shadow-lg">
+            <div className="mb-2 flex items-center gap-2">
+              <Radio className="h-5 w-5" />
+              <span className="text-sm font-semibold uppercase tracking-wide">Go Live</span>
+            </div>
+            <h2 className="mb-1 text-xl font-bold">Start your own live stream</h2>
+            <p className="mb-3 text-sm opacity-90">
+              Hosting is free — you keep 60% of gifts sent by viewers.
+            </p>
+            <Button onClick={openHost} variant="secondary" className="w-full font-semibold">
+              Go Live now
+            </Button>
           </div>
-          <h2 className="mb-1 text-xl font-bold">Start your own live stream</h2>
-          <p className="mb-3 text-sm opacity-90">
-            Hosting is free — you keep 60% of gifts sent by viewers.
-          </p>
-          <Button onClick={openHost} variant="secondary" className="w-full font-semibold">
-            Go Live now
-          </Button>
+
+          {/* Join Live (viewer) */}
+          <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-2 flex items-center gap-2 text-primary">
+              <Users className="h-5 w-5" />
+              <span className="text-sm font-semibold uppercase tracking-wide">Join a Live</span>
+            </div>
+            <h2 className="mb-1 text-xl font-bold text-foreground">
+              {sessions.length > 0
+                ? `${sessions.length} host${sessions.length === 1 ? "" : "s"} live now`
+                : "No streams live right now"}
+            </h2>
+            <p className="mb-3 text-sm text-muted-foreground">
+              $1.50/hr for the first 2 hours, then $0.35/hr. Pay per hour with tokens.
+            </p>
+            <Button
+              onClick={() => {
+                if (sessions.length === 0) {
+                  toast.info("No one is live yet — check back soon.");
+                  return;
+                }
+                const first = sessions.find((s) => s.host_id !== user?.id) ?? sessions[0];
+                openViewer(first);
+              }}
+              disabled={sessions.length === 0}
+              className="w-full font-semibold"
+            >
+              {sessions.length > 0 ? "Join Live now" : "None live yet"}
+            </Button>
+          </div>
         </div>
+
 
         {/* Active sessions feed */}
         <div className="mb-2 flex items-center justify-between px-1">
