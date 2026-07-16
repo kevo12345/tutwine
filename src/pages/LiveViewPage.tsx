@@ -103,7 +103,7 @@ export default function LiveViewPage() {
   // Once we have live+user, secure a ticket then join room
   useEffect(() => {
     if (!live || !user || live.status === "ended" || phase === "ended" || phase === "notfound") return;
-    if (phase === "signup" || phase === "ready" || phase === "buying" || phase === "insufficient" || phase === "expired") return;
+    if (phase === "signup" || phase === "ready" || phase === "confirm" || phase === "buying" || phase === "insufficient" || phase === "expired") return;
     void ensureTicketAndJoin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live?.id, user?.id]);
@@ -130,20 +130,27 @@ export default function LiveViewPage() {
 
     if (existing) {
       setTicket(existing as Ticket);
+      if (!joinedAt) setJoinedAt(Date.now());
       await joinRoom("viewer");
       return;
     }
 
-    // Need to buy one
-    setPhase("buying");
+    // No ticket — ask the viewer to confirm the purchase (pricing modal)
+    setPhase("confirm");
+  }
+
+  async function confirmAndBuy() {
     if (balance < TICKET_PRICE_TOKENS) {
       setPhase("insufficient");
       return;
     }
+    setPhase("buying");
     const purchased = await buyTicket();
     if (!purchased) return;
+    if (!joinedAt) setJoinedAt(Date.now());
     await joinRoom("viewer");
   }
+
 
   async function buyTicket(): Promise<boolean> {
     if (!live) return false;
