@@ -162,4 +162,17 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  @keyframes heart-float {
+    0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+    15% { transform: translate(var(--wobble, 0), -20px) scale(1.15); opacity: 1; }
+    100% { transform: translate(var(--wobble, 0), -320px) scale(0.9); opacity: 0; }
+  }
+  .animate-heart-float {
+    animation: heart-float 2.4s ease-out forwards;
+    will-change: transform, opacity;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
