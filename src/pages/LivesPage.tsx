@@ -137,9 +137,8 @@ export default function LivesPage() {
               Hosting a live is <span className="text-primary">free</span>.
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Joining a live costs <span className="font-medium text-foreground">$1.50/hr</span>,{" "}
-              becoming <span className="font-medium text-foreground">$0.35/hr</span> after 2 hours.
-              Pay once, broadcast until time runs out.
+              Start streaming anytime — you keep{" "}
+              <span className="font-medium text-foreground">60%</span> of gifts sent by viewers.
             </p>
           </div>
         )}
