@@ -393,6 +393,7 @@ export type Database = {
           provider_ref: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["live_status"]
+          thumbnail_url: string | null
           updated_at: string
         }
         Insert: {
@@ -409,6 +410,7 @@ export type Database = {
           provider_ref?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["live_status"]
+          thumbnail_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -425,6 +427,7 @@ export type Database = {
           provider_ref?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["live_status"]
+          thumbnail_url?: string | null
           updated_at?: string
         }
         Relationships: []

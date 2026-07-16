@@ -58,8 +58,12 @@ export default function LivePage() {
   }, [sessions, user, sheet]);
 
   const openHost = () => {
-    setSheet({ kind: "host" });
-    setHours(1);
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    // Hosting is free — go to the setup page (thumbnail + duration) and start directly.
+    navigate("/live/start");
   };
   const openViewer = (s: ActiveLiveSession) => {
     if (s.host_id === user?.id) {
@@ -213,10 +217,8 @@ export default function LivePage() {
       <Sheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)}>
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
-            <SheetTitle>{sheet?.kind === "host" ? "Go Live" : `Join ${sheet?.session?.display_name ?? "live"}`}</SheetTitle>
-            <SheetDescription>
-              Pick how long you want {sheet?.kind === "host" ? "to broadcast" : "to watch"}.
-            </SheetDescription>
+            <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
+            <SheetDescription>Pick how long you want to watch.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
@@ -309,7 +311,7 @@ export default function LivePage() {
             )}
 
             <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay $${usd.toFixed(2)} & ${sheet?.kind === "host" ? "Go Live" : "Join"}`}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay $${usd.toFixed(2)} & Join`}
             </Button>
             <p className="text-center text-[11px] text-muted-foreground">
               Access expires automatically when your paid time runs out.
