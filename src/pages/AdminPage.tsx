@@ -11,6 +11,7 @@ import PaymentsPage from "@/components/admin/PaymentsPage";
 import NowPaymentsIpnPage from "@/components/admin/NowPaymentsIpnPage";
 import SupportInboxPage from "@/components/admin/SupportInboxPage";
 import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
+import GiftCatalogPage from "@/components/admin/GiftCatalogPage";
 import { useAdminData } from "@/hooks/useAdminData";
 
 export default function AdminPage() {
