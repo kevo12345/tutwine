@@ -54,6 +54,7 @@ export default function DiscoverPage() {
 
   const [profiles, setProfiles] = useState<DiscoverProfileRow[]>([]);
   const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
+  const [lastSeenMap, setLastSeenMap] = useState<Map<string, string>>(new Map());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
