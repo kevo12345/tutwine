@@ -73,7 +73,7 @@ export default function GiftCatalogPage() {
     const payload = parsed.data;
     const { error } = editing
       ? await supabase.from("gift_catalog").update(payload).eq("id", editing.id)
-      : await supabase.from("gift_catalog").insert(payload);
+      : await supabase.from("gift_catalog").insert([payload]);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Gift updated" : "Gift added");
