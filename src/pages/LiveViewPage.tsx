@@ -59,8 +59,10 @@ export default function LiveViewPage() {
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [phase, setPhase] = useState<
-    "loading" | "signup" | "ended" | "notfound" | "buying" | "insufficient" | "expired" | "ready"
+    "loading" | "signup" | "ended" | "notfound" | "confirm" | "buying" | "insufficient" | "expired" | "ready"
   >("loading");
+  const [joinedAt, setJoinedAt] = useState<number | null>(null);
+
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [chatOpen, setChatOpen] = useState(false);
 
