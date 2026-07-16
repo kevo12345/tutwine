@@ -52,6 +52,7 @@ export default function AdminPage() {
         <Route path="nowpayments" element={<NowPaymentsIpnPage />} />
         <Route path="support" element={<SupportInboxPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
+        <Route path="gift-catalog" element={<GiftCatalogPage />} />
       </Routes>
     </AdminLayout>
   );
