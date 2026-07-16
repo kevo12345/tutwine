@@ -195,25 +195,12 @@ export default function LiveRoomPage() {
     );
   }
 
-  // Rate info for viewers (host is free)
-  const RATE_INTRO = 1.5;
-  const RATE_LATE = 0.35;
-  const INTRO_MS = 2 * 60 * 60 * 1000;
+  // Rate info for viewers (host is free). Flat $1/hr = 1 token/hour.
   let rateLabel: string | null = null;
   let rateHint: string | null = null;
   if (!isHost && joinedAt) {
-    const elapsed = now - new Date(joinedAt).getTime();
-    const inIntro = elapsed < INTRO_MS;
-    const currentRate = inIntro ? RATE_INTRO : RATE_LATE;
-    rateLabel = `$${currentRate.toFixed(2)}/hr`;
-    if (inIntro) {
-      const untilChange = INTRO_MS - elapsed;
-      const mm = Math.floor(untilChange / 60000);
-      const ss = Math.floor((untilChange % 60000) / 1000);
-      rateHint = `drops to $${RATE_LATE.toFixed(2)}/hr in ${mm}:${ss.toString().padStart(2, "0")}`;
-    } else {
-      rateHint = "reduced rate active";
-    }
+    rateLabel = "$1/hr";
+    rateHint = "1 token per hour";
   }
 
   return (
