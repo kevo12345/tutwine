@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 type Props = {
   roomUrl: string;
-  token: string;
+  token?: string;
   onLeave?: () => void;
 };
 
