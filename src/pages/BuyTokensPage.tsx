@@ -164,9 +164,15 @@ export default function BuyTokensPage() {
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value.replace(/[^0-9]/g, ""))}
             />
-            <p className="text-xs text-muted-foreground">
-              You'll be charged ${amount || 0}.00
-            </p>
+            {customAmount !== "" && amount < CUSTOM_MIN ? (
+              <p className="text-xs text-destructive">
+                Minimum custom amount is ${CUSTOM_MIN}.00
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                You'll be charged ${amount || 0}.00
+              </p>
+            )}
           </div>
         )}
 
