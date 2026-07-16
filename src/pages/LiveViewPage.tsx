@@ -497,6 +497,63 @@ function JoinLivePayDialog({
   );
 }
 
+function TicketExpiredDialog({
+  open,
+  balance,
+  onExit,
+  onRenew,
+  onBuyTokens,
+}: {
+  open: boolean;
+  balance: number;
+  onExit: () => void;
+  onRenew: () => void;
+  onBuyTokens: () => void;
+}) {
+  const canAfford = balance >= TICKET_PRICE_TOKENS;
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onExit();
+      }}
+    >
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-display flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" /> Your ticket has ended
+          </DialogTitle>
+          <DialogDescription>
+            Your paid time for this live has run out. Renew for another hour or exit the stream.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-3 py-2 text-xs">
+          <span className="text-muted-foreground">Your balance</span>
+          <span className="flex items-center gap-1 font-medium text-foreground">
+            <Coins className="h-3.5 w-3.5 text-primary" /> {balance} token{balance === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="ghost" onClick={onExit}>Exit live</Button>
+          {canAfford ? (
+            <Button onClick={onRenew} className="gradient-warm border-0 text-primary-foreground">
+              Renew · {TICKET_PRICE_TOKENS} token
+            </Button>
+          ) : (
+            <Button onClick={onBuyTokens} className="gradient-warm border-0 text-primary-foreground">
+              Buy tokens
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
 
 // ---------------------------------------------------------------------------
 // Chat
