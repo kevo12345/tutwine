@@ -81,7 +81,7 @@ export default function LiveRoomPage() {
   }, [sessionId, user, navigate]);
 
 
-  // Session countdown
+  // Session countdown — show H:MM:SS while ≥1h, else M:SS
   useEffect(() => {
     if (!expiresAt) return;
     const tick = () => {
@@ -91,9 +91,15 @@ export default function LiveRoomPage() {
         navigate("/live", { replace: true });
         return;
       }
-      const m = Math.floor(diff / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setRemaining(`${m}:${s.toString().padStart(2, "0")}`);
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      setRemaining(
+        h > 0
+          ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+          : `${m}:${s.toString().padStart(2, "0")}`
+      );
     };
     tick();
     const i = setInterval(tick, 1000);
