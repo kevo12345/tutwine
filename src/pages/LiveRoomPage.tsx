@@ -78,6 +78,17 @@ export default function LiveRoomPage() {
 
       setRoomUrl(session.daily_room_url);
       setExpiresAt(myExpiresAt);
+
+      // Fetch thumbnail + host display name for header/background
+      const [{ data: sRow }, { data: profs }] = await Promise.all([
+        supabase.from("live_sessions").select("thumbnail_url").eq("id", sessionId).maybeSingle(),
+        supabase.rpc("get_profiles_public", { _targets: [session.host_id] }),
+      ]);
+      if (sRow?.thumbnail_url) setThumbnail(sRow.thumbnail_url);
+      const hp = (profs ?? [])[0] as any;
+      if (hp?.display_name) setHostName(hp.display_name);
+      if (!sRow?.thumbnail_url && hp?.photos?.[0]) setThumbnail(hp.photos[0]);
+
       setLoading(false);
     })();
   }, [sessionId, user, navigate]);
