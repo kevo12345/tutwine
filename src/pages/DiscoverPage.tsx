@@ -462,7 +462,7 @@ export default function DiscoverPage() {
                           }
                         }}
                       >
-                        <ProfileCard profile={profileForCard} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
+                        <ProfileCard profile={profileForCard} isOnline={onlineIds.has(currentProfile.user_id)} onTap={() => navigate(`/profile/${currentProfile.user_id}`)} />
                       </div>
                     </div>
                   </div>
