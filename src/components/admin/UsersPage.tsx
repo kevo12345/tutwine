@@ -98,10 +98,18 @@ export default function UsersPage({ users, actionLoading, handleAction }: UsersP
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">{u.display_name ?? "No name"}</p>
-                        <p className="text-[11px] text-muted-foreground">{u.city ?? ""}{u.country ? `, ${u.country}` : ""}</p>
+                        <div className="flex items-center gap-2">
+                          {(u as any).emrand_id && (
+                            <code className="text-[10px] font-semibold text-primary/80">
+                              #{(u as any).emrand_id}
+                            </code>
+                          )}
+                          <p className="text-[11px] text-muted-foreground">{u.city ?? ""}{u.country ? `, ${u.country}` : ""}</p>
+                        </div>
                       </div>
                     </div>
                   </TableCell>
+
                   <TableCell>
                     <Badge
                       variant={u.onboarding_complete ? "default" : "secondary"}
