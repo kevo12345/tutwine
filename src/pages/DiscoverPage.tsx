@@ -116,11 +116,12 @@ export default function DiscoverPage() {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  // Fetch online presence for loaded profiles (60s freshness), refresh every 45s
+  // Fetch online presence for loaded profiles, refresh every 45s
   useEffect(() => {
     const ids = profiles.map((p) => p.user_id);
     if (ids.length === 0) {
       setOnlineIds(new Set());
+      setLastSeenMap(new Map());
       return;
     }
 
@@ -132,12 +133,15 @@ export default function DiscoverPage() {
         .in("user_id", ids);
       if (cancelled) return;
       const now = Date.now();
-      const next = new Set<string>();
+      const nextOnline = new Set<string>();
+      const nextLastSeen = new Map<string, string>();
       (data ?? []).forEach((r: any) => {
         const fresh = r.last_seen_at && now - new Date(r.last_seen_at).getTime() < 90_000;
-        if (r.is_online && fresh) next.add(r.user_id);
+        if (r.is_online && fresh) nextOnline.add(r.user_id);
+        if (r.last_seen_at) nextLastSeen.set(r.user_id, r.last_seen_at);
       });
-      setOnlineIds(next);
+      setOnlineIds(nextOnline);
+      setLastSeenMap(nextLastSeen);
     };
 
     load();
