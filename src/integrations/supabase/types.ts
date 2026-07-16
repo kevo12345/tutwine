@@ -807,6 +807,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_subscriptions: { Args: never; Returns: undefined }
       get_active_live_sessions: {
         Args: never
         Returns: {
