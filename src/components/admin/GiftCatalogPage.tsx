@@ -55,6 +55,11 @@ export default function GiftCatalogPage() {
   const [editing, setEditing] = useState<Gift | null>(null);
   const [form, setForm] = useState<z.input<typeof giftSchema>>(empty);
   const [saving, setSaving] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   async function load() {
     setLoading(true);
