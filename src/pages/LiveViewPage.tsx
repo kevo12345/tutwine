@@ -13,6 +13,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -27,7 +35,9 @@ import {
   Lock,
   Shield,
   MessageSquareOff,
+  Clock,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { GiftSheet } from "@/components/live/GiftSheet";
 import { HostBroadcaster } from "@/components/live/HostBroadcaster";
