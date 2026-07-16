@@ -29,7 +29,10 @@ export default function LiveRoomPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [isHost, setIsHost] = useState(false);
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const nameCache = useRef<Map<string, string | null>>(new Map());
+
 
   // Authorize + fetch room URL
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function LiveRoomPage() {
       if (session.host_id !== user.id) {
         const { data: pass } = await supabase
           .from("live_passes")
-          .select("expires_at, status")
+          .select("expires_at, status, started_at, created_at")
           .eq("session_id", sessionId)
           .eq("viewer_id", user.id)
           .eq("status", "active")
@@ -66,6 +69,9 @@ export default function LiveRoomPage() {
         myExpiresAt = new Date(
           Math.min(new Date(pass.expires_at).getTime(), new Date(session.expires_at).getTime()),
         ).toISOString();
+        setJoinedAt(pass.started_at ?? pass.created_at);
+      } else {
+        setIsHost(true);
       }
 
       setRoomUrl(session.daily_room_url);
@@ -73,6 +79,7 @@ export default function LiveRoomPage() {
       setLoading(false);
     })();
   }, [sessionId, user, navigate]);
+
 
   // Session countdown
   useEffect(() => {
@@ -188,29 +195,61 @@ export default function LiveRoomPage() {
     );
   }
 
+  // Rate info for viewers (host is free)
+  const RATE_INTRO = 1.5;
+  const RATE_LATE = 0.35;
+  const INTRO_MS = 2 * 60 * 60 * 1000;
+  let rateLabel: string | null = null;
+  let rateHint: string | null = null;
+  if (!isHost && joinedAt) {
+    const elapsed = now - new Date(joinedAt).getTime();
+    const inIntro = elapsed < INTRO_MS;
+    const currentRate = inIntro ? RATE_INTRO : RATE_LATE;
+    rateLabel = `$${currentRate.toFixed(2)}/hr`;
+    if (inIntro) {
+      const untilChange = INTRO_MS - elapsed;
+      const mm = Math.floor(untilChange / 60000);
+      const ss = Math.floor((untilChange % 60000) / 1000);
+      rateHint = `drops to $${RATE_LATE.toFixed(2)}/hr in ${mm}:${ss.toString().padStart(2, "0")}`;
+    } else {
+      rateHint = "reduced rate active";
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       {/* Top bar */}
-      <div className="flex items-center justify-between bg-black/90 px-4 py-3 text-white">
-        <span className="flex items-center gap-2 text-sm font-semibold">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+      <div className="flex flex-col gap-1 bg-black/90 px-4 py-2 text-white">
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+            </span>
+            LIVE
           </span>
-          LIVE
-        </span>
-        <span className="flex items-center gap-1 text-xs">
-          <Clock className="h-3 w-3" /> {remaining}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-white hover:bg-white/10"
-          onClick={() => navigate("/live")}
-        >
-          <X className="h-5 w-5" />
-        </Button>
+          <span className="flex items-center gap-1 text-xs tabular-nums">
+            <Clock className="h-3 w-3" /> {remaining}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/10"
+            onClick={() => navigate("/live")}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        {rateLabel && (
+          <div className="flex items-center justify-between text-[11px] text-white/70">
+            <span>
+              Rate: <span className="font-semibold text-white">{rateLabel}</span>
+            </span>
+            {rateHint && <span className="tabular-nums">{rateHint}</span>}
+          </div>
+        )}
       </div>
+
 
       {/* Video + overlays */}
       <div className="relative flex-1">
