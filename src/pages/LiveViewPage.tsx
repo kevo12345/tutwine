@@ -397,6 +397,15 @@ export default function LiveViewPage() {
         onConfirm={() => void confirmAndBuy()}
         onBuyTokens={() => navigate("/buy-tokens")}
       />
+
+      <TicketExpiredDialog
+        open={phase === "expired"}
+        balance={balance}
+        onExit={() => navigate("/lives")}
+        onRenew={() => { setPhase("loading"); void ensureTicketAndJoin(); }}
+        onBuyTokens={() => navigate("/buy-tokens")}
+      />
+
     </div>
   );
 }
