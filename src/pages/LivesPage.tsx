@@ -350,7 +350,26 @@ function StartLiveDialog({
               />
             </label>
           </div>
+
+          <div className="space-y-1">
+            <Label>Camera preview</Label>
+            <div className="relative overflow-hidden rounded-xl border bg-black aspect-[9/16] max-h-[280px] mx-auto">
+              <BeautyCamera settings={beauty} className="absolute inset-0 h-full w-full" />
+              <div className="absolute bottom-2 right-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={beauty.enabled ? "default" : "secondary"}
+                  className="h-8 rounded-full gap-1.5"
+                  onClick={() => setBeautyOpen(true)}
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Beauty
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={starting}>
