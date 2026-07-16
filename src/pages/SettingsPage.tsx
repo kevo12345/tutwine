@@ -30,10 +30,26 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  const [wallet, setWallet] = useState((profile as any)?.litecoin_wallet_address ?? "");
+  const [savingWallet, setSavingWallet] = useState(false);
+
   const handleToggle = async (field: "hide_distance" | "hide_state", value: boolean) => {
     if (!user) return;
     await supabase.from("profiles").update({ [field]: value }).eq("user_id", user.id);
   };
+
+  const handleSaveWallet = async () => {
+    if (!user) return;
+    setSavingWallet(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ litecoin_wallet_address: wallet.trim() || null } as any)
+      .eq("user_id", user.id);
+    setSavingWallet(false);
+    if (error) toast.error(error.message);
+    else toast.success("Litecoin wallet saved");
+  };
+
 
   const handleLogout = async () => {
     await signOut();
