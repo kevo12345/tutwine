@@ -149,6 +149,44 @@ export type Database = {
         }
         Relationships: []
       }
+      gifts: {
+        Row: {
+          created_at: string
+          gift_key: string
+          host_id: string
+          id: string
+          live_id: string
+          sender_id: string
+          token_amount: number
+        }
+        Insert: {
+          created_at?: string
+          gift_key: string
+          host_id: string
+          id?: string
+          live_id: string
+          sender_id: string
+          token_amount: number
+        }
+        Update: {
+          created_at?: string
+          gift_key?: string
+          host_id?: string
+          id?: string
+          live_id?: string
+          sender_id?: string
+          token_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gifts_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "lives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_chat_messages: {
         Row: {
           content: string
@@ -400,9 +438,13 @@ export type Database = {
           daily_room_name: string | null
           daily_room_url: string | null
           ended_at: string | null
+          gross_tokens: number
+          host_earning: number
           host_id: string
           id: string
           like_count: number
+          platform_earning: number
+          settled_at: string | null
           share_link: string
           started_at: string
           status: string
@@ -416,9 +458,13 @@ export type Database = {
           daily_room_name?: string | null
           daily_room_url?: string | null
           ended_at?: string | null
+          gross_tokens?: number
+          host_earning?: number
           host_id: string
           id?: string
           like_count?: number
+          platform_earning?: number
+          settled_at?: string | null
           share_link?: string
           started_at?: string
           status?: string
@@ -432,9 +478,13 @@ export type Database = {
           daily_room_name?: string | null
           daily_room_url?: string | null
           ended_at?: string | null
+          gross_tokens?: number
+          host_earning?: number
           host_id?: string
           id?: string
           like_count?: number
+          platform_earning?: number
+          settled_at?: string | null
           share_link?: string
           started_at?: string
           status?: string
@@ -1117,6 +1167,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      host_earnings_stats: {
+        Args: { _host_id?: string }
+        Returns: {
+          available_earnings: number
+          paid_withdrawals: number
+          pending_withdrawals: number
+          total_gift_tokens: number
+          total_gifts_received: number
+          total_lifetime_earnings: number
+          total_likes_received: number
+          total_live_views: number
+          total_watch_seconds: number
+        }[]
+      }
       like_live: { Args: { _live_id: string }; Returns: number }
       move_to_dlq: {
         Args: {
@@ -1141,6 +1205,23 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      send_gift: {
+        Args: { _gift_key: string; _live_id: string; _token_amount: number }
+        Returns: {
+          gift_id: string
+          new_balance: number
+        }[]
+      }
+      settle_live_earnings: {
+        Args: { _live_id: string }
+        Returns: {
+          gross: number
+          host_pct: number
+          host_share: number
+          live_id: string
+          platform_share: number
         }[]
       }
       who_liked_me: {
