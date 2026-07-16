@@ -224,6 +224,7 @@ function StartLiveDialog({
   onStarted: () => void;
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
