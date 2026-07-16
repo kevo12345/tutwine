@@ -145,7 +145,7 @@ export default function LivePage() {
                 : "No streams live right now"}
             </h2>
             <p className="mb-3 text-sm text-muted-foreground">
-              $1.50/hr for the first 2 hours, then $0.35/hr. Pay per hour with tokens.
+              $1/hr · 1 token per hour. If you don't have tokens, we'll help you top up.
             </p>
             <Button
               onClick={() => {
