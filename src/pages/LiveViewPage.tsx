@@ -333,12 +333,17 @@ export default function LiveViewPage() {
           />
         )}
         {phase === "ready" && roomUrl && token && (
-          <iframe
-            className="h-full w-full"
-            src={`${roomUrl}?t=${token}`}
-            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-          />
+          isHost ? (
+            <HostBroadcaster roomUrl={roomUrl} token={token} />
+          ) : (
+            <iframe
+              className="h-full w-full"
+              src={`${roomUrl}?t=${token}`}
+              allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+            />
+          )
         )}
+
 
         {/* Floating actions */}
         {phase === "ready" && live && (
