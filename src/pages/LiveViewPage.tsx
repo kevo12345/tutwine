@@ -339,19 +339,14 @@ export default function LiveViewPage() {
           />
         )}
         {phase === "expired" && (
-          <ErrorState
-            icon={<Coins className="h-10 w-10" />}
-            msg="Your ticket expired. Buy more tokens to keep watching."
-            action={
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate("/buy-tokens")}>Buy tokens</Button>
-                <Button className="gradient-warm border-0 text-primary-foreground" onClick={() => { setPhase("loading"); void ensureTicketAndJoin(); }}>
-                  Try again
-                </Button>
-              </div>
-            }
-          />
+          <Center>
+            <div className="flex flex-col items-center gap-2 text-white/80">
+              <Clock className="h-10 w-10 opacity-70" />
+              <p className="text-sm">Your ticket has ended.</p>
+            </div>
+          </Center>
         )}
+
         {phase === "ready" && roomUrl && token && (
           isHost ? (
             <HostBroadcaster roomUrl={roomUrl} token={token} />
