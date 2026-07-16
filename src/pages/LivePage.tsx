@@ -191,7 +191,7 @@ export default function LivePage() {
               return (
                 <button
                   key={s.id}
-                  onClick={() => openViewer(s)}
+                  onClick={() => navigate(`/live/${s.id}`)}
                   className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition active:scale-[0.98]"
                 >
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
