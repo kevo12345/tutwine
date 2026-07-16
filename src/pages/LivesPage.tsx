@@ -134,12 +134,12 @@ export default function LivesPage() {
         {!myLive && (
           <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-3">
             <p className="text-sm font-medium">
-              Starting a live is <span className="text-primary">free</span>.
+              Hosting a live is <span className="text-primary">free</span>.
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Joining a live: from <span className="font-medium text-foreground">$1.50/hr</span> ·{" "}
-              <span className="font-medium text-foreground">$0.35/hr</span> after 2 hours. Pay
-              once, broadcast until time runs out.
+              Joining a live costs <span className="font-medium text-foreground">$1.50/hr</span>,{" "}
+              becoming <span className="font-medium text-foreground">$0.35/hr</span> after 2 hours.
+              Pay once, broadcast until time runs out.
             </p>
           </div>
         )}
