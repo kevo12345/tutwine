@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star, Check, Heart, Trash2 } from "lucide-react";
+import { Settings, Edit3, BadgeCheck, MapPin, Camera, Loader2, Crown, Zap, Star, Check, Heart, Trash2, Coins } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -138,6 +138,14 @@ export default function ProfilePage() {
               EMRAND: {(profile as any).emrand_id}
             </div>
           )}
+          <button
+            onClick={() => navigate("/buy-tokens")}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1 text-xs font-semibold text-warning-foreground hover:bg-warning/20"
+          >
+            <Coins className="h-3.5 w-3.5 text-warning" />
+            <span className="text-foreground">{Number((profile as any)?.token_balance ?? 0)} tokens</span>
+            <span className="text-muted-foreground">· Buy</span>
+          </button>
           {(profile?.city || profile?.state) && (
 <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
