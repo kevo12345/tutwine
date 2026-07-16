@@ -31,6 +31,8 @@ export default function LiveRoomPage() {
   const [now, setNow] = useState(Date.now());
   const [isHost, setIsHost] = useState(false);
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
+  const [hostName, setHostName] = useState<string | null>(null);
   const nameCache = useRef<Map<string, string | null>>(new Map());
 
 
@@ -76,6 +78,17 @@ export default function LiveRoomPage() {
 
       setRoomUrl(session.daily_room_url);
       setExpiresAt(myExpiresAt);
+
+      // Fetch thumbnail + host display name for header/background
+      const [{ data: sRow }, { data: profs }] = await Promise.all([
+        supabase.from("live_sessions").select("thumbnail_url").eq("id", sessionId).maybeSingle(),
+        supabase.rpc("get_profiles_public", { _targets: [session.host_id] }),
+      ]);
+      if (sRow?.thumbnail_url) setThumbnail(sRow.thumbnail_url);
+      const hp = (profs ?? [])[0] as any;
+      if (hp?.display_name) setHostName(hp.display_name);
+      if (!sRow?.thumbnail_url && hp?.photos?.[0]) setThumbnail(hp.photos[0]);
+
       setLoading(false);
     })();
   }, [sessionId, user, navigate]);
@@ -211,16 +224,39 @@ export default function LiveRoomPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
+      {/* Blurred thumbnail backdrop (visible around iframe letterboxing) */}
+      {thumbnail && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-40 blur-2xl scale-110"
+          style={{ backgroundImage: `url(${thumbnail})` }}
+        />
+      )}
+      <div className="pointer-events-none absolute inset-0 bg-black/50" aria-hidden />
+
       {/* Top bar */}
-      <div className="flex flex-col gap-1 bg-black/90 px-4 py-2 text-white">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-semibold">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-            </span>
-            LIVE
-          </span>
+      <div className="relative z-10 flex flex-col gap-1 bg-black/80 px-4 py-2 text-white backdrop-blur">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {thumbnail ? (
+              <img
+                src={thumbnail}
+                alt={hostName ?? "Live thumbnail"}
+                className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-red-500"
+              />
+            ) : (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-red-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> Live
+              </div>
+              {hostName && <div className="truncate text-sm font-semibold">{hostName}</div>}
+            </div>
+          </div>
           <span className="flex items-center gap-1.5 text-xs">
             <Clock className="h-3 w-3" />
             <span className="opacity-70">Ends in</span>
@@ -247,7 +283,7 @@ export default function LiveRoomPage() {
 
 
       {/* Video + overlays */}
-      <div className="relative flex-1">
+      <div className="relative z-10 flex-1">
         {roomUrl && (
           <iframe
             className="absolute inset-0 h-full w-full"
