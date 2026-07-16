@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,10 +30,31 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  const [wallet, setWallet] = useState((profile as any)?.litecoin_wallet_address ?? "");
+  const [savingWallet, setSavingWallet] = useState(false);
+
+  useEffect(() => {
+    setWallet((profile as any)?.litecoin_wallet_address ?? "");
+  }, [profile]);
+
+
   const handleToggle = async (field: "hide_distance" | "hide_state", value: boolean) => {
     if (!user) return;
     await supabase.from("profiles").update({ [field]: value }).eq("user_id", user.id);
   };
+
+  const handleSaveWallet = async () => {
+    if (!user) return;
+    setSavingWallet(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ litecoin_wallet_address: wallet.trim() || null } as any)
+      .eq("user_id", user.id);
+    setSavingWallet(false);
+    if (error) toast.error(error.message);
+    else toast.success("Litecoin wallet saved");
+  };
+
 
   const handleLogout = async () => {
     await signOut();
@@ -111,6 +132,28 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Payouts */}
+        <div className="mb-6">
+          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Payouts</h2>
+          <Card className="border-0 shadow-card overflow-hidden">
+            <CardContent className="p-4 space-y-3">
+              <Label htmlFor="ltc" className="text-sm">Litecoin Wallet Address</Label>
+              <Input
+                id="ltc"
+                value={wallet}
+                onChange={(e) => setWallet(e.target.value)}
+                placeholder="Your LTC address (required for withdrawals)"
+              />
+              <Button size="sm" onClick={handleSaveWallet} disabled={savingWallet}>
+                {savingWallet && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Save wallet
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+
 
         {/* Account Actions */}
         <div className="mb-6">
