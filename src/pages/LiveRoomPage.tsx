@@ -117,7 +117,9 @@ export default function LiveRoomPage() {
       {feed.map((s, idx) => (
         <div
           key={s.id}
-          ref={(n) => (panelRefs.current[idx] = n)}
+          ref={(n) => {
+            panelRefs.current[idx] = n;
+          }}
           data-idx={idx}
           className="relative h-[100dvh] w-full snap-start snap-always"
         >
