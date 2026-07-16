@@ -33,6 +33,11 @@ export default function SettingsPage() {
   const [wallet, setWallet] = useState((profile as any)?.litecoin_wallet_address ?? "");
   const [savingWallet, setSavingWallet] = useState(false);
 
+  useEffect(() => {
+    setWallet((profile as any)?.litecoin_wallet_address ?? "");
+  }, [profile]);
+
+
   const handleToggle = async (field: "hide_distance" | "hide_state", value: boolean) => {
     if (!user) return;
     await supabase.from("profiles").update({ [field]: value }).eq("user_id", user.id);
