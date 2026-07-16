@@ -4,7 +4,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Coins, Eye, Gift, Heart, Clock, Loader2, Wallet } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  ArrowLeft,
+  Coins,
+  Eye,
+  Gift,
+  Heart,
+  Clock,
+  Loader2,
+  Wallet,
+  ArrowRightLeft,
+  RefreshCcw,
+  Banknote,
+} from "lucide-react";
+import { toast } from "sonner";
 
 type Stats = {
   available_earnings: number;
@@ -17,6 +40,17 @@ type Stats = {
   total_likes_received: number;
   total_watch_seconds: number;
 };
+
+type Withdrawal = {
+  id: string;
+  amount: number;
+  status: "pending" | "paid" | "rejected";
+  requested_at: string;
+  cooldown_until: string;
+  wallet_address: string;
+};
+
+const MIN_WITHDRAWAL = 100;
 
 function fmtDuration(s: number) {
   if (!s) return "0m";
@@ -50,80 +84,317 @@ function StatCard({
 }
 
 export default function HostEarningsPage() {
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [latestWithdrawal, setLatestWithdrawal] = useState<Withdrawal | null>(null);
+
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [convertAmount, setConvertAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [walletAddr, setWalletAddr] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const load = async () => {
+    if (!user) return;
+    setLoading(true);
+    const [{ data: s }, { data: w }] = await Promise.all([
+      supabase.rpc("host_earnings_stats", { _host_id: null }),
+      supabase
+        .from("withdrawals" as any)
+        .select("id, amount, status, requested_at, cooldown_until, wallet_address")
+        .eq("user_id", user.id)
+        .order("requested_at", { ascending: false })
+        .limit(1),
+    ]);
+    const row = Array.isArray(s) ? s[0] : (s as any);
+    setStats(row ?? null);
+    setLatestWithdrawal(((w as any)?.[0] as Withdrawal) ?? null);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data, error } = await supabase.rpc("host_earnings_stats", { _host_id: null });
-      if (!error) {
-        const row = Array.isArray(data) ? data[0] : (data as any);
-        setStats(row ?? null);
-      }
-      setLoading(false);
-    })();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    setWalletAddr(profile?.litecoin_wallet_address ?? "");
+  }, [profile]);
+
+  const cooldownActive =
+    latestWithdrawal && new Date(latestWithdrawal.cooldown_until).getTime() > Date.now();
+  const available = Number(stats?.available_earnings ?? 0);
+  const withdrawDisabled = available < MIN_WITHDRAWAL || cooldownActive;
+
+  async function handleConvert() {
+    const amt = Number(convertAmount);
+    if (!amt || amt <= 0) return toast.error("Enter a valid amount");
+    if (amt > available) return toast.error("Insufficient earnings");
+    setSubmitting(true);
+    const { error } = await supabase.rpc("convert_earnings_to_tokens" as any, { _amount: amt });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Converted ${amt} to tokens`);
+    setConvertOpen(false);
+    setConvertAmount("");
+    await Promise.all([load(), refreshProfile()]);
+  }
+
+  async function handleRenew() {
+    setSubmitting(true);
+    const { error } = await supabase.rpc("renew_subscription_with_earnings" as any);
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Subscription renewed for 30 days");
+    setRenewOpen(false);
+    await Promise.all([load(), refreshProfile()]);
+  }
+
+  async function handleWithdraw() {
+    const amt = Number(withdrawAmount);
+    if (!amt || amt < MIN_WITHDRAWAL) return toast.error(`Minimum is ${MIN_WITHDRAWAL}`);
+    if (amt > available) return toast.error("Insufficient earnings");
+    if (!walletAddr || walletAddr.trim().length < 10)
+      return toast.error("Enter a valid Litecoin wallet address");
+    setSubmitting(true);
+    const { error } = await supabase.rpc("request_withdrawal" as any, {
+      _amount: amt,
+      _wallet_address: walletAddr.trim(),
+    });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Withdrawal requested");
+    setWithdrawOpen(false);
+    setWithdrawAmount("");
+    await Promise.all([load(), refreshProfile()]);
+  }
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-2 bg-background/95 backdrop-blur border-b px-4 py-3">
         <Link to="/profile">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
         </Link>
         <h1 className="text-lg font-semibold">Host Earnings</h1>
       </header>
 
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-foreground/80">
-          Hosts receive <strong>60%</strong> of all Live Ticket and Gift earnings when a live
-          runs 60+ minutes (<strong>10%</strong> if it ends early). Tutwine retains the
-          remainder as commission.
+          Hosts receive <strong>60%</strong> of all Live Ticket and Gift earnings when a live runs
+          60+ minutes (<strong>10%</strong> if it ends early). Tutwine retains the remainder as
+          commission.
         </div>
 
         {loading || !stats ? (
-          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3">
               <StatCard
                 icon={<Wallet className="h-3.5 w-3.5" />}
                 label="Available Earnings"
-                value={`${Number(stats.available_earnings).toFixed(2)}`}
+                value={available.toFixed(2)}
                 sub="tokens ($1 each)"
               />
               <StatCard
                 icon={<Clock className="h-3.5 w-3.5" />}
                 label="Pending Withdrawals"
-                value={`${Number(stats.pending_withdrawals).toFixed(2)}`}
+                value={Number(stats.pending_withdrawals).toFixed(2)}
               />
               <StatCard
                 icon={<Coins className="h-3.5 w-3.5" />}
                 label="Paid Withdrawals"
-                value={`${Number(stats.paid_withdrawals).toFixed(2)}`}
+                value={Number(stats.paid_withdrawals).toFixed(2)}
               />
               <StatCard
                 icon={<Coins className="h-3.5 w-3.5" />}
                 label="Total Lifetime Earnings"
-                value={`${Number(stats.total_lifetime_earnings).toFixed(2)}`}
+                value={Number(stats.total_lifetime_earnings).toFixed(2)}
               />
             </div>
 
+            <Card className="p-4 space-y-3">
+              <h2 className="text-sm font-semibold">Use your earnings</h2>
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2"
+                  onClick={() => setConvertOpen(true)}
+                  disabled={available <= 0}
+                >
+                  <ArrowRightLeft className="h-4 w-4" /> Convert to Tokens (1:1)
+                </Button>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2"
+                  onClick={() => setRenewOpen(true)}
+                >
+                  <RefreshCcw className="h-4 w-4" /> Renew Subscription with Earnings
+                </Button>
+                <Button
+                  className="justify-start gap-2"
+                  onClick={() => {
+                    setWithdrawAmount(String(Math.floor(available)));
+                    setWithdrawOpen(true);
+                  }}
+                  disabled={!!withdrawDisabled}
+                >
+                  <Banknote className="h-4 w-4" /> Withdraw to Litecoin
+                </Button>
+                {available < MIN_WITHDRAWAL && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Minimum withdrawal is {MIN_WITHDRAWAL}. You have {available.toFixed(2)}.
+                  </p>
+                )}
+                {cooldownActive && latestWithdrawal && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Next withdrawal available{" "}
+                    {new Date(latestWithdrawal.cooldown_until).toLocaleString()} (72h cooldown).
+                  </p>
+                )}
+                {!profile?.litecoin_wallet_address && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Tip: set a default Litecoin wallet in{" "}
+                    <Link to="/settings" className="underline">
+                      Settings
+                    </Link>
+                    .
+                  </p>
+                )}
+              </div>
+            </Card>
+
             <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={<Eye className="h-3.5 w-3.5" />} label="Total Live Views" value={stats.total_live_views ?? 0} />
+              <StatCard
+                icon={<Eye className="h-3.5 w-3.5" />}
+                label="Total Live Views"
+                value={stats.total_live_views ?? 0}
+              />
               <StatCard
                 icon={<Gift className="h-3.5 w-3.5" />}
                 label="Total Gifts Received"
                 value={stats.total_gifts_received ?? 0}
                 sub={`${Number(stats.total_gift_tokens ?? 0).toFixed(0)} tokens`}
               />
-              <StatCard icon={<Heart className="h-3.5 w-3.5" />} label="Total Likes Received" value={stats.total_likes_received ?? 0} />
-              <StatCard icon={<Clock className="h-3.5 w-3.5" />} label="Total Watch Time" value={fmtDuration(stats.total_watch_seconds ?? 0)} />
+              <StatCard
+                icon={<Heart className="h-3.5 w-3.5" />}
+                label="Total Likes Received"
+                value={stats.total_likes_received ?? 0}
+              />
+              <StatCard
+                icon={<Clock className="h-3.5 w-3.5" />}
+                label="Total Watch Time"
+                value={fmtDuration(stats.total_watch_seconds ?? 0)}
+              />
             </div>
           </>
         )}
       </div>
+
+      {/* Convert dialog */}
+      <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convert Earnings to Tokens</DialogTitle>
+            <DialogDescription>
+              Move earnings to your token balance at a 1:1 rate. Available: {available.toFixed(2)}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Amount</Label>
+            <Input
+              type="number"
+              min={1}
+              max={available}
+              value={convertAmount}
+              onChange={(e) => setConvertAmount(e.target.value)}
+              placeholder="e.g. 25"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConvertOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConvert} disabled={submitting}>
+              {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Convert
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Renew dialog */}
+      <Dialog open={renewOpen} onOpenChange={setRenewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renew Subscription with Earnings</DialogTitle>
+            <DialogDescription>
+              Your current subscription price will be deducted from Available Earnings and your
+              subscription extended by 30 days.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenewOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenew} disabled={submitting}>
+              {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Renew
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Withdraw dialog */}
+      <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Withdraw to Litecoin</DialogTitle>
+            <DialogDescription>
+              Minimum {MIN_WITHDRAWAL}. A 72-hour cooldown applies to each request.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                min={MIN_WITHDRAWAL}
+                max={available}
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Litecoin wallet address</Label>
+              <Input
+                value={walletAddr}
+                onChange={(e) => setWalletAddr(e.target.value)}
+                placeholder="LTC address"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                This will be saved as your default wallet.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setWithdrawOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleWithdraw} disabled={submitting}>
+              {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Confirm Withdrawal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
