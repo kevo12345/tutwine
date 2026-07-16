@@ -21,11 +21,15 @@ export function useSubscription() {
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
       if (!user) return null;
+      const nowIso = new Date().toISOString();
       const { data } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)
         .eq("status", "active")
+        .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+        .order("started_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       return data;
     },
