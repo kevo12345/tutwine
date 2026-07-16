@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { MapPin, BadgeCheck, Crown, Zap, Star, Heart } from "lucide-react";
+import { MapPin, BadgeCheck, Crown, Zap, Star, Heart, Circle } from "lucide-react";
 import type { MockProfile } from "@/lib/mock-data";
 
 interface ProfileCardProps {
@@ -7,6 +7,7 @@ interface ProfileCardProps {
   style?: React.CSSProperties;
   className?: string;
   onTap?: () => void;
+  isOnline?: boolean;
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; label: string; className: string }> = {
