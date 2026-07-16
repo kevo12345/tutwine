@@ -53,7 +53,7 @@ export default function LiveRoomPage() {
       if (session.host_id !== user.id) {
         const { data: pass } = await supabase
           .from("live_passes")
-          .select("expires_at, status")
+          .select("expires_at, status, started_at, created_at")
           .eq("session_id", sessionId)
           .eq("viewer_id", user.id)
           .eq("status", "active")
@@ -69,6 +69,9 @@ export default function LiveRoomPage() {
         myExpiresAt = new Date(
           Math.min(new Date(pass.expires_at).getTime(), new Date(session.expires_at).getTime()),
         ).toISOString();
+        setJoinedAt(pass.started_at ?? pass.created_at);
+      } else {
+        setIsHost(true);
       }
 
       setRoomUrl(session.daily_room_url);
@@ -76,6 +79,7 @@ export default function LiveRoomPage() {
       setLoading(false);
     })();
   }, [sessionId, user, navigate]);
+
 
   // Session countdown
   useEffect(() => {
