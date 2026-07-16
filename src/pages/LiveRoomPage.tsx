@@ -221,8 +221,10 @@ export default function LiveRoomPage() {
             </span>
             LIVE
           </span>
-          <span className="flex items-center gap-1 text-xs tabular-nums">
-            <Clock className="h-3 w-3" /> {remaining}
+          <span className="flex items-center gap-1.5 text-xs">
+            <Clock className="h-3 w-3" />
+            <span className="opacity-70">Ends in</span>
+            <span className="font-semibold tabular-nums">{remaining}</span>
           </span>
           <Button
             variant="ghost"
