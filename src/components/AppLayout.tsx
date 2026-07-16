@@ -5,6 +5,7 @@ import { LiveSuggestionBanner } from "./LiveSuggestionBanner";
 import { usePresence } from "@/hooks/usePresence";
 import { useLocationPrompt } from "@/hooks/useLocationPrompt";
 import { useLikeNotifications } from "@/hooks/useLikeNotifications";
+import { useWithdrawalNotifications } from "@/hooks/useWithdrawalNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, X, Settings, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ function getSettingsInstructions() {
 export function AppLayout({ children }: { children: ReactNode }) {
   usePresence();
   useLikeNotifications();
+  useWithdrawalNotifications();
   const { hasLocation, requestLocation, locationStatus } = useLocationPrompt();
   const { profile } = useAuth();
   const location = useLocation();
