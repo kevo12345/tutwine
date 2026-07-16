@@ -37,6 +37,7 @@ const LiveRoomPage = lazy(() => import("./pages/LiveRoomPage"));
 const BuyTokensPage = lazy(() => import("./pages/BuyTokensPage"));
 const LivesPage = lazy(() => import("./pages/LivesPage"));
 const LiveViewPage = lazy(() => import("./pages/LiveViewPage"));
+const HostEarningsPage = lazy(() => import("./pages/HostEarningsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
