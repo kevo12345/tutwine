@@ -185,30 +185,55 @@ export default function LivePage() {
             No one is live right now. Be the first — go live and people will see you here in real time.
           </div>
         ) : (
-          <div className="space-y-2">
-            {sessions.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm">
-                <div className="relative">
-                  <Avatar className="h-12 w-12 ring-2 ring-red-500">
-                    <AvatarImage src={s.photos?.[0]} alt={s.display_name ?? "Live"} />
-                    <AvatarFallback>{(s.display_name ?? "L").slice(0, 1)}</AvatarFallback>
-                  </Avatar>
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-red-500 px-1.5 text-[9px] font-bold uppercase text-white">
-                    Live
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{s.display_name ?? "Anonymous"}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Users className="h-3 w-3" />{s.viewer_count}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRemaining(s.expires_at)}</span>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {sessions.map((s) => {
+              const thumb = s.thumbnail_url ?? s.photos?.[0] ?? null;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => openViewer(s)}
+                  className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition active:scale-[0.98]"
+                >
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
+                    {thumb ? (
+                      <img
+                        src={thumb}
+                        alt={s.display_name ?? "Live thumbnail"}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <Radio className="h-10 w-10 opacity-40" />
+                      </div>
+                    )}
+                    <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                      Live
+                    </span>
+                    <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+                      <Users className="h-3 w-3" />
+                      {s.viewer_count}
+                    </span>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7 ring-1 ring-white/70">
+                          <AvatarImage src={s.photos?.[0]} alt="" />
+                          <AvatarFallback>{(s.display_name ?? "L").slice(0, 1)}</AvatarFallback>
+                        </Avatar>
+                        <p className="min-w-0 flex-1 truncate text-xs font-semibold text-white">
+                          {s.display_name ?? "Anonymous"}
+                        </p>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1 text-[10px] text-white/85">
+                        <Clock className="h-3 w-3" />
+                        {formatRemaining(s.expires_at)}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <Button size="sm" onClick={() => openViewer(s)}>
-                  {s.host_id === user?.id ? "Open" : "Join"}
-                </Button>
-              </div>
-            ))}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
