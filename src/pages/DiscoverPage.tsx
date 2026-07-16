@@ -53,6 +53,7 @@ export default function DiscoverPage() {
   const { limits } = useSubscription();
 
   const [profiles, setProfiles] = useState<DiscoverProfileRow[]>([]);
+  const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
