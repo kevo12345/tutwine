@@ -1058,11 +1058,57 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          cooldown_until: string
+          created_at: string
+          id: string
+          processed_at: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          cooldown_until?: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          cooldown_until?: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      approve_withdrawal: {
+        Args: { _note?: string; _withdrawal_id: string }
+        Returns: undefined
+      }
       assign_emrand_id: { Args: { _user_id: string }; Returns: string }
       calculate_live_duration_payout: {
         Args: { _live_id: string }
@@ -1081,6 +1127,13 @@ export type Database = {
           amount: number
           new_balance: number
           user_id: string
+        }[]
+      }
+      convert_earnings_to_tokens: {
+        Args: { _amount: number }
+        Returns: {
+          new_available: number
+          new_balance: number
         }[]
       }
       delete_email: {
@@ -1241,6 +1294,27 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      reject_withdrawal: {
+        Args: { _note?: string; _withdrawal_id: string }
+        Returns: undefined
+      }
+      renew_subscription_with_earnings: {
+        Args: never
+        Returns: {
+          new_available: number
+          new_ends_at: string
+          subscription_id: string
+        }[]
+      }
+      request_withdrawal: {
+        Args: { _amount: number; _wallet_address: string }
+        Returns: {
+          cooldown_until: string
+          new_available: number
+          new_pending: number
+          withdrawal_id: string
         }[]
       }
       send_gift: {
