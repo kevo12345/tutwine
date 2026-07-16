@@ -288,6 +288,51 @@ export type Database = {
         }
         Relationships: []
       }
+      lives: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          ended_at: string | null
+          host_id: string
+          id: string
+          like_count: number
+          share_link: string
+          started_at: string
+          status: string
+          title: string
+          updated_at: string
+          viewer_count: number
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          ended_at?: string | null
+          host_id: string
+          id?: string
+          like_count?: number
+          share_link?: string
+          started_at?: string
+          status?: string
+          title: string
+          updated_at?: string
+          viewer_count?: number
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          ended_at?: string | null
+          host_id?: string
+          id?: string
+          like_count?: number
+          share_link?: string
+          started_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          viewer_count?: number
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -822,6 +867,17 @@ export type Database = {
     }
     Functions: {
       assign_emrand_id: { Args: { _user_id: string }; Returns: string }
+      calculate_live_duration_payout: {
+        Args: { _live_id: string }
+        Returns: {
+          duration_seconds: number
+          host_pct: number
+          live_id: string
+          platform_pct: number
+          qualifies_full: boolean
+          status: string
+        }[]
+      }
       complete_token_purchase: {
         Args: { _payment_ref?: string; _tx_id: string }
         Returns: {
@@ -938,6 +994,7 @@ export type Database = {
           verified: boolean
         }[]
       }
+      has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_live_access: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
