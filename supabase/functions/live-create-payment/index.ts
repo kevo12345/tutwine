@@ -69,8 +69,16 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { kind, session_id, duration_hours, provider, phone, pay_currency, kes_amount } = body || {};
 
-    if (!['host', 'viewer'].includes(kind)) {
-      return new Response(JSON.stringify({ error: 'kind must be host or viewer' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Hosting a live is always free. Reject any attempt to create a host
+    // billing transaction, regardless of what the client sends.
+    if (kind === 'host') {
+      return new Response(
+        JSON.stringify({ error: 'Hosting a live is free — no payment required.', code: 'HOST_FREE' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (kind !== 'viewer') {
+      return new Response(JSON.stringify({ error: 'kind must be viewer' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     if (!['sellapay', 'nowpayments'].includes(provider)) {
       return new Response(JSON.stringify({ error: 'unsupported provider' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
