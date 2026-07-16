@@ -741,6 +741,42 @@ export type Database = {
         }
         Relationships: []
       }
+      token_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payment_method: string | null
+          payment_ref: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          payment_ref?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          payment_ref?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           is_online: boolean
@@ -786,6 +822,14 @@ export type Database = {
     }
     Functions: {
       assign_emrand_id: { Args: { _user_id: string }; Returns: string }
+      complete_token_purchase: {
+        Args: { _payment_ref?: string; _tx_id: string }
+        Returns: {
+          amount: number
+          new_balance: number
+          user_id: string
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -827,6 +871,10 @@ export type Database = {
         Returns: number
       }
       expire_subscriptions: { Args: never; Returns: undefined }
+      fail_token_purchase: {
+        Args: { _payment_ref?: string; _tx_id: string }
+        Returns: undefined
+      }
       get_active_live_sessions: {
         Args: never
         Returns: {
