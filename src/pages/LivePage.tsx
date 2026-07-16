@@ -217,10 +217,8 @@ export default function LivePage() {
       <Sheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)}>
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
-            <SheetTitle>{sheet?.kind === "host" ? "Go Live" : `Join ${sheet?.session?.display_name ?? "live"}`}</SheetTitle>
-            <SheetDescription>
-              Pick how long you want {sheet?.kind === "host" ? "to broadcast" : "to watch"}.
-            </SheetDescription>
+            <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
+            <SheetDescription>Pick how long you want to watch.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
