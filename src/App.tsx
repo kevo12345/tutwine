@@ -33,6 +33,7 @@ const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const FaqPage = lazy(() => import("./pages/FaqPage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
+const GoLiveSetupPage = lazy(() => import("./pages/GoLiveSetupPage"));
 const LiveRoomPage = lazy(() => import("./pages/LiveRoomPage"));
 const BuyTokensPage = lazy(() => import("./pages/BuyTokensPage"));
 const LivesPage = lazy(() => import("./pages/LivesPage"));
