@@ -51,7 +51,7 @@ const faqs = [
       },
       {
         q: "How does 'Go Live' work?",
-        a: "From the Live tab, tap Go Live, choose how long you want to broadcast, and pay for the time you need. Pricing is $1.50/hr for the first 2 hours and $0.35/hr after that. Other users can join your stream by paying for their own viewing time. Your live session ends automatically when the paid time runs out.",
+        a: "Hosting a live is free — from the Live tab, tap Go Live to start streaming. Viewers pay $1/hr (1 token per hour) to join, and if they don't have enough tokens they'll be prompted to top up. Your live ends automatically when the host stops or paid viewer time runs out.",
       },
 
     ],
