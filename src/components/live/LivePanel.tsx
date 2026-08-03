@@ -213,13 +213,17 @@ export function LivePanel({
         />
       )}
 
-      {/* Video */}
+      {/* Video stage — fixed 9:16 like TikTok/IG Live, centered, never cropped */}
       {active && authorized && roomUrl && (
-        isHost ? (
-          <HostBroadcaster roomUrl={roomUrl} token="" onLeave={closeLive} />
-        ) : (
-          <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
-        )
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative h-full max-h-full w-full max-w-full overflow-hidden bg-black aspect-[9/16] mx-auto">
+            {isHost ? (
+              <HostBroadcaster roomUrl={roomUrl} token="" onLeave={closeLive} />
+            ) : (
+              <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
+            )}
+          </div>
+        </div>
       )}
 
       {/* Loading state */}
