@@ -266,12 +266,12 @@ export default function LivePage() {
         )}
       </div>
 
-      {/* Payment sheet */}
+      {/* Token join sheet */}
       <Sheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)}>
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
             <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
-            <SheetDescription>Pick how long you want to watch.</SheetDescription>
+            <SheetDescription>1 token per hour — pick how long you want to watch.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
@@ -291,83 +291,26 @@ export default function LivePage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                ${usd.toFixed(2)} USD {provider === "sellapay" && <>· ≈ KES {kes}</>}
+                Costs {hours} token{hours === 1 ? "" : "s"} · your balance: {balance} token
+                {balance === 1 ? "" : "s"}
               </p>
             </div>
 
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Pay with</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setProvider("sellapay")}
-                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                    provider === "sellapay" ? "border-primary bg-primary/10 text-primary" : "border-border"
-                  }`}
-                >
-                  <Smartphone className="h-4 w-4" /> M-Pesa
-                </button>
-                <button
-                  onClick={() => setProvider("nowpayments")}
-                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                    provider === "nowpayments" ? "border-primary bg-primary/10 text-primary" : "border-border"
-                  }`}
-                >
-                  <Bitcoin className="h-4 w-4" /> Crypto
-                </button>
-              </div>
-            </div>
-
-            {provider === "sellapay" ? (
-              <div>
-                <Label htmlFor="phone" className="text-xs uppercase text-muted-foreground">M-Pesa phone</Label>
-                <Input id="phone" inputMode="tel" placeholder="07XXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" />
-              </div>
+            {balance < hours ? (
+              <Button onClick={() => navigate("/buy-tokens")} className="w-full" size="lg">
+                Buy tokens to join
+              </Button>
             ) : (
-              <div>
-                <Label className="text-xs uppercase text-muted-foreground">Coin</Label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {(["usdttrc20", "ltc"] as const).map((c) => {
-                    const disabled = c === "usdttrc20" && usdtBelowMin;
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                          if (disabled) {
-                            toast.error(
-                              `USDT (TRC20) needs at least $${USDT_MIN_USD}. Pick a longer duration or pay with Litecoin / M-Pesa.`
-                            );
-                            return;
-                          }
-                          setPayCurrency(c);
-                        }}
-                        className={`rounded-xl border px-2 py-2 text-sm font-semibold transition ${
-                          disabled
-                            ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground opacity-60"
-                            : payCurrency === c
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border"
-                        }`}
-                      >
-                        {c === "usdttrc20" ? "USDT (TRC20)" : "Litecoin"}
-                      </button>
-                    );
-                  })}
-                </div>
-                {usdtBelowMin && (
-                  <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                    USDT (TRC20) requires at least ${USDT_MIN_USD}. For this duration, pay with Litecoin or switch to M-Pesa.
-                  </p>
+              <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  `Spend ${hours} token${hours === 1 ? "" : "s"} & Join`
                 )}
-              </div>
+              </Button>
             )}
-
-            <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay $${usd.toFixed(2)} & Join`}
-            </Button>
             <p className="text-center text-[11px] text-muted-foreground">
-              Access expires automatically when your paid time runs out.
+              Access expires automatically when your time runs out. Tokens can't be withdrawn as cash.
             </p>
           </div>
         </SheetContent>
@@ -375,3 +318,4 @@ export default function LivePage() {
     </AppLayout>
   );
 }
+
