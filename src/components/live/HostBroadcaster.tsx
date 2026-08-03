@@ -10,6 +10,7 @@ import { toast } from "sonner";
 type Props = {
   roomUrl: string;
   token?: string;
+  /** Ends the live for everyone (server-side), not just this tab. */
   onLeave?: () => void;
 };
 
@@ -131,7 +132,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
           </Button>
           {onLeave && (
             <Button size="sm" variant="destructive" className="h-9 rounded-full" onClick={onLeave}>
-              End
+              End live
             </Button>
           )}
         </div>

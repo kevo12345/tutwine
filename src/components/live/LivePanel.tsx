@@ -135,7 +135,7 @@ export function LivePanel({
     return () => clearInterval(i);
   }, [expiresAt, active, navigate, onExit]);
 
-  // Hearts broadcast channel
+  // Hearts + "live ended" broadcast channel
   useEffect(() => {
     if (!active || !sessionId) return;
     const ch = supabase.channel(`live_reactions_${sessionId}`, {
@@ -147,13 +147,40 @@ export function LivePanel({
         ...prev,
         { id: `${Date.now()}-${Math.random()}`, color, startX: Math.random() },
       ]);
-    }).subscribe();
+    })
+      .on("broadcast", { event: "live_ended" }, () => {
+        if (isHost) return;
+        toast.info("The host ended this live");
+        onExit ? onExit() : navigate("/live", { replace: true });
+      })
+      .subscribe();
     heartChanRef.current = ch;
     return () => {
       supabase.removeChannel(ch);
       heartChanRef.current = null;
     };
-  }, [sessionId, active]);
+  }, [sessionId, active, isHost, navigate, onExit]);
+
+  // Safety net: react to the session row flipping to 'ended' (missed broadcast, late joiner)
+  useEffect(() => {
+    if (!active || !sessionId || isHost) return;
+    const ch = supabase
+      .channel(`live_status_${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "live_sessions", filter: `id=eq.${sessionId}` },
+        (payload) => {
+          if ((payload.new as any)?.status === "ended") {
+            toast.info("The host ended this live");
+            onExit ? onExit() : navigate("/live", { replace: true });
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [sessionId, active, isHost, navigate, onExit]);
 
   // Presence for viewer count
   useEffect(() => {
@@ -197,6 +224,8 @@ export function LivePanel({
       toast.error(error.message ?? "Couldn't end the live");
       return;
     }
+    // Tell every connected viewer immediately.
+    heartChanRef.current?.send({ type: "broadcast", event: "live_ended", payload: {} });
     toast.success("Your live has ended");
     closeLive();
   };
@@ -218,7 +247,7 @@ export function LivePanel({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative h-full max-h-full w-full max-w-full overflow-hidden bg-black aspect-[9/16] mx-auto">
             {isHost ? (
-              <HostBroadcaster roomUrl={roomUrl} token="" onLeave={closeLive} />
+              <HostBroadcaster roomUrl={roomUrl} token="" onLeave={endLive} />
             ) : (
               <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
             )}
