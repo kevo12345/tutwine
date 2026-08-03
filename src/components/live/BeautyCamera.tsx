@@ -124,8 +124,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             return;
           }
 
-          // Fixed 9:16 output (1080x1920). The camera frame is *contained*
-          // (never cropped) inside it; leftover space gets a blurred backdrop.
+          // Fixed 9:16 output (1080x1920), TikTok-style: the camera frame is
+          // *cover* fitted so it always fills the frame edge-to-edge.
           const outW = width;
           const outH = height;
           if (canvas.width !== outW || canvas.height !== outH) {
@@ -134,18 +134,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           }
 
           const z = Math.max(1, zoomRef.current || 1);
-          const fit = Math.min(outW / vw, outH / vh);
-
-          // Blurred backdrop so no hard black bars appear around the frame.
-          const bgScale = Math.max(outW / vw, outH / vh) * 1.1;
-          const bgW = vw * bgScale;
-          const bgH = vh * bgScale;
-          ctx.save();
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, outW, outH);
-          ctx.filter = "blur(28px) brightness(0.8)";
-          ctx.drawImage(video, (outW - bgW) / 2, (outH - bgH) / 2, bgW, bgH);
-          ctx.restore();
+          const fit = Math.max(outW / vw, outH / vh);
 
           const scale = fit * z;
           let dw = vw * scale;
@@ -156,6 +145,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           }
           const dx = (outW - dw) / 2;
           const dy = (outH - dh) / 2;
+
 
           ctx.save();
           ctx.filter = beautyFilterCss(st);
