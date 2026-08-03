@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Mic, MicOff, Video, VideoOff, Loader2 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Sparkles, Mic, MicOff, Video, VideoOff, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 import { BeautyCamera, BeautyCameraHandle } from "@/components/live/BeautyCamera";
 import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
 import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
 import { toast } from "sonner";
+
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+
 
 type Props = {
   roomUrl: string;
