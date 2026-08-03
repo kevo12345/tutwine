@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
+import { useStageFit } from "@/hooks/useStageFit";
+
 
 /** Must match BeautyCamera so viewers see the same framing as the host preview. */
 const SUBJECT_ZOOM = 1;
@@ -24,6 +26,8 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   /** Aspect ratio (w/h) of the host's incoming track. */
   const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const [connecting, setConnecting] = useState(true);
+  const { stageRef, objectFit } = useStageFit(trackRatio);
+
 
   useEffect(() => {
     if (!active || !roomUrl) return;
@@ -106,17 +110,22 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   }, [roomUrl, active, userName]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-black">
+    <div ref={stageRef} className="absolute inset-0 overflow-hidden bg-black">
+      {/* Stage ratio is measured and matched against the incoming track ratio:
+          matching ratios fill edge-to-edge, mismatched ones are fitted. */}
       <video
         ref={videoRef}
-        className={`absolute inset-0 z-[1] block h-full w-full object-center ${
-          trackRatio !== null && trackRatio > 1 ? "object-contain" : "object-cover"
-        }`}
-        style={{ transform: `scale(${SUBJECT_ZOOM})`, transformOrigin: "center center" }}
+        className="absolute inset-0 z-[1] block h-full w-full object-center"
+        style={{
+          objectFit,
+          transform: `scale(${SUBJECT_ZOOM})`,
+          transformOrigin: "center center",
+        }}
         playsInline
         autoPlay
         muted={false}
       />
+
 
       <audio ref={audioRef} autoPlay />
       {(connecting || !hasVideo) && (
