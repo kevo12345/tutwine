@@ -164,12 +164,16 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   }, [active]);
 
   return (
-    <div className={className ?? "relative h-full w-full bg-black"}>
+    <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>
       <video ref={videoRef} className="hidden" playsInline muted />
       <canvas
         ref={canvasRef}
-        className="h-full w-full object-cover"
-        style={{ transform: mirror ? "scaleX(-1)" : undefined }}
+        className="absolute inset-0 block h-full w-full"
+        style={{
+          objectFit: "cover",
+          objectPosition: "center",
+          transform: mirror ? "scaleX(-1)" : undefined,
+        }}
       />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-xs text-white/80 p-4">
