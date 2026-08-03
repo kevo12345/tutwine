@@ -56,6 +56,8 @@ export default function LiveMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [scope, setScope] = useState<"live" | "all">("live");
   const [search, setSearch] = useState("");
+  const [detail, setDetail] = useState<DetailTarget | null>(null);
+
 
   const load = async (includeEnded: boolean) => {
     setLoading(true);
