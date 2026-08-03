@@ -44,14 +44,14 @@ export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift 
         e.preventDefault();
         send();
       }}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 pb-3 pt-6 safe-bottom"
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-2 pb-3 pt-6 sm:px-3 safe-bottom"
     >
       <Input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         maxLength={200}
         placeholder={placeholder ?? "Say something…"}
-        className="h-10 flex-1 rounded-full border-white/20 bg-white/10 text-white placeholder:text-white/60 focus-visible:ring-primary"
+        className="h-10 min-w-0 flex-1 rounded-full border-white/20 bg-white/10 text-white placeholder:text-white/60 focus-visible:ring-primary"
       />
       {draft.trim() ? (
         <button
@@ -74,7 +74,7 @@ export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift 
               <Gift className="h-5 w-5" />
             </button>
             {giftOpen && (
-              <div className="absolute bottom-12 right-0 flex gap-1.5 rounded-2xl bg-black/80 p-2 shadow-lg backdrop-blur-sm">
+              <div className="absolute bottom-12 right-0 flex max-w-[80vw] flex-wrap justify-end gap-1.5 rounded-2xl bg-black/80 p-2 shadow-lg backdrop-blur-sm">
                 {GIFT_EMOJI.map((g) => (
                   <button
                     key={g}

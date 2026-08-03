@@ -109,14 +109,14 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
       )}
 
       {/* Host controls */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end p-3">
+      <div className="safe-top pointer-events-none absolute inset-x-0 top-0 flex justify-end p-2 sm:p-3">
         <div className="pointer-events-auto rounded-full bg-black/60 px-3 py-1 text-[11px] text-white">
           {joined ? "LIVE · You are broadcasting" : "Connecting…"}
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-3">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/60 p-1.5">
+      <div className="safe-bottom pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-2 sm:p-3">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-black/60 p-1.5 sm:gap-2">
           <IconBtn onClick={toggleMic} title={micOn ? "Mute mic" : "Unmute mic"}>
             {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
           </IconBtn>
@@ -126,14 +126,14 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
           <Button
             size="sm"
             variant={beauty.enabled ? "default" : "secondary"}
-            className="h-9 rounded-full gap-1.5"
+            className="h-9 shrink-0 gap-1.5 rounded-full px-3"
             onClick={() => setBeautyOpen(true)}
           >
             <Sparkles className="h-4 w-4" />
             Beauty
           </Button>
           {onLeave && (
-            <Button size="sm" variant="destructive" className="h-9 rounded-full" onClick={onLeave}>
+            <Button size="sm" variant="destructive" className="h-9 shrink-0 rounded-full px-3" onClick={onLeave}>
               End live
             </Button>
           )}
