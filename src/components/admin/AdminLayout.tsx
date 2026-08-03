@@ -21,6 +21,7 @@ const navItems = [
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
+  { title: "Live Monitor", url: "/admin/live-monitor", icon: Radio },
   { title: "Withdrawals", url: "/admin/withdrawals", icon: Banknote },
   { title: "Crypto IPN", url: "/admin/nowpayments", icon: Bitcoin },
   { title: "Support", url: "/admin/support", icon: MessageCircle },
