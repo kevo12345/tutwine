@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react";
-import { X, Users, UserPlus, Check, Loader2 } from "lucide-react";
+import { X, Users, UserPlus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,7 +13,7 @@ type Props = {
   remaining: string;
   onClose: () => void;
   currentUserId?: string;
-  /** Host only: ends the live for everyone. */
+  /** Host only: ends the live for everyone (handled by the broadcaster controls). */
   onEndLive?: () => void | Promise<void>;
 };
 
@@ -36,12 +26,9 @@ export function LiveTopBar({
   remaining,
   onClose,
   currentUserId,
-  onEndLive,
 }: Props) {
-  const [confirmEnd, setConfirmEnd] = useState(false);
-  const [ending, setEnding] = useState(false);
-
   const [following, setFollowing] = useState<boolean | null>(null);
+
 
   useEffect(() => {
     if (isHost || !currentUserId) return;
