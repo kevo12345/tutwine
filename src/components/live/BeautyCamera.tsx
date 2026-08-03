@@ -21,7 +21,7 @@ type Props = {
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
   /** Extra digital zoom applied on top of the cover fit. 1 = none. */
-  /** Values below 1 shrink the subject (letterbox pillars filled black). */
+  /** Minimum is 1 (full 9:16 cover fit); higher values crop in further. */
   zoom?: number;
 };
 
@@ -34,7 +34,7 @@ type Props = {
  * sharpening zone for "eye enhancement" — no ML.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1 },
+  { settings, width = 1080, height = 1920, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1 },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
