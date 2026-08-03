@@ -60,16 +60,34 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: width },
-            height: { ideal: height },
-            // Ask the camera for a portrait 9:16 frame so we crop as little as possible.
-            aspectRatio: { ideal: width / height },
-            facingMode,
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Camera not supported in this browser");
+        }
+        // Try an ideal portrait frame first, then progressively relax so a
+        // camera that can't honour the hints still opens.
+        const attempts: MediaStreamConstraints[] = [
+          {
+            video: {
+              width: { ideal: width },
+              height: { ideal: height },
+              facingMode,
+            },
+            audio: false,
           },
-          audio: false,
-        });
+          { video: { facingMode }, audio: false },
+          { video: true, audio: false },
+        ];
+        let stream: MediaStream | null = null;
+        let lastErr: any = null;
+        for (const c of attempts) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(c);
+            break;
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+        if (!stream) throw lastErr ?? new Error("Camera unavailable");
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -82,13 +100,12 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         await video.play().catch(() => {});
 
         const canvas = canvasRef.current!;
-        // Fixed 9:16 output buffer — the broadcast frame is always vertical,
-        // matching the full-screen player so the CSS layer never crops again.
         const TARGET_ASPECT = width / height; // 9:16
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d", { desynchronized: true });
         if (!ctx) throw new Error("Canvas 2D unavailable");
+
 
         const render = () => {
           if (cancelled) return;
