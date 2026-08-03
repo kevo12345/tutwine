@@ -232,7 +232,7 @@ export function LivePanel({
 
 
   return (
-    <div className="absolute inset-0 h-full min-h-full w-full overflow-hidden bg-black">
+    <div className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-black">
 
       {/* Poster fallback / background */}
       {hostPhoto && (
