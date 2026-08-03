@@ -8,7 +8,7 @@ import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
 import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
 import { toast } from "sonner";
 
-const MIN_ZOOM = 1;
+const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3;
 const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 
@@ -34,7 +34,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
   const [beautyOpen, setBeautyOpen] = useState(false);
   const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
   const [connecting, setConnecting] = useState(true);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.3);
   const stageRef = useRef<HTMLDivElement>(null);
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
 

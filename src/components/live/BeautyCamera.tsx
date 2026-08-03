@@ -35,7 +35,7 @@ type Props = {
  * sharpening zone for "eye enhancement" — no ML.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 1080, height = 1920, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1 },
+  { settings, width = 1080, height = 1920, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 0.3 },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -134,7 +134,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          const z = Math.max(1, Math.min(3, zoomRef.current || 1));
+          const z = Math.max(0.3, Math.min(3, zoomRef.current || 0.3));
           const fit = Math.max(outW / vw, outH / vh);
 
           const scale = fit * z;
