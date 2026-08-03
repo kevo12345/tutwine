@@ -3,7 +3,7 @@ import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
 
 /** Must match BeautyCamera so viewers see the same framing as the host preview. */
-const SUBJECT_ZOOM = 1.15;
+const SUBJECT_ZOOM = 1;
 
 type Props = {
   roomUrl: string;
