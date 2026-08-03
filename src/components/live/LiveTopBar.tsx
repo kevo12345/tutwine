@@ -63,9 +63,9 @@ export function LiveTopBar({
   };
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-3">
+    <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-2 sm:p-3">
       {/* Host card */}
-      <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 py-1 pl-1 pr-3 text-white backdrop-blur-sm">
+      <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full bg-black/55 py-1 pl-1 pr-2 text-white backdrop-blur-sm sm:flex-none sm:pr-3">
         {hostPhoto ? (
           <img src={hostPhoto} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-red-500" />
         ) : (
@@ -73,8 +73,8 @@ export function LiveTopBar({
             {(hostName ?? "L").slice(0, 1)}
           </div>
         )}
-        <div className="flex flex-col leading-tight">
-          <span className="max-w-[120px] truncate text-xs font-semibold">{hostName ?? "Host"}</span>
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="max-w-[90px] truncate sm:max-w-[140px] text-xs font-semibold">{hostName ?? "Host"}</span>
           <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-red-400">
             <span className="h-1 w-1 animate-pulse rounded-full bg-red-500" /> Live · {remaining}
           </span>
@@ -85,16 +85,16 @@ export function LiveTopBar({
             variant={following ? "secondary" : "default"}
             onClick={toggleFollow}
             disabled={following === null || following}
-            className="ml-1 h-7 rounded-full px-3 text-xs"
+            className="ml-1 h-7 shrink-0 rounded-full px-2 text-xs sm:px-3"
           >
             {following ? <Check className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-            <span className="ml-1">{following ? "Following" : "Follow"}</span>
+            <span className="ml-1 hidden sm:inline">{following ? "Following" : "Follow"}</span>
           </Button>
         )}
       </div>
 
       {/* Right cluster */}
-      <div className="pointer-events-auto flex items-center gap-2">
+      <div className="pointer-events-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
         <div className="flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
           <Users className="h-3.5 w-3.5" />
           <span className="tabular-nums">{viewerCount}</span>

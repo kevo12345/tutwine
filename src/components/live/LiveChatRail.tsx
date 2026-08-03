@@ -84,11 +84,11 @@ export function LiveChatRail({ sessionId, active }: Props) {
   }, [sessionId, active]);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-24 flex max-h-[45%] flex-col justify-end gap-1.5 overflow-hidden px-3">
+    <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] flex max-h-[38%] flex-col justify-end gap-1.5 overflow-hidden px-2 sm:bottom-24 sm:max-h-[45%] sm:px-3">
       {messages.slice(-12).map((m) => (
         <div
           key={m.id}
-          className="flex max-w-[80%] items-start gap-2 rounded-2xl bg-black/55 px-2.5 py-1.5 text-white backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
+          className="flex max-w-[88%] items-start gap-2 rounded-2xl bg-black/55 px-2 py-1 sm:max-w-[80%] sm:px-2.5 sm:py-1.5 text-white backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
         >
           {m.author_photo ? (
             <img src={m.author_photo} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" />
@@ -101,7 +101,7 @@ export function LiveChatRail({ sessionId, active }: Props) {
             <div className="text-[10px] font-semibold uppercase tracking-wide text-white/70">
               {m.author_name ?? "Guest"}
             </div>
-            <div className="break-words text-sm leading-snug">{m.content}</div>
+            <div className="break-words text-[13px] leading-snug sm:text-sm">{m.content}</div>
           </div>
         </div>
       ))}
