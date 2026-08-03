@@ -9,7 +9,8 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
+import { getSellapayToken, sellapayBase, cleanKenyanPhone, sellapayUserMessage, SellapayError } from '../_shared/sellapay.ts';
+
 const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
 // NOWPayments rejects USDT-TRC20 invoices below this amount (AMOUNT_MINIMAL_ERROR).
@@ -20,29 +21,6 @@ function priceForHours(hours: number): number {
   // Viewers pay $1/hr (1 token per hour). Hosting is free (blocked above).
   const h = Math.max(1, Math.floor(hours));
   return h * 1;
-}
-
-function cleanKenyanPhone(phone: string) {
-  let p = phone.replace(/\s+/g, '').replace(/^(\+?254)/, '');
-  if (p.startsWith('0')) p = p.substring(1);
-  return p;
-}
-
-async function getSellapayToken(): Promise<string> {
-  const apiKey = Deno.env.get('SELLAPAY_API_KEY');
-  const apiSecret = Deno.env.get('SELLAPAY_SECRET_KEY');
-  if (!apiKey || !apiSecret) throw new Error('SellaPay credentials not configured');
-  const res = await fetch(`${SELLAPAY_BASE}/authorize`, {
-    method: 'POST',
-    headers: { 'X-API-KEY': apiKey, 'X-API-SECRET': apiSecret, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({}),
-  });
-  const raw = await res.text();
-  if (!res.ok) throw new Error(`SellaPay auth failed: ${res.status} ${raw.slice(0, 200)}`);
-  const data = JSON.parse(raw);
-  const token = data.access_token || data.token;
-  if (!token) throw new Error('SellaPay auth: no access_token');
-  return token;
 }
 
 Deno.serve(async (req) => {
@@ -137,7 +115,7 @@ Deno.serve(async (req) => {
       const cleanPhone = cleanKenyanPhone(String(phone));
       const sellapayToken = await getSellapayToken();
       const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback?live_${kind === 'host' ? 'session' : 'pass'}_id=${rowId}`;
-      const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
+      const stkRes = await fetch(`${sellapayBase()}/requestStkPush`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${sellapayToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
@@ -221,6 +199,10 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('live-create-payment error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
+    if (err instanceof SellapayError) {
+      const { message, code } = sellapayUserMessage(err);
+      return new Response(JSON.stringify({ error: message, code, details: msg, fallback: true }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

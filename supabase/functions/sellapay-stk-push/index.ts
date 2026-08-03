@@ -5,61 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Per official docs: https://github.com/silvavalleyafrica/sellapay-api-docs
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
-
-function sellapayActionUrl(action: string) {
-  return `${SELLAPAY_BASE}/${action}`;
-}
-
-async function getSellapayToken(): Promise<string> {
-  const apiKey = Deno.env.get('SELLAPAY_API_KEY');
-  const apiSecret = Deno.env.get('SELLAPAY_SECRET_KEY');
-
-  if (!apiKey || !apiSecret) {
-    throw new Error('SellaPay credentials not configured');
-  }
-
-  const res = await fetch(sellapayActionUrl('authorize'), {
-    method: 'POST',
-    headers: {
-      'X-API-KEY': apiKey,
-      'X-API-SECRET': apiSecret,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({}),
-  });
-
-  const raw = await res.text();
-  console.log('SellaPay authorize status:', res.status, 'body:', raw?.slice(0, 500) || 'empty');
-
-  if (!res.ok) {
-    throw new Error(`SellaPay auth failed: status ${res.status} ${raw?.slice(0, 200) || 'empty response'}`);
-  }
-
-  let data: any;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error(`SellaPay auth failed: non-JSON response: ${raw?.slice(0, 200)}`);
-  }
-
-  const accessToken = data.access_token || data.token;
-  if (!accessToken) {
-    throw new Error(`SellaPay auth failed: no access_token in response: ${raw?.slice(0, 200)}`);
-  }
-  return accessToken;
-}
-
-
-function cleanKenyanPhoneNumber(phone: string) {
-  let cleanPhone = phone.replace(/\s+/g, '').replace(/^(\+?254)/, '');
-  if (cleanPhone.startsWith('0')) {
-    cleanPhone = cleanPhone.substring(1);
-  }
-  return cleanPhone;
-}
+import { getSellapayToken, sellapayBase, cleanKenyanPhone, sellapayUserMessage, SellapayError } from '../_shared/sellapay.ts';
 
 function extractProviderSubscriptionId(stkData: any, fallbackReference: string) {
   return (
@@ -120,7 +66,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const cleanPhone = cleanKenyanPhoneNumber(phone);
+    const cleanPhone = cleanKenyanPhone(phone);
     const sellapayToken = await getSellapayToken();
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -163,7 +109,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
+    const stkRes = await fetch(`${sellapayBase()}/requestStkPush`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
@@ -231,15 +177,10 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error:', error);
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    if (msg.startsWith('SellaPay auth failed')) {
+    if (error instanceof SellapayError) {
+      const { message, code } = sellapayUserMessage(error);
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'M-Pesa provider authentication failed. SellaPay is not returning an access token for the configured credentials/API endpoint.',
-          details: msg,
-          provider: 'sellapay',
-          fallback: true,
-        }),
+        JSON.stringify({ success: false, error: message, code, details: msg, provider: 'sellapay', fallback: true }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
