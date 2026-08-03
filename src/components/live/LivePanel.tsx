@@ -197,6 +197,8 @@ export function LivePanel({
       toast.error(error.message ?? "Couldn't end the live");
       return;
     }
+    // Tell every connected viewer immediately.
+    heartChanRef.current?.send({ type: "broadcast", event: "live_ended", payload: {} });
     toast.success("Your live has ended");
     closeLive();
   };
