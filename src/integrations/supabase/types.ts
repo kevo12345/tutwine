@@ -387,8 +387,12 @@ export type Database = {
           daily_room_url: string | null
           duration_hours: number
           expires_at: string | null
+          gross_tokens: number
+          host_earning: number
           host_id: string
           id: string
+          like_count: number
+          platform_earning: number
           provider: string
           provider_ref: string | null
           started_at: string | null
@@ -404,8 +408,12 @@ export type Database = {
           daily_room_url?: string | null
           duration_hours: number
           expires_at?: string | null
+          gross_tokens?: number
+          host_earning?: number
           host_id: string
           id?: string
+          like_count?: number
+          platform_earning?: number
           provider: string
           provider_ref?: string | null
           started_at?: string | null
@@ -421,8 +429,12 @@ export type Database = {
           daily_room_url?: string | null
           duration_hours?: number
           expires_at?: string | null
+          gross_tokens?: number
+          host_earning?: number
           host_id?: string
           id?: string
+          like_count?: number
+          platform_earning?: number
           provider?: string
           provider_ref?: string | null
           started_at?: string | null
@@ -1328,6 +1340,7 @@ export type Database = {
         }[]
       }
       like_live: { Args: { _live_id: string }; Returns: number }
+      like_live_session: { Args: { _session_id: string }; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
