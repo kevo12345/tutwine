@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,11 +18,17 @@ const CUSTOM_MIN = 10;
 
 export default function BuyTokensPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, refreshProfile } = useAuth();
   const qc = useQueryClient();
 
-  const [selected, setSelected] = useState<number | "custom">(3);
-  const [customAmount, setCustomAmount] = useState<string>("");
+  const requested = Number(searchParams.get("amount") ?? 0);
+  const [selected, setSelected] = useState<number | "custom">(
+    requested > 0 && !PRESETS.includes(requested) ? "custom" : requested > 0 ? requested : 3,
+  );
+  const [customAmount, setCustomAmount] = useState<string>(
+    requested > 0 && !PRESETS.includes(requested) ? String(Math.max(requested, CUSTOM_MIN)) : "",
+  );
   const [method, setMethod] = useState<Method>("mpesa");
   const [submitting, setSubmitting] = useState(false);
 
