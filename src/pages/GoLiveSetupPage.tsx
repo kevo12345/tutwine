@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Radio, Image as ImageIcon, X } from "lucide-react";
+import { ArrowLeft, Loader2, Radio, Image as ImageIcon, X, RefreshCw } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,18 +10,48 @@ import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 
+const THUMB_KEY = "tutwine:live-thumbnail";
+
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+  /** Banner reused from the host's previous live (already uploaded). */
+  const [savedThumbUrl, setSavedThumbUrl] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+
+  // Remember the banner between lives: local cache first, then last session.
+  useEffect(() => {
+    if (!user) return;
+    const cached = localStorage.getItem(`${THUMB_KEY}:${user.id}`);
+    if (cached) setSavedThumbUrl(cached);
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("live_sessions")
+        .select("thumbnail_url")
+        .eq("host_id", user.id)
+        .not("thumbnail_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !data?.thumbnail_url) return;
+      setSavedThumbUrl(data.thumbnail_url);
+      localStorage.setItem(`${THUMB_KEY}:${user.id}`, data.thumbnail_url);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const expiresPreview = useMemo(() => {
     const end = new Date(Date.now() + hours * 60 * 60 * 1000);
     return end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }, [hours]);
+
+  const shownThumb = thumbPreview ?? savedThumbUrl;
 
   const onPickThumb = (f: File | null) => {
     if (!f) {
@@ -40,6 +70,14 @@ export default function GoLiveSetupPage() {
     setThumbFile(f);
     setThumbPreview(URL.createObjectURL(f));
   };
+
+  const clearThumb = () => {
+    setThumbFile(null);
+    setThumbPreview(null);
+    setSavedThumbUrl(null);
+    if (user) localStorage.removeItem(`${THUMB_KEY}:${user.id}`);
+  };
+
 
   const start = async () => {
     if (!user) {
