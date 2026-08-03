@@ -12,6 +12,7 @@ import {
 import { Coins, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 
 type CatalogGift = {
   id: string;
@@ -34,6 +35,7 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   const [sending, setSending] = useState<string | null>(null);
   const [gifts, setGifts] = useState<CatalogGift[]>([]);
   const [loading, setLoading] = useState(false);
+  const [shortfall, setShortfall] = useState<number | null>(null);
   const balance = Number((profile as any)?.token_balance ?? 0);
 
   useEffect(() => {
