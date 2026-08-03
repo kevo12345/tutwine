@@ -29,37 +29,16 @@ function formatRemaining(expiresAt: string): string {
 
 export default function LivePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const { tier } = useSubscription();
   const { sessions, loading } = useActiveLiveSessions();
   const isPhone = useIsPhone();
   const desktopBlocked = isPhone === false;
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
   const [hours, setHours] = useState<number>(1);
-  const [provider, setProvider] = useState<"sellapay" | "nowpayments">("sellapay");
-  const [phone, setPhone] = useState("");
-  const [payCurrency, setPayCurrency] = useState<"ltc" | "usdttrc20">("ltc");
   const [submitting, setSubmitting] = useState(false);
-  const usd = useMemo(() => priceForLiveHours(hours), [hours]);
-  const kes = useMemo(() => Math.max(1, Math.round(usd * 130)), [usd]);
-  // NOWPayments USDT-TRC20 invoices typically require ~$8+ USD; smaller amounts are rejected by the provider.
-  const USDT_MIN_USD = 8;
-  const usdtBelowMin = usd < USDT_MIN_USD;
-
-  // Auto-fall back to LTC if the selected duration puts USDT below the provider minimum.
-  useEffect(() => {
-    if (provider === "nowpayments" && payCurrency === "usdttrc20" && usdtBelowMin) {
-      setPayCurrency("ltc");
-    }
-  }, [provider, payCurrency, usdtBelowMin]);
-
-  // Auto-redirect host if they have an active session
-  useEffect(() => {
-    if (!user) return;
-    const own = sessions.find((s) => s.host_id === user.id);
-    if (own && sheet?.kind !== "host") {
-      // don't auto-navigate; just surface a CTA
-    }
-  }, [sessions, user, sheet]);
+  const balance = Number(profile?.token_balance ?? 0);
+  const canHost = tier !== "free";
 
   const openHost = () => {
     if (desktopBlocked) {
@@ -70,7 +49,11 @@ export default function LivePage() {
       navigate("/login");
       return;
     }
-    // Hosting is free — go to the setup page (thumbnail + duration) and start directly.
+    if (!canHost) {
+      toast.error("An active subscription is required to go live");
+      navigate("/pricing");
+      return;
+    }
     navigate("/live/start");
   };
   const openViewer = (s: ActiveLiveSession) => {
@@ -78,7 +61,11 @@ export default function LivePage() {
       toast.info("Live only works on mobile — open tutwine.com on your phone.");
       return;
     }
-    if (s.host_id === user?.id) {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (s.host_id === user.id) {
       navigate(`/live/${s.id}`);
       return;
     }
@@ -86,44 +73,36 @@ export default function LivePage() {
     setHours(1);
   };
 
+  /** Viewers pay with tokens (1 token per hour) to get a live pass. */
   const submit = async () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (provider === "sellapay" && !/^(?:\+?254|0)\d{9}$/.test(phone.replace(/\s+/g, ""))) {
-      toast.error("Enter a valid Kenyan M-Pesa number");
-      return;
-    }
+    if (!user || !sheet?.session) return;
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("live-create-payment", {
-        body: {
-          kind: sheet!.kind,
-          session_id: sheet!.session?.id,
-          duration_hours: hours,
-          provider,
-          phone: provider === "sellapay" ? phone : undefined,
-          pay_currency: provider === "nowpayments" ? payCurrency : undefined,
-          kes_amount: provider === "sellapay" ? kes : undefined,
-        },
+      const { error } = await (supabase as any).rpc("purchase_live_pass", {
+        _session_id: sheet.session.id,
+        _hours: hours,
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      if (provider === "sellapay") {
-        toast.success("STK push sent — approve on your phone to go live");
-      } else {
-        toast.success("Send the exact crypto amount to the address shown to activate");
-        // Could also open a detail view; for now, just close.
-      }
+      await refreshProfile();
+      const target = sheet.session.id;
       setSheet(null);
+      const ok = await requestAvPermissions();
+      navigate(`/live/${target}`);
+      if (!ok) toast.info("Enable camera/mic access to chat on the live");
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Could not start payment");
+      const msg = String(err?.message ?? "");
+      if (msg.includes("insufficient tokens")) {
+        toast.error("Not enough tokens — top up to join");
+        navigate("/buy-tokens");
+      } else {
+        toast.error(msg || "Could not join the live");
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <AppLayout>
