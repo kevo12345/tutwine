@@ -34,6 +34,9 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
   const [beautyOpen, setBeautyOpen] = useState(false);
   const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
   const [connecting, setConnecting] = useState(true);
+  const [zoom, setZoom] = useState(1);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
 
   // Join Daily as call-object; do NOT let Daily auto-open camera — we supply
   // the processed track ourselves via setInputDevicesAsync.
@@ -94,12 +97,48 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
     }
   }
 
+  // Wheel / trackpad-pinch zoom (native non-passive listener so preventDefault works).
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      setZoom((z) => clampZoom(z * Math.exp(-dy * 0.0015)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  function touchDist(t: TouchList) {
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
   return (
-    <div className="relative h-full w-full bg-black">
+    <div
+      ref={stageRef}
+      className="relative h-full w-full touch-none bg-black"
+      onTouchStart={(e) => {
+        if (e.touches.length === 2) pinchRef.current = { dist: touchDist(e.touches), zoom };
+      }}
+      onTouchMove={(e) => {
+        const p = pinchRef.current;
+        if (p && e.touches.length === 2) {
+          const d = touchDist(e.touches);
+          if (p.dist > 0) setZoom(clampZoom(p.zoom * (d / p.dist)));
+        }
+      }}
+      onTouchEnd={() => {
+        pinchRef.current = null;
+      }}
+    >
       {/* Local preview + processed track source */}
       <BeautyCamera
         ref={camRef}
         settings={beauty}
+        zoom={zoom}
         active={camOn}
         onProcessedTrack={handleTrack}
         className="absolute inset-0 h-full w-full bg-black"
@@ -111,6 +150,28 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
           <Loader2 className="h-8 w-8 animate-spin text-white" />
         </div>
       )}
+
+      {/* Zoom controls */}
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+        <div className="pointer-events-auto flex flex-col items-center gap-3 rounded-full bg-black/60 px-2 py-3">
+          <IconBtn onClick={() => setZoom((z) => clampZoom(z + 0.25))} title="Zoom in">
+            <ZoomIn className="h-4 w-4" />
+          </IconBtn>
+          <Slider
+            orientation="vertical"
+            className="h-32"
+            value={[zoom]}
+            min={MIN_ZOOM}
+            max={MAX_ZOOM}
+            step={0.05}
+            onValueChange={(v) => setZoom(clampZoom(v[0]))}
+          />
+          <IconBtn onClick={() => setZoom((z) => clampZoom(z - 0.25))} title="Zoom out">
+            <ZoomOut className="h-4 w-4" />
+          </IconBtn>
+          <span className="text-[10px] font-medium text-white/80">{zoom.toFixed(1)}x</span>
+        </div>
+      </div>
 
       {/* Host controls */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end p-3">
