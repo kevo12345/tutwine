@@ -56,9 +56,8 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   async function send(gift: CatalogGift) {
     if (hostIsSelf) return;
     if (balance < gift.token_price) {
-      toast.warning(`Need ${gift.token_price} tokens — top up.`);
       setOpen(false);
-      navigate("/buy-tokens");
+      setShortfall(gift.token_price);
       return;
     }
     setSending(gift.key);
@@ -70,9 +69,8 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
     setSending(null);
     if (error) {
       if (error.message?.includes("insufficient")) {
-        toast.warning("Not enough tokens.");
         setOpen(false);
-        navigate("/buy-tokens");
+        setShortfall(gift.token_price);
         return;
       }
       toast.error(error.message ?? "Could not send gift");
