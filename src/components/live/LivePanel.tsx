@@ -242,6 +242,8 @@ export function LivePanel({
             viewerCount={viewerCount}
             remaining={remaining}
             onClose={closeLive}
+            onEndLive={endLive}
+
             currentUserId={user?.id}
           />
 
