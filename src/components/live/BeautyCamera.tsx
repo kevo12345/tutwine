@@ -20,7 +20,10 @@ type Props = {
   mirror?: boolean;
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
+  /** Extra digital zoom applied on top of the cover fit. 1 = none. */
+  zoom?: number;
 };
+
 
 /**
  * Renders the local camera into a canvas with real-time beauty filters and
@@ -30,7 +33,7 @@ type Props = {
  * sharpening zone for "eye enhancement" — no ML.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user" },
+  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1.35 },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -111,9 +114,10 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          // "Cover" fit: the camera frame fills the whole broadcast frame
-          // (TikTok/IG Live style) — sides are cropped instead of letterboxed.
-          const scale = Math.max(outW / vw, outH / vh);
+          // "Cover" fit plus an extra zoom-in so the subject fills the frame
+          // (TikTok/IG Live style) — sides/top are cropped, never letterboxed.
+          const scale = Math.max(outW / vw, outH / vh) * zoom;
+
 
           let dw = vw * scale;
           const dh = vh * scale;
