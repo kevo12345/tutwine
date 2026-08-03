@@ -9,7 +9,7 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke';
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
 const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
 // NOWPayments rejects USDT-TRC20 invoices below this amount (AMOUNT_MINIMAL_ERROR).
@@ -32,7 +32,7 @@ async function getSellapayToken(): Promise<string> {
   const apiKey = Deno.env.get('SELLAPAY_API_KEY');
   const apiSecret = Deno.env.get('SELLAPAY_SECRET_KEY');
   if (!apiKey || !apiSecret) throw new Error('SellaPay credentials not configured');
-  const res = await fetch(`${SELLAPAY_BASE}/index.php?action=authorize`, {
+  const res = await fetch(`${SELLAPAY_BASE}/authorize`, {
     method: 'POST',
     headers: { 'X-API-KEY': apiKey, 'X-API-SECRET': apiSecret, 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({}),
@@ -137,15 +137,15 @@ Deno.serve(async (req) => {
       const cleanPhone = cleanKenyanPhone(String(phone));
       const sellapayToken = await getSellapayToken();
       const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback?live_${kind === 'host' ? 'session' : 'pass'}_id=${rowId}`;
-      const stkRes = await fetch(`${SELLAPAY_BASE}/v1/requestStkPush`, {
+      const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${sellapayToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           amount: amountKes,
           phone: cleanPhone,
-          note: `TutWine Live ${hours}h`,
-          reference: rowId,
-          description: `TutWine Live ${kind} ${hours}h`,
+          // docs: reference max 20 chars
+          reference: String(rowId).replace(/-/g, '').slice(0, 20),
+          description: `TutWine Live ${hours}h`,
           callbackUrl,
           callback_url: callbackUrl,
         }),

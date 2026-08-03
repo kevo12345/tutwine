@@ -5,10 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke';
+// Per official docs: https://github.com/silvavalleyafrica/sellapay-api-docs
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api/v1';
 
 function sellapayActionUrl(action: string) {
-  return `${SELLAPAY_BASE}/index.php?action=${action}`;
+  return `${SELLAPAY_BASE}/${action}`;
 }
 
 async function getSellapayToken(): Promise<string> {
@@ -162,7 +163,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch('https://pay.sellapay.co.ke/v1/requestStkPush', {
+    const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
@@ -172,9 +173,9 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: Number(amount),
         phone: cleanPhone,
-        note: `TutWine ${tier} subscription`,
-        reference: subRef,
-        description: `TutWine ${tier} subscription`,
+        // docs: reference max 20 chars
+        reference: String(subRef).replace(/-/g, '').slice(0, 20),
+        description: `TutWine ${tier}`,
         callbackUrl,
         callback_url: callbackUrl,
       }),
