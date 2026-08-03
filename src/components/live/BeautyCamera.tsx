@@ -120,8 +120,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           ? [
               {
                 video: {
-                  width: { ideal: height },
-                  height: { ideal: width },
+                  width: { ideal: width },
+                  height: { ideal: height },
                   aspectRatio: { ideal: 9 / 16 },
                   frameRate: { ideal: 30, min: 24 },
                   facingMode: { ideal: facingMode },
@@ -226,7 +226,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         });
         if (actualRatio > 0) setTrackRatio(actualRatio);
         onProcessedTrack?.(track);
-        startFaceDistanceHint(video);
+        if (!native) startFaceDistanceHint(video);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Camera unavailable");
       }
@@ -268,7 +268,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
       />
 
 
-      {tooClose && !error && (
+      {tooClose && !native && !error && (
         <div className="pointer-events-none absolute left-1/2 top-[18%] z-[3] -translate-x-1/2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] text-white/90 backdrop-blur-sm">
           Move your phone slightly farther away
         </div>
