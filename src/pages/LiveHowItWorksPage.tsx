@@ -77,25 +77,43 @@ export default function LiveHowItWorksPage() {
 
           <div className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center gap-2 text-foreground">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="font-semibold">Tickets</span>
+              <Ticket className="h-4 w-4 text-primary" />
+              <span className="font-semibold">Tickets — 60% host / 40% Tutwine</span>
             </div>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
+              A ticket costs 1 coin per hour and only unlocks that one live. Every ticket a viewer buys is
+              recorded as host earnings and split instantly: you keep 60%, Tutwine keeps 40% as the platform
+              commission for streaming, payments, and moderation.
+            </p>
+            <ul className="mt-3 space-y-2 text-sm">
               <li className="flex justify-between gap-3">
-                <span>Your share of every ticket</span>
-                <span className="font-semibold text-foreground">60%</span>
+                <span className="text-muted-foreground">Ticket revenue</span>
+                <span className="font-semibold text-foreground">100%</span>
               </li>
               <li className="flex justify-between gap-3">
-                <span>Tutwine platform commission</span>
+                <span className="text-muted-foreground">Your share</span>
+                <span className="font-semibold text-primary">60%</span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Tutwine commission</span>
                 <span className="font-semibold text-foreground">40%</span>
               </li>
             </ul>
-            <p className="mt-3 text-xs text-muted-foreground">
-              A ticket costs 1 coin per hour and only works on that one live. Example: a $10 ticket pays you
-              $6 and Tutwine $4 — credited to your earnings the moment it's bought. If your live runs past an
-              hour, viewers renew automatically when they have coins.
+            <div className="mt-3 rounded-xl bg-muted/30 p-3 text-xs text-muted-foreground">
+              <p className="font-semibold text-foreground">Example</p>
+              <p className="mt-1">$10 of tickets sold → you earn $6, Tutwine earns $4.</p>
+              <p className="mt-1">
+                20 viewers × 1 coin/hour = 20 coins → 12 coins to you, 8 coins to Tutwine.
+              </p>
+            </div>
+            <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              Tickets last one hour. If your live runs longer, viewers renew automatically when they have
+              coins — each renewal is another ticket split the same 60/40 way. A live that runs an hour or
+              more keeps the full 60% split on tickets and gifts.
             </p>
           </div>
+
 
           <div className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center gap-2 text-foreground">

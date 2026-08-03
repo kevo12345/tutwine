@@ -13,6 +13,7 @@ import SupportInboxPage from "@/components/admin/SupportInboxPage";
 import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
 import GiftCatalogPage from "@/components/admin/GiftCatalogPage";
 import WithdrawalsPage from "@/components/admin/WithdrawalsPage";
+import LiveMonitorPage from "@/components/admin/LiveMonitorPage";
 
 import { useAdminData } from "@/hooks/useAdminData";
 
@@ -56,6 +57,7 @@ export default function AdminPage() {
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="gift-catalog" element={<GiftCatalogPage />} />
         <Route path="withdrawals" element={<WithdrawalsPage />} />
+        <Route path="live-monitor" element={<LiveMonitorPage />} />
 
       </Routes>
     </AdminLayout>

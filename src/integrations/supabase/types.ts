@@ -1153,6 +1153,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_live_overview: {
+        Args: { _include_ended?: boolean }
+        Returns: {
+          display_name: string
+          emrand_id: string
+          ended_at: string
+          gift_tokens: number
+          gifts_count: number
+          host_earning: number
+          host_id: string
+          hours_running: number
+          likes: number
+          live_id: string
+          platform_earning: number
+          source: string
+          started_at: string
+          status: string
+          ticket_tokens: number
+          tickets_sold: number
+          title: string
+          viewers_now: number
+        }[]
+      }
       approve_withdrawal: {
         Args: { _note?: string; _withdrawal_id: string }
         Returns: undefined
