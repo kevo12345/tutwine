@@ -17,7 +17,6 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const bgVideoRef = useRef<HTMLVideoElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
   const [connecting, setConnecting] = useState(true);
 
@@ -53,10 +52,6 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
           const video = videoRef.current;
           const stream = new MediaStream([vTrack]);
           video.srcObject = stream;
-          if (bgVideoRef.current) {
-            bgVideoRef.current.srcObject = stream;
-            bgVideoRef.current.play().catch(() => {});
-          }
           video.onloadedmetadata = () => {
             const settings = vTrack.getSettings();
             const width = video.videoWidth || settings.width || 0;

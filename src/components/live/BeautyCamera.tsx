@@ -34,7 +34,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   const videoRef = useRef<HTMLVideoElement>(null);
   const rawStreamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement>(null);
 
   useImperativeHandle(ref, () => ({
     getStream: () => rawStreamRef.current,
@@ -105,10 +104,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           return;
         }
         video.srcObject = stream;
-        if (bgVideoRef.current) {
-          bgVideoRef.current.srcObject = stream;
-          bgVideoRef.current.play().catch(() => {});
-        }
         video.muted = true;
         video.playsInline = true;
         await new Promise<void>((resolve) => {
@@ -145,22 +140,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}>
-      {/* Blurred, darkened copy of the same stream fills the letterbox areas */}
-      <video
-        ref={bgVideoRef}
-        aria-hidden
-        className="pointer-events-none absolute z-0 block object-cover"
-        style={{
-          inset: "-20px",
-          width: "calc(100% + 40px)",
-          height: "calc(100% + 40px)",
-          filter: "blur(20px) brightness(0.55)",
-          transform: mirror ? "scaleX(-1) scale(1.08)" : "scale(1.08)",
-        }}
-        playsInline
-        muted
-        autoPlay
-      />
       {/* TikTok-style foreground: proportional full-viewport fill. */}
       <video
         ref={videoRef}
