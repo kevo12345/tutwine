@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 import { Sparkles, Mic, MicOff, Video, VideoOff, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 import { BeautyCamera, BeautyCameraHandle } from "@/components/live/BeautyCamera";
 import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
@@ -157,15 +157,21 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
           <IconBtn onClick={() => setZoom((z) => clampZoom(z + 0.25))} title="Zoom in">
             <ZoomIn className="h-4 w-4" />
           </IconBtn>
-          <Slider
+          <SliderPrimitive.Root
             orientation="vertical"
-            className="h-32"
+            className="relative flex h-32 w-5 touch-none select-none flex-col items-center"
             value={[zoom]}
             min={MIN_ZOOM}
             max={MAX_ZOOM}
             step={0.05}
             onValueChange={(v) => setZoom(clampZoom(v[0]))}
-          />
+            aria-label="Camera zoom"
+          >
+            <SliderPrimitive.Track className="relative h-full w-1.5 grow overflow-hidden rounded-full bg-white/25">
+              <SliderPrimitive.Range className="absolute w-full bg-primary" />
+            </SliderPrimitive.Track>
+            <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-primary bg-background focus-visible:outline-none" />
+          </SliderPrimitive.Root>
           <IconBtn onClick={() => setZoom((z) => clampZoom(z - 0.25))} title="Zoom out">
             <ZoomOut className="h-4 w-4" />
           </IconBtn>
