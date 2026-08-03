@@ -21,6 +21,8 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
+  /** Aspect ratio (w/h) of the host's incoming track. */
+  const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const [connecting, setConnecting] = useState(true);
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
             const height = video.videoHeight || settings.height || 0;
             const ratio = height > 0 ? width / height : 9 / 16;
             console.info("Live viewer track", { width, height, aspectRatio: ratio });
+            if (ratio > 0) setTrackRatio(ratio);
           };
           video.play().catch(() => {});
           setHasVideo(true);
@@ -106,7 +109,9 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
     <div className="absolute inset-0 overflow-hidden bg-black">
       <video
         ref={videoRef}
-        className="absolute inset-0 z-[1] block h-full w-full object-cover object-center"
+        className={`absolute inset-0 z-[1] block h-full w-full object-center ${
+          trackRatio !== null && trackRatio > 1 ? "object-contain" : "object-cover"
+        }`}
         style={{ transform: `scale(${SUBJECT_ZOOM})`, transformOrigin: "center center" }}
         playsInline
         autoPlay
