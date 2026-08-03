@@ -18,6 +18,8 @@ type Props = {
   onProcessedTrack?: (track: MediaStreamTrack | null) => void;
   active?: boolean; // when false, releases camera
   mirror?: boolean;
+  /** "user" (front) or "environment" (back) camera. */
+  facingMode?: "user" | "environment";
 };
 
 /**
@@ -28,7 +30,7 @@ type Props = {
  * sharpening zone for "eye enhancement" — no ML.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true },
+  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user" },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -61,7 +63,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             height: { ideal: height },
             // Ask the camera for a portrait 9:16 frame so we crop as little as possible.
             aspectRatio: { ideal: width / height },
-            facingMode: "user",
+            facingMode,
           },
           audio: false,
         });
@@ -168,7 +170,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
       rawStreamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, facingMode]);
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>

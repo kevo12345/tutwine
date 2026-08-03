@@ -1,26 +1,56 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Radio, Image as ImageIcon, X, RefreshCw } from "lucide-react";
-import { AppLayout } from "@/components/AppLayout";
+import {
+  X,
+  Loader2,
+  Radio,
+  Image as ImageIcon,
+  RefreshCw,
+  SwitchCamera,
+  Sparkles,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
+import { BeautyCamera } from "@/components/live/BeautyCamera";
+import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
+import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
 
 const THUMB_KEY = "tutwine:live-thumbnail";
 
+/**
+ * TikTok-style full-screen "Go LIVE" setup: live camera preview behind
+ * translucent overlay controls (flip, beauty, duration, thumbnail) with a
+ * single primary Go LIVE action pinned to the bottom.
+ */
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
-  /** Banner reused from the host's previous live (already uploaded). */
   const [savedThumbUrl, setSavedThumbUrl] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
+  const [beautyOpen, setBeautyOpen] = useState(false);
+  const [facing, setFacing] = useState<"user" | "environment">("user");
+  const [camReady, setCamReady] = useState(false);
+
+  // Ask for camera access up-front so the preview can render.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const granted = await requestAvPermissions();
+      if (!cancelled) setCamReady(granted);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Remember the banner between lives: local cache first, then last session.
   useEffect(() => {
@@ -71,14 +101,6 @@ export default function GoLiveSetupPage() {
     setThumbPreview(URL.createObjectURL(f));
   };
 
-  const clearThumb = () => {
-    setThumbFile(null);
-    setThumbPreview(null);
-    setSavedThumbUrl(null);
-    if (user) localStorage.removeItem(`${THUMB_KEY}:${user.id}`);
-  };
-
-
   const start = async () => {
     if (!user) {
       navigate("/login");
@@ -88,7 +110,6 @@ export default function GoLiveSetupPage() {
       toast.error("Live session must be at least 1 hour");
       return;
     }
-    // Ask for camera + mic while we still have the direct user gesture.
     const granted = await requestAvPermissions();
     if (!granted) return;
     setStarting(true);
@@ -108,7 +129,6 @@ export default function GoLiveSetupPage() {
       }
       if (thumbnail_url) localStorage.setItem(`${THUMB_KEY}:${user.id}`, thumbnail_url);
 
-
       const { data, error } = await supabase.functions.invoke("live-start-free", {
         body: { duration_hours: hours, thumbnail_url },
       });
@@ -126,110 +146,180 @@ export default function GoLiveSetupPage() {
   };
 
   return (
-    <AppLayout>
-      <div className="px-4 pb-8 pt-4">
-        <div className="mb-4 flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Back">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Set up your live</h1>
-            <p className="text-sm text-muted-foreground">Hosting is free — you keep 60% of gifts.</p>
+    <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-background">
+      {/* Full-bleed camera preview */}
+      {camReady ? (
+        <BeautyCamera
+          settings={beauty}
+          active
+          mirror={facing === "user"}
+          facingMode={facing}
+          className="absolute inset-0 h-full w-full bg-background"
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background px-8 text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">Allow camera & mic access to preview your live.</p>
+        </div>
+      )}
+
+      {/* Scrim for legible overlays */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-background/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-background via-background/80 to-transparent" />
+
+      {/* Top bar */}
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="rounded-full bg-foreground/10 p-2 text-foreground backdrop-blur-sm"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <span className="rounded-full bg-foreground/10 px-3 py-1.5 text-[11px] font-semibold text-foreground backdrop-blur-sm">
+          Hosting is free · you keep 60% of gifts
+        </span>
+        <div className="w-9" />
+      </div>
+
+      {/* Bottom control stack */}
+      <div className="absolute inset-x-0 bottom-0 space-y-4 p-4 pb-6">
+        {/* Tool row */}
+        <div className="flex items-start justify-around">
+          <ToolButton
+            icon={<SwitchCamera className="h-6 w-6" />}
+            label="Flip"
+            onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+          />
+          <ToolButton
+            icon={<Sparkles className="h-6 w-6" />}
+            label="Beautify"
+            active={beauty.enabled}
+            onClick={() => setBeautyOpen(true)}
+          />
+          <label htmlFor="thumb" className="cursor-pointer">
+            <ToolButton
+              icon={shownThumb ? <RefreshCw className="h-6 w-6" /> : <ImageIcon className="h-6 w-6" />}
+              label={shownThumb ? "Cover" : "Add cover"}
+              active={!!shownThumb}
+              asDiv
+            />
+          </label>
+        </div>
+
+        {/* Cover + duration card */}
+        <div className="flex items-center gap-3 rounded-2xl bg-foreground/10 p-3 backdrop-blur-md">
+          <label htmlFor="thumb" className="shrink-0 cursor-pointer">
+            {shownThumb ? (
+              <img
+                src={shownThumb}
+                alt="Live cover preview"
+                className="h-12 w-12 rounded-xl object-cover"
+              />
+            ) : (
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-foreground/30 text-foreground/70">
+                <ImageIcon className="h-5 w-5" />
+              </span>
+            )}
+          </label>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {shownThumb ? "Cover ready" : "Add a cover image"}
+            </p>
+            <p className="flex items-center gap-1 truncate text-[11px] text-foreground/70">
+              <Clock className="h-3 w-3" /> {hours}h live · ends around {expiresPreview}
+            </p>
           </div>
         </div>
 
-        {/* Thumbnail */}
-        <section className="mb-5">
-          <Label className="mb-2 block text-xs uppercase text-muted-foreground">Thumbnail</Label>
-          {shownThumb ? (
-            <div className="relative overflow-hidden rounded-2xl border border-border">
-              <img src={shownThumb} alt="Live thumbnail preview" className="h-48 w-full object-cover" />
-              <div className="absolute right-2 top-2 flex items-center gap-2">
-                <label
-                  htmlFor="thumb"
-                  className="flex cursor-pointer items-center gap-1 rounded-full bg-black/60 px-2.5 py-1.5 text-[11px] font-semibold text-white"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" /> Change
-                </label>
-                <button
-                  type="button"
-                  onClick={clearThumb}
-                  className="rounded-full bg-black/60 p-1.5 text-white"
-                  aria-label="Remove thumbnail"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              {!thumbPreview && (
-                <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white">
-                  Saved banner
-                </span>
-              )}
-            </div>
-          ) : (
-            <label
-              htmlFor="thumb"
-              className="flex h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition hover:bg-muted/50"
+        {/* Duration chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {LIVE_DURATION_OPTIONS.map((h) => (
+            <button
+              key={h}
+              type="button"
+              onClick={() => setHours(h)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur-md transition ${
+                hours === h
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-foreground/10 text-foreground/80"
+              }`}
             >
-              <ImageIcon className="h-8 w-8 opacity-60" />
-              <span className="text-sm font-medium">Tap to upload a thumbnail</span>
-              <span className="text-[11px] opacity-80">JPG or PNG · up to 5 MB · optional</span>
-            </label>
-          )}
-          <input
-            id="thumb"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onClick={(e) => ((e.target as HTMLInputElement).value = "")}
-            onChange={(e) => onPickThumb(e.target.files?.[0] ?? null)}
-          />
-        </section>
-
-        {/* Duration */}
-        <section className="mb-5">
-          <Label className="mb-2 block text-xs uppercase text-muted-foreground">
-            Duration <span className="normal-case text-[10px] opacity-70">· minimum 1 hour</span>
-          </Label>
-          <div className="grid grid-cols-5 gap-2">
-            {LIVE_DURATION_OPTIONS.map((h) => (
-              <button
-                key={h}
-                type="button"
-                onClick={() => setHours(h)}
-                className={`rounded-xl border px-2 py-3 text-sm font-semibold transition ${
-                  hours === h
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-foreground hover:border-primary/40"
-                }`}
-              >
-                {h}h
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Your live will end automatically around <span className="font-medium text-foreground">{expiresPreview}</span>.
-          </p>
-        </section>
+              {h}h
+            </button>
+          ))}
+        </div>
 
         <Button
           onClick={start}
           disabled={starting}
           size="lg"
-          className="w-full gradient-warm border-0 text-primary-foreground shadow-glow"
+          className="h-14 w-full rounded-full gradient-warm border-0 text-base font-bold text-primary-foreground shadow-glow"
         >
           {starting ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <>
-              <Radio className="mr-2 h-5 w-5" /> Start live now
+              <Radio className="mr-2 h-5 w-5" /> Go LIVE
             </>
           )}
         </Button>
-        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+        <p className="text-center text-[11px] text-foreground/70">
           Viewers pay $1/hr (1 token) to join.
         </p>
       </div>
-    </AppLayout>
+
+      <input
+        id="thumb"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onClick={(e) => ((e.target as HTMLInputElement).value = "")}
+        onChange={(e) => onPickThumb(e.target.files?.[0] ?? null)}
+      />
+
+      <BeautySettingsPanel
+        value={beauty}
+        onChange={setBeauty}
+        open={beautyOpen}
+        onOpenChange={setBeautyOpen}
+      />
+    </div>
+  );
+}
+
+function ToolButton({
+  icon,
+  label,
+  onClick,
+  active,
+  asDiv,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+  asDiv?: boolean;
+}) {
+  const content = (
+    <>
+      <span
+        className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-md ${
+          active ? "bg-primary/90 text-primary-foreground" : "bg-foreground/10 text-foreground"
+        }`}
+      >
+        {icon}
+      </span>
+      <span className="text-[11px] font-medium text-foreground/80">{label}</span>
+    </>
+  );
+  if (asDiv) {
+    return <div className="flex flex-col items-center gap-1.5">{content}</div>;
+  }
+  return (
+    <button type="button" onClick={onClick} className="flex flex-col items-center gap-1.5">
+      {content}
+    </button>
   );
 }
