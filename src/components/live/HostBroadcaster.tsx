@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Mic, MicOff, Video, VideoOff, Loader2 } from "lucide-react";
+import { Sparkles, Mic, MicOff, Video, VideoOff, Loader2, Pause, Play } from "lucide-react";
 import { BeautyCamera, BeautyCameraHandle } from "@/components/live/BeautyCamera";
 import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
 import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
@@ -14,6 +14,10 @@ type Props = {
   onLeave?: () => void;
   /** Cleans up a session when the video provider refuses the host connection. */
   onJoinFailed?: () => void;
+  /** True while the host has paused the live (viewers see the cover image). */
+  paused?: boolean;
+  /** Toggles the paused state for everyone. */
+  onTogglePause?: () => void | Promise<void>;
 };
 
 /**
@@ -21,7 +25,7 @@ type Props = {
  * feed the browser's native camera track as the outgoing camera.
  * Viewers keep using the Daily iframe embed — no change on their side.
  */
-export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props) {
+export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused, onTogglePause }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const camRef = useRef<BeautyCameraHandle>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -86,6 +90,29 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props
     };
   }, [roomUrl, token]);
 
+  // Stop sending audio/video while paused so viewers only see the cover.
+  useEffect(() => {
+    const call = callRef.current;
+    if (!call || !joined) return;
+    (async () => {
+      try {
+        if (paused) {
+          await call.setLocalVideo(false);
+          await call.setLocalAudio(false);
+        } else {
+          const track = camRef.current?.getTrack() ?? cameraTrackRef.current;
+          if (track?.readyState === "live") {
+            await call.setInputDevicesAsync({ videoSource: track });
+          }
+          await call.setLocalVideo(camOn);
+          await call.setLocalAudio(micOn);
+        }
+      } catch (e) {
+        console.warn("pause toggle failed", e);
+      }
+    })();
+  }, [paused, joined, camOn, micOn]);
+
   // Push the native camera track whenever it changes.
   function handleTrack(track: MediaStreamTrack | null) {
     cameraTrackRef.current = track;
@@ -142,7 +169,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props
       {/* Host controls */}
       <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-end p-2 sm:p-3">
         <div className="pointer-events-auto rounded-full bg-black/60 px-3 py-1 text-[11px] text-white">
-          {joined ? "LIVE · You are broadcasting" : "Connecting…"}
+          {!joined ? "Connecting…" : paused ? "PAUSED · Viewers see your cover" : "LIVE · You are broadcasting"}
         </div>
       </div>
 
@@ -154,6 +181,17 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props
           <IconBtn onClick={toggleCam} title={camOn ? "Turn camera off" : "Turn camera on"}>
             {camOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
           </IconBtn>
+          {onTogglePause && (
+            <Button
+              size="sm"
+              variant={paused ? "default" : "secondary"}
+              className="h-9 shrink-0 gap-1.5 rounded-full px-3"
+              onClick={() => void onTogglePause()}
+            >
+              {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+              {paused ? "Resume" : "Pause"}
+            </Button>
+          )}
           <Button
             size="sm"
             variant={beauty.enabled ? "default" : "secondary"}
