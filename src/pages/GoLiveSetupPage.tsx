@@ -154,8 +154,6 @@ export default function GoLiveSetupPage() {
           active
           mirror={facing === "user"}
           facingMode={facing}
-          zoom={0.3}
-
           className="absolute inset-0 h-full w-full bg-background"
         />
       ) : (

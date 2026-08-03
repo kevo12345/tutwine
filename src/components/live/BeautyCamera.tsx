@@ -2,65 +2,44 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import { BeautySettings, beautyFilterCss } from "@/lib/beautyFilter";
 
 export type BeautyCameraHandle = {
-  /** The processed (filtered) MediaStream. May change identity if source changes. */
+  /** The browser camera MediaStream. */
   getStream: () => MediaStream | null;
-  /** The processed video track, ready to send over WebRTC. */
+  /** The original camera track, ready to send over WebRTC. */
   getTrack: () => MediaStreamTrack | null;
 };
 
 type Props = {
   settings: BeautySettings;
-  /** Optional constraints applied to getUserMedia. */
+  /** Preferred portrait capture dimensions. */
   width?: number;
   height?: number;
   className?: string;
-  /** Called when the processed track is (re)created — swap it into your peer/Daily. */
+  /** Called when the camera track is (re)created — swap it into Daily. */
   onProcessedTrack?: (track: MediaStreamTrack | null) => void;
   active?: boolean; // when false, releases camera
   mirror?: boolean;
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
-  /** Digital zoom for the subject layer. 1 = full 9:16 cover fit. */
-  /** Values below 1 shrink the subject inside a full-bleed background. */
-  zoom?: number;
-
 };
 
-
 /**
- * Renders the local camera into a canvas with real-time beauty filters and
- * exposes the resulting processed MediaStreamTrack for broadcasting.
- * Uses lightweight CSS canvas filters (blur/brightness/saturate/contrast) plus
- * an optional subtle horizontal squeeze for "face slimming" and a soft central
- * sharpening zone for "eye enhancement" — no ML.
+ * Opens the device camera and renders its MediaStream directly. The outgoing
+ * WebRTC track is the original camera track: no canvas resampling, digital zoom,
+ * crop transform, or fixed-size intermediate buffer is introduced.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 1080, height = 1920, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 0.3 },
+  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user" },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const rawStreamRef = useRef<MediaStream | null>(null);
-  const processedStreamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const settingsRef = useRef(settings);
-  const zoomRef = useRef(zoom);
   const [error, setError] = useState<string | null>(null);
+  const [portraitStream, setPortraitStream] = useState(true);
 
   useImperativeHandle(ref, () => ({
-    getStream: () => processedStreamRef.current,
-    getTrack: () => processedStreamRef.current?.getVideoTracks()[0] ?? null,
+    getStream: () => rawStreamRef.current,
+    getTrack: () => rawStreamRef.current?.getVideoTracks()[0] ?? null,
   }));
-
-  // Keep latest settings for the rAF loop without re-subscribing.
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-
-  // Live-updatable zoom (read by the rAF loop without restarting the camera).
-  useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
 
   useEffect(() => {
     if (!active) return;
@@ -71,18 +50,25 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Try an ideal portrait frame first, then progressively relax so a
-        // camera that can't honour the hints still opens.
+        // Prefer a native portrait track. `aspectRatio` is important: width and
+        // height alone are treated as loose hints by Safari and Chrome.
         const attempts: MediaStreamConstraints[] = [
           {
             video: {
               width: { ideal: width },
               height: { ideal: height },
-              facingMode,
+              aspectRatio: { ideal: 9 / 16 },
+              facingMode: { ideal: facingMode },
             },
             audio: false,
           },
-          { video: { facingMode }, audio: false },
+          {
+            video: {
+              aspectRatio: { ideal: 9 / 16 },
+              facingMode: { ideal: facingMode },
+            },
+            audio: false,
+          },
           { video: true, audio: false },
         ];
         let stream: MediaStream | null = null;
@@ -101,82 +87,35 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           return;
         }
         rawStreamRef.current = stream;
-        const video = videoRef.current!;
+        const video = videoRef.current;
+        if (!video) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
         video.srcObject = stream;
         video.muted = true;
         video.playsInline = true;
-        await video.play().catch(() => {});
+        await new Promise<void>((resolve) => {
+          if (video.readyState >= HTMLMediaElement.HAVE_METADATA) resolve();
+          else video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+        });
+        await video.play();
 
-        const canvas = canvasRef.current!;
-        const TARGET_ASPECT = width / height; // 9:16
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d", { desynchronized: true });
-        if (!ctx) throw new Error("Canvas 2D unavailable");
-
-
-        const render = () => {
-          if (cancelled) return;
-          const st = settingsRef.current;
-          const vw = video.videoWidth;
-          const vh = video.videoHeight;
-          if (!vw || !vh) {
-            rafRef.current = requestAnimationFrame(render);
-            return;
-          }
-
-          // Fixed 9:16 output (1080x1920), TikTok-style: the camera frame is
-          // *cover* fitted so it always fills the frame edge-to-edge.
-          const outW = width;
-          const outH = height;
-          if (canvas.width !== outW || canvas.height !== outH) {
-            canvas.width = outW;
-            canvas.height = outH;
-          }
-
-          const z = Math.max(0.3, Math.min(1, zoomRef.current || 0.3));
-          const fit = Math.max(outW / vw, outH / vh);
-
-          const scale = fit * z;
-          let dw = vw * scale;
-          const dh = vh * scale;
-          if (st.enabled && st.faceSlim > 0) {
-            // subtle horizontal squeeze up to ~7% at max
-            dw *= 1 - (st.faceSlim / 100) * 0.07;
-          }
-          const dx = (outW - dw) / 2;
-          const dy = (outH - dh) / 2;
-
-          ctx.save();
-          ctx.filter = beautyFilterCss(st);
-          ctx.drawImage(video, dx, dy, dw, dh);
-          ctx.restore();
-
-
-
-
-          if (st.enabled && st.eyeEnhance > 0) {
-            // gentle central "vignette" contrast bump — no ML face detection
-            ctx.save();
-            const alpha = (st.eyeEnhance / 100) * 0.18;
-            ctx.globalCompositeOperation = "overlay";
-            ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-            const rx = canvas.width * 0.35;
-            const ry = canvas.height * 0.12;
-            const cx = canvas.width / 2;
-            const cy = canvas.height * 0.4;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-          }
-          rafRef.current = requestAnimationFrame(render);
-        };
-        render();
-
-        const processed = (canvas as HTMLCanvasElement).captureStream(30);
-        processedStreamRef.current = processed;
-        onProcessedTrack?.(processed.getVideoTracks()[0] ?? null);
+        const track = stream.getVideoTracks()[0] ?? null;
+        const trackSettings = track?.getSettings();
+        const actualWidth = video.videoWidth || trackSettings?.width || 0;
+        const actualHeight = video.videoHeight || trackSettings?.height || 0;
+        const actualRatio = actualHeight > 0 ? actualWidth / actualHeight : 9 / 16;
+        // Only use cover when the browser really supplied a portrait stream.
+        // A landscape fallback with cover is what creates the giant face crop.
+        setPortraitStream(actualRatio <= 0.75);
+        console.info("Live camera capture", {
+          width: actualWidth,
+          height: actualHeight,
+          aspectRatio: actualRatio,
+          facingMode: trackSettings?.facingMode,
+        });
+        onProcessedTrack?.(track);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Camera unavailable");
       }
@@ -184,11 +123,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
     return () => {
       cancelled = true;
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
       onProcessedTrack?.(null);
-      processedStreamRef.current?.getTracks().forEach((t) => t.stop());
-      processedStreamRef.current = null;
       rawStreamRef.current?.getTracks().forEach((t) => t.stop());
       rawStreamRef.current = null;
     };
@@ -199,19 +134,14 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
     <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>
       <video
         ref={videoRef}
-        className="pointer-events-none absolute left-0 top-0 h-px w-px opacity-0"
+        className={`pointer-events-none absolute inset-0 block h-full w-full ${portraitStream ? "object-cover" : "object-contain"}`}
+        style={{
+          filter: beautyFilterCss(settings),
+          transform: mirror ? "scaleX(-1)" : undefined,
+        }}
         playsInline
         muted
         autoPlay
-      />
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 block h-full w-full"
-        style={{
-          objectFit: "cover",
-          objectPosition: "center",
-          transform: mirror ? "scaleX(-1)" : undefined,
-        }}
       />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-xs text-white/80 p-4">
