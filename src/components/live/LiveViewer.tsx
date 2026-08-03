@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
 
+/** Must match BeautyCamera so viewers see the same framing as the host preview. */
+const SUBJECT_ZOOM = 1.15;
+
 type Props = {
   roomUrl: string;
   active: boolean; // only join when true
@@ -104,6 +107,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
       <video
         ref={videoRef}
         className="absolute inset-0 z-[1] block h-full w-full object-cover object-center"
+        style={{ transform: `scale(${SUBJECT_ZOOM})`, transformOrigin: "center center" }}
         playsInline
         autoPlay
         muted={false}
