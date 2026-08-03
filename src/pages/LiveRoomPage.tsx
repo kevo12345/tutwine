@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveLiveSessions } from "@/hooks/useActiveLiveSessions";
 import { LivePanel } from "@/components/live/LivePanel";
+import { useViewportStageHeight } from "@/hooks/useViewportStageHeight";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -21,6 +22,8 @@ export default function LiveRoomPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  useViewportStageHeight();
 
   // Determine which sessions the user can watch
   useEffect(() => {
@@ -112,7 +115,11 @@ export default function LiveRoomPage() {
   return (
     <div
       ref={containerRef}
-      className="no-scrollbar fixed inset-0 z-50 h-[100dvh] w-screen snap-y snap-mandatory overflow-y-scroll overscroll-none bg-black"
+      className="no-scrollbar fixed inset-0 z-50 snap-y snap-mandatory overflow-y-scroll overscroll-none bg-black"
+      style={{
+        height: "var(--live-h, 100dvh)",
+        width: "var(--live-w, 100vw)",
+      }}
     >
       {feed.map((s, idx) => (
         <div
@@ -121,7 +128,11 @@ export default function LiveRoomPage() {
             panelRefs.current[idx] = n;
           }}
           data-idx={idx}
-          className="relative h-[100dvh] min-h-[100dvh] w-screen shrink-0 snap-start snap-always"
+          className="relative w-full shrink-0 snap-start snap-always"
+          style={{
+            height: "var(--live-h, 100dvh)",
+            minHeight: "var(--live-h, 100dvh)",
+          }}
         >
           <LivePanel
             sessionId={s.id}

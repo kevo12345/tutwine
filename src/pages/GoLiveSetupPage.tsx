@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useViewportStageHeight } from "@/hooks/useViewportStageHeight";
 import { useNavigate } from "react-router-dom";
 import {
   X,
@@ -30,6 +31,7 @@ const THUMB_KEY = "tutwine:live-thumbnail";
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  useViewportStageHeight();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
@@ -146,7 +148,10 @@ export default function GoLiveSetupPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-background">
+    <div
+      className="fixed inset-0 z-50 overflow-hidden bg-background"
+      style={{ height: "var(--live-h, 100dvh)", width: "var(--live-w, 100vw)" }}
+    >
       {/* Full-bleed camera preview */}
       {camReady ? (
         <BeautyCamera
