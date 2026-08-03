@@ -267,7 +267,9 @@ export default function LiveViewPage() {
 
   async function handleShare() {
     if (!live) return;
-    const url = `${window.location.origin}/lives/${live.share_link}`;
+    const inviteCode = (profile as any)?.emrand_id ?? null;
+    const url = `${window.location.origin}/lives/${live.share_link}${inviteCode ? `?ref=${inviteCode}` : ""}`;
+
     try {
       if (navigator.share) {
         await navigator.share({ title: live.title, url });
