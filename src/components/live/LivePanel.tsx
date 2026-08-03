@@ -135,7 +135,7 @@ export function LivePanel({
     return () => clearInterval(i);
   }, [expiresAt, active, navigate, onExit]);
 
-  // Hearts broadcast channel
+  // Hearts + "live ended" broadcast channel
   useEffect(() => {
     if (!active || !sessionId) return;
     const ch = supabase.channel(`live_reactions_${sessionId}`, {
@@ -147,13 +147,40 @@ export function LivePanel({
         ...prev,
         { id: `${Date.now()}-${Math.random()}`, color, startX: Math.random() },
       ]);
-    }).subscribe();
+    })
+      .on("broadcast", { event: "live_ended" }, () => {
+        if (isHost) return;
+        toast.info("The host ended this live");
+        onExit ? onExit() : navigate("/live", { replace: true });
+      })
+      .subscribe();
     heartChanRef.current = ch;
     return () => {
       supabase.removeChannel(ch);
       heartChanRef.current = null;
     };
-  }, [sessionId, active]);
+  }, [sessionId, active, isHost, navigate, onExit]);
+
+  // Safety net: react to the session row flipping to 'ended' (missed broadcast, late joiner)
+  useEffect(() => {
+    if (!active || !sessionId || isHost) return;
+    const ch = supabase
+      .channel(`live_status_${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "live_sessions", filter: `id=eq.${sessionId}` },
+        (payload) => {
+          if ((payload.new as any)?.status === "ended") {
+            toast.info("The host ended this live");
+            onExit ? onExit() : navigate("/live", { replace: true });
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [sessionId, active, isHost, navigate, onExit]);
 
   // Presence for viewer count
   useEffect(() => {
