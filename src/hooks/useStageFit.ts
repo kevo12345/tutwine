@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
  * - Landscape source (what some browsers hand back) → `contain`, because
  *   cropping it into a 9:16 stage would blow the subject up massively.
  */
-export function useStageFit(trackRatio: number | null) {
+export function useStageFit(trackRatio: number | null, forceCover = false) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageRatio, setStageRatio] = useState<number | null>(null);
 
@@ -34,11 +34,12 @@ export function useStageFit(trackRatio: number | null) {
   }, []);
 
   let objectFit: "cover" | "contain" = "cover";
-  if (trackRatio !== null) {
+  if (!forceCover && trackRatio !== null) {
     const stageIsPortrait = stageRatio === null || stageRatio < 1;
     objectFit = trackRatio > 1 && stageIsPortrait ? "contain" : "cover";
   }
 
   return { stageRef, stageRatio, objectFit };
 }
+
 

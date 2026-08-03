@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
 import { useStageFit } from "@/hooks/useStageFit";
+import { isNativeApp } from "@/lib/platform";
 
 
 /** Must match BeautyCamera so viewers see the same framing as the host preview. */
@@ -26,7 +27,8 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   /** Aspect ratio (w/h) of the host's incoming track. */
   const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const [connecting, setConnecting] = useState(true);
-  const { stageRef, objectFit } = useStageFit(trackRatio);
+  // Native app hosts publish a true 9:16 portrait track, so fill edge-to-edge.
+  const { stageRef, objectFit } = useStageFit(trackRatio, isNativeApp() && (trackRatio ?? 0) <= 1);
 
 
   useEffect(() => {

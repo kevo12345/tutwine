@@ -1,10 +1,12 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { BeautySettings, beautyFilterCss } from "@/lib/beautyFilter";
 import { useStageFit } from "@/hooks/useStageFit";
+import { isNativeApp } from "@/lib/platform";
 
 
 /** Uniform zoom applied to the rendered frame — keeps aspect ratio, centres subject. */
 const SUBJECT_ZOOM = 1;
+
 
 export type BeautyCameraHandle = {
   /** The browser camera MediaStream. */
@@ -43,7 +45,14 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   /** Aspect ratio (w/h) of the track the device actually delivered. */
   const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const hintTimerRef = useRef<number | null>(null);
-  const { stageRef, objectFit } = useStageFit(trackRatio);
+  /**
+   * In the native app the WebView is portrait-locked and the camera delivers a
+   * real portrait track, so we can fill the stage edge-to-edge with `cover`
+   * without cropping the subject. In a mobile browser we keep auto-fitting.
+   */
+  const native = isNativeApp();
+  const { stageRef, objectFit } = useStageFit(trackRatio, native);
+
 
 
   /**
@@ -101,12 +110,30 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Android Chrome satisfies a 9:16 request by digitally cropping the
-        // sensor, which is exactly the "zoomed in" look we want to avoid. Ask
-        // for the full-sensor 3:4 portrait frame instead: the whole vertical
-        // field of view is kept and only the sides are trimmed by `cover`.
+        // Native app: the WebView is portrait-locked, so a true 9:16 portrait
+        // track (1080x1920) comes straight off the sensor — full-screen with no
+        // crop and no digital zoom.
+        // Mobile browser: Android Chrome satisfies a 9:16 request by digitally
+        // cropping the sensor, which is the "zoomed in" look we want to avoid,
+        // so we ask for the full-sensor 3:4 portrait frame instead.
+        const nativePortraitAttempts: MediaStreamConstraints[] = native
+          ? [
+              {
+                video: {
+                  width: { ideal: width },
+                  height: { ideal: height },
+                  aspectRatio: { ideal: 9 / 16 },
+                  frameRate: { ideal: 30, min: 24 },
+                  facingMode: { ideal: facingMode },
+                },
+                audio: false,
+              },
+            ]
+          : [];
         const attempts: MediaStreamConstraints[] = [
+          ...nativePortraitAttempts,
           {
+
             video: {
               width: { ideal: 1080 },
               height: { ideal: 1440 },
@@ -199,7 +226,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         });
         if (actualRatio > 0) setTrackRatio(actualRatio);
         onProcessedTrack?.(track);
-        startFaceDistanceHint(video);
+        if (!native) startFaceDistanceHint(video);
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Camera unavailable");
       }
@@ -241,7 +268,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
       />
 
 
-      {tooClose && !error && (
+      {tooClose && !native && !error && (
         <div className="pointer-events-none absolute left-1/2 top-[18%] z-[3] -translate-x-1/2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] text-white/90 backdrop-blur-sm">
           Move your phone slightly farther away
         </div>
