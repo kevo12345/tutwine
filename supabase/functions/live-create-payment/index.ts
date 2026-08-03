@@ -137,15 +137,15 @@ Deno.serve(async (req) => {
       const cleanPhone = cleanKenyanPhone(String(phone));
       const sellapayToken = await getSellapayToken();
       const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback?live_${kind === 'host' ? 'session' : 'pass'}_id=${rowId}`;
-      const stkRes = await fetch(`${SELLAPAY_BASE}/v1/requestStkPush`, {
+      const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${sellapayToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           amount: amountKes,
           phone: cleanPhone,
-          note: `TutWine Live ${hours}h`,
-          reference: rowId,
-          description: `TutWine Live ${kind} ${hours}h`,
+          // docs: reference max 20 chars
+          reference: String(rowId).replace(/-/g, '').slice(0, 20),
+          description: `TutWine Live ${hours}h`,
           callbackUrl,
           callback_url: callbackUrl,
         }),
