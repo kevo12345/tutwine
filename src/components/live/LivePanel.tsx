@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Clock } from "lucide-react";
+import { Loader2, Clock, PauseCircle } from "lucide-react";
 import { LiveViewer } from "./LiveViewer";
 import { HostBroadcaster } from "./HostBroadcaster";
 import { LiveChatRail } from "./LiveChatRail";
@@ -61,6 +61,8 @@ export function LivePanel({
   const [authorized, setAuthorized] = useState(false);
   const [renewOpen, setRenewOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string | null>(posterUrl ?? null);
   const heartChanRef = useRef<any>(null);
   const presenceChanRef = useRef<any>(null);
   const renewingRef = useRef(false);
@@ -86,7 +88,11 @@ export function LivePanel({
       }
       setHostId(session.host_id);
       setSessionEndsAt(session.expires_at);
-      if (session.thumbnail_url) setHostPhoto((p) => p ?? session.thumbnail_url);
+      if (session.thumbnail_url) {
+        setHostPhoto((p) => p ?? session.thumbnail_url);
+        setCoverUrl(session.thumbnail_url);
+      }
+      setIsPaused(!!session.is_paused);
 
       let myExpiresAt = session.expires_at;
       if (session.host_id !== user.id) {
@@ -241,6 +247,10 @@ export function LivePanel({
           if (typeof next?.like_count === "number") {
             setLikeCount((c) => Math.max(c, next.like_count));
           }
+          if (typeof next?.is_paused === "boolean") {
+            setIsPaused(next.is_paused);
+          }
+          if (next?.thumbnail_url) setCoverUrl(next.thumbnail_url);
           if (next?.status === "ended" && !isHost) {
             toast.info("The host ended this live");
             onExit ? onExit() : navigate("/live", { replace: true });
@@ -319,6 +329,21 @@ export function LivePanel({
     closeLive();
   };
 
+  /** Host-only: pause / resume the broadcast. Viewers see the cover image. */
+  const togglePause = async () => {
+    const next = !isPaused;
+    const { error } = await (supabase as any).rpc("set_live_paused", {
+      _session_id: sessionId,
+      _paused: next,
+    });
+    if (error) {
+      toast.error(error.message ?? "Couldn't update your live");
+      return;
+    }
+    setIsPaused(next);
+    toast.success(next ? "Live paused — viewers see your cover" : "You're back live");
+  };
+
   const abortFailedLive = async () => {
     await (supabase as any).rpc("end_live_session", { _session_id: sessionId });
     closeLive();
@@ -347,10 +372,33 @@ export function LivePanel({
                 token=""
                 onLeave={endLive}
                 onJoinFailed={abortFailedLive}
+                paused={isPaused}
+                onTogglePause={togglePause}
               />
             ) : (
               <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Paused — viewers see the host's cover with a be-right-back note */}
+      {authorized && !isHost && isPaused && (
+        <div className="absolute inset-0 z-[15] flex flex-col items-center justify-center bg-black/70">
+          {(coverUrl ?? hostPhoto) && (
+            <img
+              src={(coverUrl ?? hostPhoto) as string}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+            />
+          )}
+          <div className="relative z-10 flex flex-col items-center gap-3 px-8 text-center">
+            <PauseCircle className="h-12 w-12 text-white/90" />
+            <p className="text-lg font-bold text-white">Live paused</p>
+            <p className="text-sm text-white/80">
+              {hostName ?? "The host"} stepped away for a moment and will be right back. Stay tuned —
+              your ticket keeps running.
+            </p>
           </div>
         </div>
       )}
