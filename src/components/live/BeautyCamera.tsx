@@ -38,6 +38,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   const rawStreamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tooClose, setTooClose] = useState(false);
+  /** Aspect ratio (w/h) of the track the device actually delivered. */
+  const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const hintTimerRef = useRef<number | null>(null);
 
   /**
@@ -190,6 +192,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           aspectRatio: actualRatio,
           facingMode: trackSettings?.facingMode,
         });
+        if (actualRatio > 0) setTrackRatio(actualRatio);
         onProcessedTrack?.(track);
         startFaceDistanceHint(video);
       } catch (e: any) {
@@ -208,10 +211,17 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}>
-      {/* TikTok-style foreground: edge-to-edge fill, subject centred + zoomed. */}
+      {/*
+        Full-screen stage. Portrait captures fill edge-to-edge with `cover`.
+        When the device hands back a landscape track (common on iOS Safari),
+        `cover` would crop away ~70% of the width and blow up the face, so the
+        frame is fitted instead — full screen, correct framing, no zoom-in.
+      */}
       <video
         ref={videoRef}
-        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-cover object-center"
+        className={`pointer-events-none absolute inset-0 z-[1] block h-full w-full object-center ${
+          trackRatio !== null && trackRatio > 1 ? "object-contain" : "object-cover"
+        }`}
         style={{
           filter: beautyFilterCss(settings),
           transform: `${mirror ? "scaleX(-1) " : ""}scale(${SUBJECT_ZOOM})`,
