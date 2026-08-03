@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Flag, BarChart3, CreditCard, UserPlus,
-  Settings, LogOut, ChevronLeft, Bell, Search, MessageCircle, Bitcoin, Gift, Banknote,
+  Radio, Settings, LogOut, ChevronLeft, Bell, Search, MessageCircle, Bitcoin, Gift, Banknote,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
