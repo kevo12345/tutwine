@@ -206,7 +206,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         ref={canvasRef}
         className="absolute inset-0 block h-full w-full"
         style={{
-          objectFit: "contain",
+          objectFit: "cover",
           objectPosition: "center",
           transform: mirror ? "scaleX(-1)" : undefined,
         }}
