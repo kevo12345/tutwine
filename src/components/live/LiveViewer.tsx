@@ -107,20 +107,25 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   }, [roomUrl, active, userName]);
 
   return (
-    <div className="absolute inset-0 bg-black">
-      {!portraitStream && (
-        <video
-          ref={bgVideoRef}
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-125 object-cover blur-2xl"
-          playsInline
-          autoPlay
-          muted
-        />
-      )}
+    <div className="absolute inset-0 overflow-hidden bg-black">
+      <video
+        ref={bgVideoRef}
+        aria-hidden
+        className="pointer-events-none absolute z-0 block object-cover"
+        style={{
+          inset: "-20px",
+          width: "calc(100% + 40px)",
+          height: "calc(100% + 40px)",
+          filter: "blur(20px) brightness(0.55)",
+          transform: "scale(1.08)",
+        }}
+        playsInline
+        autoPlay
+        muted
+      />
       <video
         ref={videoRef}
-        className={`absolute inset-0 z-[1] h-full w-full ${portraitStream ? "object-cover" : "object-contain"}`}
+        className="absolute inset-0 z-[1] h-full w-full object-contain object-center"
         playsInline
         autoPlay
         muted={false}

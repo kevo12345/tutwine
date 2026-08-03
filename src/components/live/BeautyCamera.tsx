@@ -148,22 +148,27 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   }, [active, facingMode]);
 
   return (
-    <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>
-      {/* Blurred fill so the stage is always full screen, even for non-portrait cameras */}
-      {!portraitStream && (
-        <video
-          ref={bgVideoRef}
-          aria-hidden
-          className="pointer-events-none absolute inset-0 block h-full w-full scale-125 object-cover blur-2xl"
-          style={{ transform: mirror ? "scaleX(-1) scale(1.25)" : "scale(1.25)" }}
-          playsInline
-          muted
-          autoPlay
-        />
-      )}
+    <div className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}>
+      {/* Blurred, darkened copy of the same stream fills the letterbox areas */}
+      <video
+        ref={bgVideoRef}
+        aria-hidden
+        className="pointer-events-none absolute z-0 block object-cover"
+        style={{
+          inset: "-20px",
+          width: "calc(100% + 40px)",
+          height: "calc(100% + 40px)",
+          filter: "blur(20px) brightness(0.55)",
+          transform: mirror ? "scaleX(-1) scale(1.08)" : "scale(1.08)",
+        }}
+        playsInline
+        muted
+        autoPlay
+      />
+      {/* Foreground: full camera image, original proportions, never stretched */}
       <video
         ref={videoRef}
-        className={`pointer-events-none absolute inset-0 block h-full w-full ${portraitStream ? "object-cover" : "object-contain"}`}
+        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-contain object-center"
         style={{
           filter: beautyFilterCss(settings),
           transform: mirror ? "scaleX(-1)" : undefined,
@@ -172,6 +177,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         muted
         autoPlay
       />
+
       {error && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-xs text-white/80 p-4">
           {error}
