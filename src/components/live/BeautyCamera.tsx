@@ -110,12 +110,30 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Android Chrome satisfies a 9:16 request by digitally cropping the
-        // sensor, which is exactly the "zoomed in" look we want to avoid. Ask
-        // for the full-sensor 3:4 portrait frame instead: the whole vertical
-        // field of view is kept and only the sides are trimmed by `cover`.
+        // Native app: the WebView is portrait-locked, so a true 9:16 portrait
+        // track (1080x1920) comes straight off the sensor — full-screen with no
+        // crop and no digital zoom.
+        // Mobile browser: Android Chrome satisfies a 9:16 request by digitally
+        // cropping the sensor, which is the "zoomed in" look we want to avoid,
+        // so we ask for the full-sensor 3:4 portrait frame instead.
+        const nativePortraitAttempts: MediaStreamConstraints[] = native
+          ? [
+              {
+                video: {
+                  width: { ideal: height },
+                  height: { ideal: width },
+                  aspectRatio: { ideal: 9 / 16 },
+                  frameRate: { ideal: 30, min: 24 },
+                  facingMode: { ideal: facingMode },
+                },
+                audio: false,
+              },
+            ]
+          : [];
         const attempts: MediaStreamConstraints[] = [
+          ...nativePortraitAttempts,
           {
+
             video: {
               width: { ideal: 1080 },
               height: { ideal: 1440 },
