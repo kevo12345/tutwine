@@ -42,6 +42,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   const processedStreamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const settingsRef = useRef(settings);
+  const zoomRef = useRef(zoom);
   const [error, setError] = useState<string | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -53,6 +54,11 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+
+  // Live-updatable zoom (read by the rAF loop without restarting the camera).
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
 
   useEffect(() => {
     if (!active) return;
@@ -133,7 +139,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
           // "Cover" fit plus an extra zoom-in so the subject fills the frame
           // (TikTok/IG Live style) — sides/top are cropped, never letterboxed.
-          const scale = Math.max(outW / vw, outH / vh) * zoom;
+          const scale = Math.max(outW / vw, outH / vh) * (zoomRef.current || 1);
 
 
           let dw = vw * scale;
