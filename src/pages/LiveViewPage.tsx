@@ -40,6 +40,7 @@ import {
 
 import { toast } from "sonner";
 import { GiftSheet } from "@/components/live/GiftSheet";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 import { HostBroadcaster } from "@/components/live/HostBroadcaster";
 
 
