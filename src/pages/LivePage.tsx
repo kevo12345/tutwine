@@ -78,6 +78,11 @@ export default function LivePage() {
   /** Viewers pay with tokens (1 token per hour) to get a live pass. */
   const submit = async () => {
     if (!user || !sheet?.session) return;
+    if (balance < hours) {
+      setSheet(null);
+      setShortfall(hours);
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await (supabase as any).rpc("purchase_live_pass", {
@@ -95,8 +100,8 @@ export default function LivePage() {
       console.error(err);
       const msg = String(err?.message ?? "");
       if (msg.includes("insufficient tokens")) {
-        toast.error("Not enough tokens — top up to join");
-        navigate("/buy-tokens");
+        setSheet(null);
+        setShortfall(hours);
       } else {
         toast.error(msg || "Could not join the live");
       }
