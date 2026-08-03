@@ -34,7 +34,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
   const [beautyOpen, setBeautyOpen] = useState(false);
   const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
   const [connecting, setConnecting] = useState(true);
-  const [zoom, setZoom] = useState(0.7);
+  const [zoom, setZoom] = useState(0.3);
   const stageRef = useRef<HTMLDivElement>(null);
   const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
 
