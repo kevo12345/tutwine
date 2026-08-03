@@ -93,7 +93,7 @@ export default function GoLiveSetupPage() {
     if (!granted) return;
     setStarting(true);
     try {
-      let thumbnail_url: string | null = null;
+      let thumbnail_url: string | null = savedThumbUrl;
       if (thumbFile) {
         const ext = thumbFile.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${user.id}/live-thumbnails/${crypto.randomUUID()}.${ext}`;
@@ -106,6 +106,8 @@ export default function GoLiveSetupPage() {
         const { data: pub } = supabase.storage.from("photos").getPublicUrl(path);
         thumbnail_url = pub.publicUrl;
       }
+      if (thumbnail_url) localStorage.setItem(`${THUMB_KEY}:${user.id}`, thumbnail_url);
+
 
       const { data, error } = await supabase.functions.invoke("live-start-free", {
         body: { duration_hours: hours, thumbnail_url },
