@@ -406,6 +406,14 @@ export default function LiveViewPage() {
         onBuyTokens={() => navigate("/buy-tokens")}
       />
 
+      <InsufficientTokensDialog
+        open={phase === "insufficient"}
+        onOpenChange={(o) => !o && navigate("/lives")}
+        needed={TICKET_PRICE_TOKENS}
+        balance={balance}
+        action="join this live"
+      />
+
     </div>
   );
 }
