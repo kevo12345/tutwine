@@ -17,6 +17,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const bgVideoRef = useRef<HTMLVideoElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
   const [connecting, setConnecting] = useState(true);
   const [portraitStream, setPortraitStream] = useState(true);
@@ -53,6 +54,10 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
           const video = videoRef.current;
           const stream = new MediaStream([vTrack]);
           video.srcObject = stream;
+          if (bgVideoRef.current) {
+            bgVideoRef.current.srcObject = stream;
+            bgVideoRef.current.play().catch(() => {});
+          }
           video.onloadedmetadata = () => {
             const settings = vTrack.getSettings();
             const width = video.videoWidth || settings.width || 0;
@@ -103,9 +108,19 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
 
   return (
     <div className="absolute inset-0 bg-black">
+      {!portraitStream && (
+        <video
+          ref={bgVideoRef}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-125 object-cover blur-2xl"
+          playsInline
+          autoPlay
+          muted
+        />
+      )}
       <video
         ref={videoRef}
-        className={`absolute inset-0 z-0 h-full w-full ${portraitStream ? "object-cover" : "object-contain"}`}
+        className={`absolute inset-0 z-[1] h-full w-full ${portraitStream ? "object-cover" : "object-contain"}`}
         playsInline
         autoPlay
         muted={false}

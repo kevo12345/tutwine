@@ -28,12 +28,13 @@ type Props = {
  * crop transform, or fixed-size intermediate buffer is introduced.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user" },
+  { settings, width = 1080, height = 1920, className, onProcessedTrack, active = true, mirror = true, facingMode = "user" },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const rawStreamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const bgVideoRef = useRef<HTMLVideoElement>(null);
   const [portraitStream, setPortraitStream] = useState(true);
 
   useImperativeHandle(ref, () => ({
@@ -105,6 +106,10 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           return;
         }
         video.srcObject = stream;
+        if (bgVideoRef.current) {
+          bgVideoRef.current.srcObject = stream;
+          bgVideoRef.current.play().catch(() => {});
+        }
         video.muted = true;
         video.playsInline = true;
         await new Promise<void>((resolve) => {
@@ -144,6 +149,18 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>
+      {/* Blurred fill so the stage is always full screen, even for non-portrait cameras */}
+      {!portraitStream && (
+        <video
+          ref={bgVideoRef}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 block h-full w-full scale-125 object-cover blur-2xl"
+          style={{ transform: mirror ? "scaleX(-1) scale(1.25)" : "scale(1.25)" }}
+          playsInline
+          muted
+          autoPlay
+        />
+      )}
       <video
         ref={videoRef}
         className={`pointer-events-none absolute inset-0 block h-full w-full ${portraitStream ? "object-cover" : "object-contain"}`}
