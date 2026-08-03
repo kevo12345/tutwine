@@ -80,11 +80,12 @@ export function ProfileCard({ profile, style, className, onTap, isOnline, lastSe
               Online
             </Badge>
           ) : lastSeenText ? (
-            <Badge className="gap-1 text-xs backdrop-blur-sm bg-muted/40 text-muted-foreground border-muted/30">
+            <Badge className="gap-1 text-xs backdrop-blur-sm bg-foreground/40 text-primary-foreground border-primary-foreground/20">
               <Clock className="h-3 w-3" />
               Seen {lastSeenText}
             </Badge>
           ) : null}
+
         </div>
         <div className="mt-1 flex items-center gap-1 text-sm opacity-90">
           <MapPin className="h-3.5 w-3.5" />
