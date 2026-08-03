@@ -13,6 +13,8 @@ import { Coins, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
+import { giftChannelName } from "@/components/live/GiftAnimationOverlay";
+
 
 type CatalogGift = {
   id: string;
@@ -76,10 +78,26 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
       toast.error(error.message ?? "Could not send gift");
       return;
     }
+    setOpen(false);
+    // Broadcast so the sender, host and all viewers see the same animation.
+    const ch = supabase.channel(giftChannelName(liveId), { config: { broadcast: { self: true } } });
+    ch.subscribe((status) => {
+      if (status !== "SUBSCRIBED") return;
+      ch.send({
+        type: "broadcast",
+        event: "gift",
+        payload: {
+          emoji: gift.emoji,
+          label: gift.label,
+          amount: gift.token_price,
+          senderName: profile?.display_name ?? "Someone",
+        },
+      }).then(() => setTimeout(() => supabase.removeChannel(ch), 500));
+    });
     await refreshProfile();
-    toast.success(`Sent ${gift.emoji} ${gift.label}!`);
     onSent?.();
   }
+
 
   return (
     <>

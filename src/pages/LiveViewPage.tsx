@@ -40,6 +40,8 @@ import {
 
 import { toast } from "sonner";
 import { GiftSheet } from "@/components/live/GiftSheet";
+import { GiftAnimationOverlay } from "@/components/live/GiftAnimationOverlay";
+
 import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 import { HostBroadcaster } from "@/components/live/HostBroadcaster";
 
@@ -359,6 +361,8 @@ export default function LiveViewPage() {
             />
           )
         )}
+
+        {phase === "ready" && live && <GiftAnimationOverlay liveId={live.id} />}
 
 
         {/* Floating actions */}
