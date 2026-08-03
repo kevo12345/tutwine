@@ -132,7 +132,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
           </Button>
           {onLeave && (
             <Button size="sm" variant="destructive" className="h-9 rounded-full" onClick={onLeave}>
-              End
+              End live
             </Button>
           )}
         </div>
