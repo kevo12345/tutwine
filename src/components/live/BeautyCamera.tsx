@@ -134,8 +134,19 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          const z = Math.max(1, zoomRef.current || 1);
+          const z = Math.max(0.3, Math.min(3, zoomRef.current || 1));
           const fit = Math.max(outW / vw, outH / vh);
+
+          // Full-bleed background layer keeps the frame filled edge-to-edge
+          // even when the subject layer is scaled below 1x.
+          if (z < 1) {
+            const bgW = vw * fit * 1.08;
+            const bgH = vh * fit * 1.08;
+            ctx.save();
+            ctx.filter = "blur(24px) brightness(0.75) saturate(1.1)";
+            ctx.drawImage(video, (outW - bgW) / 2, (outH - bgH) / 2, bgW, bgH);
+            ctx.restore();
+          }
 
           const scale = fit * z;
           let dw = vw * scale;
@@ -149,9 +160,14 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
 
           ctx.save();
+          if (z < 1) {
+            ctx.shadowColor = "rgba(0,0,0,0.45)";
+            ctx.shadowBlur = 48;
+          }
           ctx.filter = beautyFilterCss(st);
           ctx.drawImage(video, dx, dy, dw, dh);
           ctx.restore();
+
 
 
           if (st.enabled && st.eyeEnhance > 0) {
