@@ -242,10 +242,10 @@ export function LivePanel({
         />
       )}
 
-      {/* Video stage — full-bleed like TikTok/IG Live (fills screen, crops sides) */}
+      {/* Video stage — portrait 9:16 stage, filled edge-to-edge (TikTok/IG Live) */}
       {active && authorized && roomUrl && (
-        <div className="absolute inset-0">
-          <div className="relative h-full w-full overflow-hidden bg-black">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative aspect-[9/16] h-full max-h-full w-auto max-w-full overflow-hidden bg-black">
             {isHost ? (
               <HostBroadcaster roomUrl={roomUrl} token="" onLeave={endLive} />
             ) : (
