@@ -112,8 +112,13 @@ export default function GoLiveSetupPage() {
       toast.error("Live session must be at least 1 hour");
       return;
     }
-    const granted = await requestAvPermissions();
-    if (!granted) return;
+    // The preview already owns a live camera track and the initial permission
+    // request included the microphone. Re-requesting video here can fail with
+    // NotReadableError on Android because the preview is using the camera.
+    if (!camReady) {
+      const granted = await requestAvPermissions();
+      if (!granted) return;
+    }
     setStarting(true);
     try {
       let thumbnail_url: string | null = savedThumbUrl;
@@ -137,7 +142,6 @@ export default function GoLiveSetupPage() {
       if (error) throw error;
       const d = data as { session_id?: string; error?: string };
       if (d?.error || !d?.session_id) throw new Error(d?.error ?? "Could not start live");
-      toast.success("You're live!");
       navigate(`/live/${d.session_id}`, { replace: true });
     } catch (err: any) {
       console.error(err);

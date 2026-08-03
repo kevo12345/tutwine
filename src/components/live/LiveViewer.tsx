@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
-import { useStageFit } from "@/hooks/useStageFit";
-import { isNativeApp } from "@/lib/platform";
-
-
-/** Must match BeautyCamera so viewers see the same framing as the host preview. */
-const SUBJECT_ZOOM = 1;
+import { Button } from "@/components/ui/button";
 
 type Props = {
   roomUrl: string;
@@ -24,11 +19,8 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
-  /** Aspect ratio (w/h) of the host's incoming track. */
-  const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const [connecting, setConnecting] = useState(true);
-  // Native app hosts publish a true 9:16 portrait track, so fill edge-to-edge.
-  const { stageRef, objectFit } = useStageFit(trackRatio, isNativeApp() && (trackRatio ?? 0) <= 1);
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
 
   useEffect(() => {
@@ -69,9 +61,8 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
             const height = video.videoHeight || settings.height || 0;
             const ratio = height > 0 ? width / height : 9 / 16;
             console.info("Live viewer track", { width, height, aspectRatio: ratio });
-            if (ratio > 0) setTrackRatio(ratio);
           };
-          video.play().catch(() => {});
+          video.play().catch(() => setAudioBlocked(true));
           setHasVideo(true);
         } else {
           setHasVideo(false);
@@ -79,7 +70,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
       }
       if (audioRef.current && aTrack) {
         audioRef.current.srcObject = new MediaStream([aTrack]);
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true));
       }
     };
 
@@ -112,17 +103,10 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   }, [roomUrl, active, userName]);
 
   return (
-    <div ref={stageRef} className="absolute inset-0 overflow-hidden bg-black">
-      {/* Stage ratio is measured and matched against the incoming track ratio:
-          matching ratios fill edge-to-edge, mismatched ones are fitted. */}
+    <div className="absolute inset-0 overflow-hidden bg-black">
       <video
         ref={videoRef}
-        className="absolute inset-0 z-[1] block h-full w-full object-center"
-        style={{
-          objectFit,
-          transform: `scale(${SUBJECT_ZOOM})`,
-          transformOrigin: "center center",
-        }}
+        className="absolute inset-0 z-[1] block h-full w-full object-cover object-center"
         playsInline
         autoPlay
         muted={false}
@@ -130,6 +114,22 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
 
 
       <audio ref={audioRef} autoPlay />
+      {audioBlocked && hasVideo && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="absolute left-1/2 top-1/2 z-[3] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/80 px-4 py-2 text-sm font-semibold text-foreground backdrop-blur-sm"
+          onClick={() => {
+            Promise.all([
+              videoRef.current?.play(),
+              audioRef.current?.play(),
+            ]).then(() => setAudioBlocked(false)).catch(() => {});
+          }}
+        >
+          Tap to hear live
+        </Button>
+      )}
       {(connecting || !hasVideo) && (
         <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
           <Loader2 className="h-8 w-8 animate-spin" />
