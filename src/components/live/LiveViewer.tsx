@@ -20,7 +20,6 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   const bgVideoRef = useRef<HTMLVideoElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
   const [connecting, setConnecting] = useState(true);
-  const [portraitStream, setPortraitStream] = useState(true);
 
   useEffect(() => {
     if (!active || !roomUrl) return;
@@ -63,7 +62,6 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
             const width = video.videoWidth || settings.width || 0;
             const height = video.videoHeight || settings.height || 0;
             const ratio = height > 0 ? width / height : 9 / 16;
-            setPortraitStream(ratio <= 0.75);
             console.info("Live viewer track", { width, height, aspectRatio: ratio });
           };
           video.play().catch(() => {});
@@ -125,7 +123,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
       />
       <video
         ref={videoRef}
-        className="absolute inset-0 z-[1] h-full w-full object-contain object-center"
+        className="absolute inset-0 z-[1] block h-full w-full object-cover object-center"
         playsInline
         autoPlay
         muted={false}
