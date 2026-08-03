@@ -43,6 +43,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   /** Aspect ratio (w/h) of the track the device actually delivered. */
   const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const hintTimerRef = useRef<number | null>(null);
+  const { stageRef, objectFit } = useStageFit(trackRatio);
+
 
   /**
    * When the device exposes no zoom control we can still coach framing: if a
