@@ -325,7 +325,10 @@ export default function LiveViewPage() {
             icon={<Lock className="h-10 w-10" />}
             msg="Sign up to join this live."
             action={
-              <Link to={`/signup?redirect=/lives/${shareLink}`}>
+              <Link
+                to={`/signup?redirect=${encodeURIComponent(`/lives/${shareLink}${window.location.search}`)}`}
+              >
+
                 <Button className="gradient-warm border-0 text-primary-foreground">Sign up</Button>
               </Link>
             }
