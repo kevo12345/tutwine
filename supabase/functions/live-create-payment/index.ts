@@ -23,12 +23,6 @@ function priceForHours(hours: number): number {
   return h * 1;
 }
 
-function cleanKenyanPhone(phone: string) {
-  let p = phone.replace(/\s+/g, '').replace(/^(\+?254)/, '');
-  if (p.startsWith('0')) p = p.substring(1);
-  return p;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
