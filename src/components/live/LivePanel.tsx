@@ -1,15 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Clock } from "lucide-react";
 import { LiveViewer } from "./LiveViewer";
 import { HostBroadcaster } from "./HostBroadcaster";
 import { LiveChatRail } from "./LiveChatRail";
 import { LiveTopBar } from "./LiveTopBar";
 import { LiveBottomBar } from "./LiveBottomBar";
 import { FloatingHearts, randomHeartColor, type FloatingHeart } from "./FloatingHearts";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+const TICKET_TOKENS = 1; // 1 token = 1 hour of access to this live
 
 type Props = {
   sessionId: string;
@@ -34,21 +46,27 @@ export function LivePanel({
   onExit,
 }: Props) {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [sessionEndsAt, setSessionEndsAt] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(initialHostId ?? null);
   const [hostName, setHostName] = useState<string | null>(initialHostName ?? null);
   const [hostPhoto, setHostPhoto] = useState<string | null>(initialHostPhoto ?? posterUrl ?? null);
   const [loading, setLoading] = useState(true);
   const [remaining, setRemaining] = useState("");
   const [viewerCount, setViewerCount] = useState(1);
+  const [likeCount, setLikeCount] = useState(0);
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
   const [authorized, setAuthorized] = useState(false);
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
   const heartChanRef = useRef<any>(null);
   const presenceChanRef = useRef<any>(null);
+  const renewingRef = useRef(false);
 
   const isHost = !!(user && hostId && user.id === hostId);
+  const balance = Number((profile as any)?.token_balance ?? 0);
 
   // Authorize + fetch room URL
   useEffect(() => {
@@ -67,6 +85,7 @@ export function LivePanel({
         return;
       }
       setHostId(session.host_id);
+      setSessionEndsAt(session.expires_at);
       if (session.thumbnail_url) setHostPhoto((p) => p ?? session.thumbnail_url);
 
       let myExpiresAt = session.expires_at;
@@ -82,7 +101,7 @@ export function LivePanel({
           .limit(1)
           .maybeSingle();
         if (!pass) {
-          toast.error("You need an active pass to join this live");
+          toast.error("You need a ticket to join this live");
           onExit ? onExit() : navigate("/live", { replace: true });
           return;
         }
@@ -93,6 +112,14 @@ export function LivePanel({
       setRoomUrl(session.daily_room_url);
       setExpiresAt(myExpiresAt);
       setAuthorized(true);
+
+      // Persisted like count
+      const { data: counts } = await supabase
+        .from("live_sessions")
+        .select("like_count")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (!cancelled && counts) setLikeCount(Number((counts as any).like_count ?? 0));
 
       // Host profile info
       if (!initialHostName || !initialHostPhoto) {
@@ -110,14 +137,53 @@ export function LivePanel({
     };
   }, [sessionId, user, active, navigate, onExit, initialHostName, initialHostPhoto]);
 
-  // Countdown timer
+  /** Buy another hour on this live. Returns true when access was extended. */
+  const renewTicket = useCallback(async (): Promise<boolean> => {
+    const { data, error } = await (supabase as any).rpc("purchase_live_pass", {
+      _session_id: sessionId,
+      _hours: TICKET_TOKENS,
+    });
+    if (error) {
+      return false;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.expires_at) return false;
+    const capped = sessionEndsAt
+      ? new Date(
+          Math.min(new Date(row.expires_at).getTime(), new Date(sessionEndsAt).getTime()),
+        ).toISOString()
+      : row.expires_at;
+    setExpiresAt(capped);
+    await refreshProfile();
+    return true;
+  }, [sessionId, sessionEndsAt, refreshProfile]);
+
+  // Countdown timer + ticket expiry handling
   useEffect(() => {
     if (!expiresAt || !active) return;
     const tick = () => {
       const diff = new Date(expiresAt).getTime() - Date.now();
       if (diff <= 0) {
-        toast.info("Your live time has ended");
-        onExit ? onExit() : navigate("/live", { replace: true });
+        if (isHost) {
+          toast.info("Your live time has ended");
+          onExit ? onExit() : navigate("/live", { replace: true });
+          return;
+        }
+        // Viewer ticket expired — auto-renew when they can afford it.
+        if (renewingRef.current) return;
+        renewingRef.current = true;
+        (async () => {
+          if (balance >= TICKET_TOKENS) {
+            const ok = await renewTicket();
+            if (ok) {
+              toast.success("Ticket renewed — enjoy another hour");
+              renewingRef.current = false;
+              return;
+            }
+          }
+          setRenewOpen(true);
+          renewingRef.current = false;
+        })();
         return;
       }
       const total = Math.floor(diff / 1000);
@@ -133,7 +199,7 @@ export function LivePanel({
     tick();
     const i = setInterval(tick, 1000);
     return () => clearInterval(i);
-  }, [expiresAt, active, navigate, onExit]);
+  }, [expiresAt, active, navigate, onExit, isHost, balance, renewTicket]);
 
   // Hearts + "live ended" broadcast channel
   useEffect(() => {
@@ -147,6 +213,7 @@ export function LivePanel({
         ...prev,
         { id: `${Date.now()}-${Math.random()}`, color, startX: Math.random() },
       ]);
+      setLikeCount((c) => c + 1);
     })
       .on("broadcast", { event: "live_ended" }, () => {
         if (isHost) return;
@@ -161,16 +228,20 @@ export function LivePanel({
     };
   }, [sessionId, active, isHost, navigate, onExit]);
 
-  // Safety net: react to the session row flipping to 'ended' (missed broadcast, late joiner)
+  // Safety net: react to the session row changing (status / like count)
   useEffect(() => {
-    if (!active || !sessionId || isHost) return;
+    if (!active || !sessionId) return;
     const ch = supabase
       .channel(`live_status_${sessionId}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "live_sessions", filter: `id=eq.${sessionId}` },
         (payload) => {
-          if ((payload.new as any)?.status === "ended") {
+          const next = payload.new as any;
+          if (typeof next?.like_count === "number") {
+            setLikeCount((c) => Math.max(c, next.like_count));
+          }
+          if (next?.status === "ended" && !isHost) {
             toast.info("The host ended this live");
             onExit ? onExit() : navigate("/live", { replace: true });
           }
@@ -204,16 +275,34 @@ export function LivePanel({
     };
   }, [sessionId, user, active]);
 
+  /** Unlimited likes: local heart + broadcast + persisted counter. */
   const sendHeart = () => {
     const color = randomHeartColor();
     setHearts((prev) => [
       ...prev,
       { id: `local-${Date.now()}-${Math.random()}`, color, startX: Math.random() },
     ]);
+    setLikeCount((c) => c + 1);
     heartChanRef.current?.send({ type: "broadcast", event: "heart", payload: { color } });
+    void (supabase as any).rpc("like_live_session", { _session_id: sessionId });
   };
 
   const dropHeart = (id: string) => setHearts((prev) => prev.filter((h) => h.id !== id));
+
+  const shareLive = async () => {
+    const url = `${window.location.origin}/live/${sessionId}`;
+    const title = `${hostName ?? "Someone"} is live on Tutwine`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text: title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Live link copied");
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
 
   const closeLive = () => (onExit ? onExit() : navigate("/live"));
 
@@ -284,10 +373,11 @@ export function LivePanel({
             hostPhoto={hostPhoto}
             isHost={isHost}
             viewerCount={viewerCount}
+            likeCount={likeCount}
             remaining={remaining}
             onClose={closeLive}
             onEndLive={endLive}
-
+            onShare={shareLive}
             currentUserId={user?.id}
           />
 
@@ -314,6 +404,72 @@ export function LivePanel({
           )}
         </>
       )}
+
+      {/* Ticket expired — renew or leave */}
+      <Dialog open={renewOpen} onOpenChange={(v) => !v && setRenewOpen(false)}>
+        <DialogContent className="max-w-sm rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" /> Your ticket has ended
+            </DialogTitle>
+            <DialogDescription>
+              Tickets last 1 hour on this live. Buy another hour to keep watching — your balance is{" "}
+              {balance} coin{balance === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            {balance >= TICKET_TOKENS ? (
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={async () => {
+                  const ok = await renewTicket();
+                  if (ok) {
+                    setRenewOpen(false);
+                    toast.success("Ticket renewed — enjoy another hour");
+                  } else {
+                    toast.error("Couldn't renew your ticket");
+                  }
+                }}
+              >
+                Renew · {TICKET_TOKENS} coin
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => {
+                  setRenewOpen(false);
+                  setTopUpOpen(true);
+                }}
+              >
+                Top up coins
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setRenewOpen(false);
+                closeLive();
+              }}
+            >
+              Exit live
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <InsufficientTokensDialog
+        open={topUpOpen}
+        onOpenChange={(v) => {
+          setTopUpOpen(v);
+          if (!v) closeLive();
+        }}
+        needed={TICKET_TOKENS}
+        balance={balance}
+        action="keep watching this live"
+      />
     </div>
   );
 }
