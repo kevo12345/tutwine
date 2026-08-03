@@ -110,7 +110,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  function touchDist(t: TouchList) {
+  function touchDist(t: React.TouchList | TouchList) {
     const dx = t[0].clientX - t[1].clientX;
     const dy = t[0].clientY - t[1].clientY;
     return Math.hypot(dx, dy);
