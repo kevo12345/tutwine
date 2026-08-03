@@ -31,6 +31,7 @@ const THUMB_KEY = "tutwine:live-thumbnail";
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  useViewportStageHeight();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
