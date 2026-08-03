@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Smartphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsPhone } from "@/hooks/useIsPhone";
+import { isNativeApp } from "@/lib/platform";
 
 /**
  * Live streaming is phone-only (portrait camera experience). On desktop we show
@@ -9,7 +10,10 @@ import { useIsPhone } from "@/hooks/useIsPhone";
  */
 export function PhoneOnlyGate({ children }: { children: React.ReactNode }) {
   const isPhone = useIsPhone();
+  const native = isNativeApp();
   const navigate = useNavigate();
+
+  if (native) return <>{children}</>;
 
   if (isPhone === null) {
     return (
