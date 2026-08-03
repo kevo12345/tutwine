@@ -141,7 +141,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <button onClick={() => navigate("/signup")} className="text-primary font-medium hover:underline">
+            <button onClick={() => navigate(redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup")} className="text-primary font-medium hover:underline">
               Sign up
             </button>
           </div>
