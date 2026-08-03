@@ -134,7 +134,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          const z = Math.max(0.3, Math.min(3, zoomRef.current || 0.3));
+          const z = Math.max(0.3, Math.min(1, zoomRef.current || 0.3));
           const fit = Math.max(outW / vw, outH / vh);
 
           const scale = fit * z;
