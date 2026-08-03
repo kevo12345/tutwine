@@ -162,6 +162,9 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 
   @keyframes heart-float {
     0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
