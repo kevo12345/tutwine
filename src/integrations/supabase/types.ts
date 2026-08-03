@@ -1208,6 +1208,14 @@ export type Database = {
         }[]
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
+      end_live_session: {
+        Args: { _session_id: string }
+        Returns: {
+          ended_at: string
+          id: string
+          status: Database["public"]["Enums"]["live_status"]
+        }[]
+      }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number

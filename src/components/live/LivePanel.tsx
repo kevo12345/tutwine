@@ -190,6 +190,18 @@ export function LivePanel({
 
   const closeLive = () => (onExit ? onExit() : navigate("/live"));
 
+  /** Host-only: end the live now (server-side), regardless of remaining scheduled time. */
+  const endLive = async () => {
+    const { error } = await (supabase as any).rpc("end_live_session", { _session_id: sessionId });
+    if (error) {
+      toast.error(error.message ?? "Couldn't end the live");
+      return;
+    }
+    toast.success("Your live has ended");
+    closeLive();
+  };
+
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       {/* Poster fallback / background */}
@@ -230,6 +242,8 @@ export function LivePanel({
             viewerCount={viewerCount}
             remaining={remaining}
             onClose={closeLive}
+            onEndLive={endLive}
+
             currentUserId={user?.id}
           />
 
