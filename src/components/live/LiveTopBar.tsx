@@ -112,16 +112,7 @@ export function LiveTopBar({
           <Users className="h-3.5 w-3.5" />
           <span className="tabular-nums">{viewerCount}</span>
         </div>
-        {isHost ? (
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => setConfirmEnd(true)}
-            className="h-8 rounded-full px-3 text-xs font-semibold"
-          >
-            End live
-          </Button>
-        ) : (
+        {!isHost && (
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/70"
@@ -131,6 +122,7 @@ export function LiveTopBar({
           </button>
         )}
       </div>
+
 
       <AlertDialog open={confirmEnd} onOpenChange={(o) => !ending && setConfirmEnd(o)}>
         <AlertDialogContent>
