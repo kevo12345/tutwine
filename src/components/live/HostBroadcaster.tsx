@@ -25,6 +25,8 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props
   const callRef = useRef<DailyCall | null>(null);
   const camRef = useRef<BeautyCameraHandle>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
+  const onJoinFailedRef = useRef(onJoinFailed);
+  onJoinFailedRef.current = onJoinFailed;
   const [joined, setJoined] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -71,7 +73,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props
         toast.error(message === "account-missing-payment-method"
           ? "Video streaming provider billing must be activated"
           : message);
-        onJoinFailed?.();
+        onJoinFailedRef.current?.();
       } finally {
         setConnecting(false);
       }
@@ -82,7 +84,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props
       call.destroy().catch(() => {});
       callRef.current = null;
     };
-  }, [roomUrl, token, onJoinFailed]);
+  }, [roomUrl, token]);
 
   // Push the native camera track whenever it changes.
   function handleTrack(track: MediaStreamTrack | null) {
