@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
+import { useStageFit } from "@/hooks/useStageFit";
+
 
 /** Must match BeautyCamera so viewers see the same framing as the host preview. */
 const SUBJECT_ZOOM = 1;
