@@ -151,7 +151,7 @@ export default function GoLiveSetupPage() {
       {camReady ? (
         <BeautyCamera
           settings={beauty}
-          active={!starting || true}
+          active
           mirror={facing === "user"}
           facingMode={facing}
           className="absolute inset-0 h-full w-full bg-background"
