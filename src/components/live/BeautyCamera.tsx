@@ -195,7 +195,13 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>
-      <video ref={videoRef} className="hidden" playsInline muted />
+      <video
+        ref={videoRef}
+        className="pointer-events-none absolute left-0 top-0 h-px w-px opacity-0"
+        playsInline
+        muted
+        autoPlay
+      />
       <canvas
         ref={canvasRef}
         className="absolute inset-0 block h-full w-full"
