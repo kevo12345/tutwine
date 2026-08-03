@@ -209,19 +209,21 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   }, [active, facingMode]);
 
   return (
-    <div className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}>
+    <div
+      ref={stageRef}
+      className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}
+    >
       {/*
-        Full-screen stage. Portrait captures fill edge-to-edge with `cover`.
-        When the device hands back a landscape track (common on iOS Safari),
-        `cover` would crop away ~70% of the width and blow up the face, so the
-        frame is fitted instead — full screen, correct framing, no zoom-in.
+        Automatic aspect-ratio matching: the stage measures itself and compares
+        its ratio with the track the device actually delivered. Matching ratios
+        fill edge-to-edge with `cover` (no crop, no zoom); mismatched ratios are
+        fitted so framing stays natural.
       */}
       <video
         ref={videoRef}
-        className={`pointer-events-none absolute inset-0 z-[1] block h-full w-full object-center ${
-          trackRatio !== null && trackRatio > 1 ? "object-contain" : "object-cover"
-        }`}
+        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-center"
         style={{
+          objectFit,
           filter: beautyFilterCss(settings),
           transform: `${mirror ? "scaleX(-1) " : ""}scale(${SUBJECT_ZOOM})`,
           transformOrigin: "center center",
@@ -231,6 +233,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         muted
         autoPlay
       />
+
 
       {tooClose && !error && (
         <div className="pointer-events-none absolute left-1/2 top-[18%] z-[3] -translate-x-1/2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] text-white/90 backdrop-blur-sm">
