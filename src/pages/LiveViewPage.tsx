@@ -362,6 +362,8 @@ export default function LiveViewPage() {
           )
         )}
 
+        {phase === "ready" && live && <GiftAnimationOverlay liveId={live.id} />}
+
 
         {/* Floating actions */}
         {phase === "ready" && live && (
