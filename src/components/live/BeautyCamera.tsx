@@ -20,7 +20,10 @@ type Props = {
   mirror?: boolean;
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
+  /** Extra digital zoom applied on top of the cover fit. 1 = none. */
+  zoom?: number;
 };
+
 
 /**
  * Renders the local camera into a canvas with real-time beauty filters and
