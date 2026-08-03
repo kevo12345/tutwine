@@ -18,6 +18,8 @@ type Props = {
   onProcessedTrack?: (track: MediaStreamTrack | null) => void;
   active?: boolean; // when false, releases camera
   mirror?: boolean;
+  /** "user" (front) or "environment" (back) camera. */
+  facingMode?: "user" | "environment";
 };
 
 /**
