@@ -13,6 +13,8 @@ import { Coins, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
+import { giftChannelName } from "@/components/live/GiftAnimationOverlay";
+
 
 type CatalogGift = {
   id: string;
