@@ -8,7 +8,7 @@ import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
 import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
 import { toast } from "sonner";
 
-const MIN_ZOOM = 0.5;
+const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3;
 const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 
