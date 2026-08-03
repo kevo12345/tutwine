@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Radio, Image as ImageIcon, X } from "lucide-react";
+import { ArrowLeft, Loader2, Radio, Image as ImageIcon, X, RefreshCw } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,18 +10,48 @@ import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 
+const THUMB_KEY = "tutwine:live-thumbnail";
+
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+  /** Banner reused from the host's previous live (already uploaded). */
+  const [savedThumbUrl, setSavedThumbUrl] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+
+  // Remember the banner between lives: local cache first, then last session.
+  useEffect(() => {
+    if (!user) return;
+    const cached = localStorage.getItem(`${THUMB_KEY}:${user.id}`);
+    if (cached) setSavedThumbUrl(cached);
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("live_sessions")
+        .select("thumbnail_url")
+        .eq("host_id", user.id)
+        .not("thumbnail_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !data?.thumbnail_url) return;
+      setSavedThumbUrl(data.thumbnail_url);
+      localStorage.setItem(`${THUMB_KEY}:${user.id}`, data.thumbnail_url);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const expiresPreview = useMemo(() => {
     const end = new Date(Date.now() + hours * 60 * 60 * 1000);
     return end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }, [hours]);
+
+  const shownThumb = thumbPreview ?? savedThumbUrl;
 
   const onPickThumb = (f: File | null) => {
     if (!f) {
@@ -41,6 +71,14 @@ export default function GoLiveSetupPage() {
     setThumbPreview(URL.createObjectURL(f));
   };
 
+  const clearThumb = () => {
+    setThumbFile(null);
+    setThumbPreview(null);
+    setSavedThumbUrl(null);
+    if (user) localStorage.removeItem(`${THUMB_KEY}:${user.id}`);
+  };
+
+
   const start = async () => {
     if (!user) {
       navigate("/login");
@@ -55,7 +93,7 @@ export default function GoLiveSetupPage() {
     if (!granted) return;
     setStarting(true);
     try {
-      let thumbnail_url: string | null = null;
+      let thumbnail_url: string | null = savedThumbUrl;
       if (thumbFile) {
         const ext = thumbFile.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${user.id}/live-thumbnails/${crypto.randomUUID()}.${ext}`;
@@ -68,6 +106,8 @@ export default function GoLiveSetupPage() {
         const { data: pub } = supabase.storage.from("photos").getPublicUrl(path);
         thumbnail_url = pub.publicUrl;
       }
+      if (thumbnail_url) localStorage.setItem(`${THUMB_KEY}:${user.id}`, thumbnail_url);
+
 
       const { data, error } = await supabase.functions.invoke("live-start-free", {
         body: { duration_hours: hours, thumbnail_url },
@@ -101,17 +141,30 @@ export default function GoLiveSetupPage() {
         {/* Thumbnail */}
         <section className="mb-5">
           <Label className="mb-2 block text-xs uppercase text-muted-foreground">Thumbnail</Label>
-          {thumbPreview ? (
+          {shownThumb ? (
             <div className="relative overflow-hidden rounded-2xl border border-border">
-              <img src={thumbPreview} alt="Live thumbnail preview" className="h-48 w-full object-cover" />
-              <button
-                type="button"
-                onClick={() => onPickThumb(null)}
-                className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white"
-                aria-label="Remove thumbnail"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <img src={shownThumb} alt="Live thumbnail preview" className="h-48 w-full object-cover" />
+              <div className="absolute right-2 top-2 flex items-center gap-2">
+                <label
+                  htmlFor="thumb"
+                  className="flex cursor-pointer items-center gap-1 rounded-full bg-black/60 px-2.5 py-1.5 text-[11px] font-semibold text-white"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Change
+                </label>
+                <button
+                  type="button"
+                  onClick={clearThumb}
+                  className="rounded-full bg-black/60 p-1.5 text-white"
+                  aria-label="Remove thumbnail"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {!thumbPreview && (
+                <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white">
+                  Saved banner
+                </span>
+              )}
             </div>
           ) : (
             <label
@@ -128,6 +181,7 @@ export default function GoLiveSetupPage() {
             type="file"
             accept="image/*"
             className="hidden"
+            onClick={(e) => ((e.target as HTMLInputElement).value = "")}
             onChange={(e) => onPickThumb(e.target.files?.[0] ?? null)}
           />
         </section>
