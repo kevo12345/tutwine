@@ -280,8 +280,8 @@ export default function LivePage() {
             </div>
 
             {balance < hours ? (
-              <Button onClick={() => navigate("/buy-tokens")} className="w-full" size="lg">
-                Buy tokens to join
+              <Button onClick={() => { setSheet(null); setShortfall(hours); }} className="w-full" size="lg">
+                Buy coins to join
               </Button>
             ) : (
               <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
@@ -298,6 +298,14 @@ export default function LivePage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <InsufficientTokensDialog
+        open={shortfall !== null}
+        onOpenChange={(o) => !o && setShortfall(null)}
+        needed={shortfall ?? 0}
+        balance={balance}
+        action="join this live"
+      />
     </AppLayout>
   );
 }
