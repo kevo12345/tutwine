@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StageVideo } from "./StageVideo";
 
 type Props = {
   roomUrl: string;
@@ -21,6 +22,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   const [hasVideo, setHasVideo] = useState(false);
   const [connecting, setConnecting] = useState(true);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
           const video = videoRef.current;
           const stream = new MediaStream([vTrack]);
           video.srcObject = stream;
+          setVideoStream(stream);
           video.onloadedmetadata = () => {
             const settings = vTrack.getSettings();
             const width = video.videoWidth || settings.width || 0;
@@ -66,6 +69,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
           setHasVideo(true);
         } else {
           setHasVideo(false);
+          setVideoStream(null);
         }
       }
       if (audioRef.current && aTrack) {
@@ -104,14 +108,12 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
-      <video
-        ref={videoRef}
-        className="absolute inset-0 z-[1] block h-full w-full object-cover object-center"
-        playsInline
-        autoPlay
+      <StageVideo
+        videoRef={videoRef}
+        stream={videoStream}
         muted={false}
+        className="absolute inset-0 h-full w-full overflow-hidden bg-black"
       />
-
 
       <audio ref={audioRef} autoPlay />
       {audioBlocked && hasVideo && (
