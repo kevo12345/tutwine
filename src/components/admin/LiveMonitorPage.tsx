@@ -237,6 +237,9 @@ export default function LiveMonitorPage() {
                     <TableCell className="text-right tabular-nums">
                       {num(r.platform_earning).toFixed(2)}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -244,6 +247,9 @@ export default function LiveMonitorPage() {
           </Table>
         )}
       </Card>
+
+      <LiveSessionDetailSheet target={detail} onClose={() => setDetail(null)} />
     </div>
+
   );
 }
