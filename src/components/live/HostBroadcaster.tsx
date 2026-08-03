@@ -42,6 +42,17 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
     (async () => {
       try {
         await call.join(token ? { url: roomUrl, token } : { url: roomUrl });
+        // Publish at high quality so the live looks sharp on phones.
+        await call
+          .updateSendSettings({
+            video: {
+              maxQuality: "high",
+              encodings: {
+                high: { maxBitrate: 2_500_000, scaleResolutionDownBy: 1, maxFramerate: 30 },
+              },
+            },
+          })
+          .catch(() => {});
         setJoined(true);
       } catch (e: any) {
         toast.error(e?.message ?? "Failed to join live");

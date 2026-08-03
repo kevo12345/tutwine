@@ -246,7 +246,7 @@ export function LivePanel({
       {/* Video stage — full-bleed portrait on phones, centered 9:16 stage on wider screens */}
       {active && authorized && roomUrl && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative h-full w-full overflow-hidden bg-black md:aspect-[9/16] md:h-full md:w-auto md:max-w-full md:rounded-none">
+          <div className="relative h-full w-full overflow-hidden bg-black">
             {isHost ? (
               <HostBroadcaster roomUrl={roomUrl} token="" onLeave={endLive} />
             ) : (
