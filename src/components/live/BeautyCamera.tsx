@@ -140,14 +140,16 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}>
-      {/* TikTok-style foreground: proportional full-viewport fill. */}
+      {/* TikTok-style foreground: edge-to-edge fill, subject centred + zoomed. */}
       <video
         ref={videoRef}
         className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-cover object-center"
         style={{
           filter: beautyFilterCss(settings),
-          transform: mirror ? "scaleX(-1)" : undefined,
+          transform: `${mirror ? "scaleX(-1) " : ""}scale(${SUBJECT_ZOOM})`,
+          transformOrigin: "center center",
         }}
+
         playsInline
         muted
         autoPlay
