@@ -33,7 +33,7 @@ type Props = {
  * sharpening zone for "eye enhancement" — no ML.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1.35 },
+  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1 },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
