@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react";
  * Automatic aspect-ratio matching for a video stage.
  *
  * Measures the stage element and compares its ratio with the camera/remote
- * track's real ratio. When the two are close (within `tolerance`), `cover`
- * fills the screen without any visible crop or zoom. When they diverge —
- * e.g. a landscape or 3:4 track on a tall 9:16 phone — `contain` is used so
- * the subject keeps its true framing instead of being blown up and cropped.
+ * track's real ratio:
+ *
+ * - Portrait source (e.g. full-sensor 3:4) on a tall stage → `cover`. The whole
+ *   vertical field of view is kept and only the sides are trimmed, so framing
+ *   stays natural (no face zoom) while filling the screen edge-to-edge.
+ * - Landscape source (what some browsers hand back) → `contain`, because
+ *   cropping it into a 9:16 stage would blow the subject up massively.
  */
-export function useStageFit(trackRatio: number | null, tolerance = 0.12) {
+export function useStageFit(trackRatio: number | null) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageRatio, setStageRatio] = useState<number | null>(null);
 
@@ -31,10 +34,11 @@ export function useStageFit(trackRatio: number | null, tolerance = 0.12) {
   }, []);
 
   let objectFit: "cover" | "contain" = "cover";
-  if (trackRatio !== null && stageRatio !== null) {
-    const diff = Math.abs(trackRatio - stageRatio) / stageRatio;
-    objectFit = diff <= tolerance ? "cover" : "contain";
+  if (trackRatio !== null) {
+    const stageIsPortrait = stageRatio === null || stageRatio < 1;
+    objectFit = trackRatio > 1 && stageIsPortrait ? "contain" : "cover";
   }
 
   return { stageRef, stageRatio, objectFit };
 }
+

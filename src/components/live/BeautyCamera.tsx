@@ -101,15 +101,16 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Ask the device for a true 9:16 portrait track first: when the capture
-        // shape already matches the stage, `object-cover` has nothing to crop,
-        // so the frame looks exactly like the phone's normal camera app.
+        // Android Chrome satisfies a 9:16 request by digitally cropping the
+        // sensor, which is exactly the "zoomed in" look we want to avoid. Ask
+        // for the full-sensor 3:4 portrait frame instead: the whole vertical
+        // field of view is kept and only the sides are trimmed by `cover`.
         const attempts: MediaStreamConstraints[] = [
           {
             video: {
-              width: { ideal: width },
-              height: { ideal: height },
-              aspectRatio: { ideal: 9 / 16 },
+              width: { ideal: 1080 },
+              height: { ideal: 1440 },
+              aspectRatio: { ideal: 3 / 4 },
               frameRate: { ideal: 30, min: 24 },
               facingMode: { ideal: facingMode },
             },
@@ -118,13 +119,14 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           {
             video: {
               width: { ideal: 720 },
-              height: { ideal: 1280 },
-              aspectRatio: { ideal: 9 / 16 },
+              height: { ideal: 960 },
+              aspectRatio: { ideal: 3 / 4 },
               frameRate: { ideal: 30 },
               facingMode: { ideal: facingMode },
             },
             audio: false,
           },
+
           {
             video: {
               width: { ideal: 1080 },
