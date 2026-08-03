@@ -1337,6 +1337,14 @@ export type Database = {
         }
         Returns: number
       }
+      purchase_live_pass: {
+        Args: { _hours?: number; _session_id: string }
+        Returns: {
+          expires_at: string
+          new_balance: number
+          pass_id: string
+        }[]
+      }
       purchase_live_ticket: {
         Args: { _live_id: string }
         Returns: {
