@@ -1,19 +1,19 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Radio, Users, Clock, Loader2, Smartphone, Bitcoin } from "lucide-react";
+import { Radio, Users, Clock, Loader2, Smartphone } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useActiveLiveSessions, type ActiveLiveSession } from "@/hooks/useActiveLiveSessions";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { LIVE_DURATION_OPTIONS, priceForLiveHours } from "@/lib/constants";
+import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
+import { useSubscription } from "@/hooks/useSubscription";
 
 type Kind = "host" | "viewer";
 
@@ -29,37 +29,16 @@ function formatRemaining(expiresAt: string): string {
 
 export default function LivePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const { tier } = useSubscription();
   const { sessions, loading } = useActiveLiveSessions();
   const isPhone = useIsPhone();
   const desktopBlocked = isPhone === false;
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
   const [hours, setHours] = useState<number>(1);
-  const [provider, setProvider] = useState<"sellapay" | "nowpayments">("sellapay");
-  const [phone, setPhone] = useState("");
-  const [payCurrency, setPayCurrency] = useState<"ltc" | "usdttrc20">("ltc");
   const [submitting, setSubmitting] = useState(false);
-  const usd = useMemo(() => priceForLiveHours(hours), [hours]);
-  const kes = useMemo(() => Math.max(1, Math.round(usd * 130)), [usd]);
-  // NOWPayments USDT-TRC20 invoices typically require ~$8+ USD; smaller amounts are rejected by the provider.
-  const USDT_MIN_USD = 8;
-  const usdtBelowMin = usd < USDT_MIN_USD;
-
-  // Auto-fall back to LTC if the selected duration puts USDT below the provider minimum.
-  useEffect(() => {
-    if (provider === "nowpayments" && payCurrency === "usdttrc20" && usdtBelowMin) {
-      setPayCurrency("ltc");
-    }
-  }, [provider, payCurrency, usdtBelowMin]);
-
-  // Auto-redirect host if they have an active session
-  useEffect(() => {
-    if (!user) return;
-    const own = sessions.find((s) => s.host_id === user.id);
-    if (own && sheet?.kind !== "host") {
-      // don't auto-navigate; just surface a CTA
-    }
-  }, [sessions, user, sheet]);
+  const balance = Number(profile?.token_balance ?? 0);
+  const canHost = tier !== "free";
 
   const openHost = () => {
     if (desktopBlocked) {
@@ -70,7 +49,11 @@ export default function LivePage() {
       navigate("/login");
       return;
     }
-    // Hosting is free — go to the setup page (thumbnail + duration) and start directly.
+    if (!canHost) {
+      toast.error("An active subscription is required to go live");
+      navigate("/pricing");
+      return;
+    }
     navigate("/live/start");
   };
   const openViewer = (s: ActiveLiveSession) => {
@@ -78,7 +61,11 @@ export default function LivePage() {
       toast.info("Live only works on mobile — open tutwine.com on your phone.");
       return;
     }
-    if (s.host_id === user?.id) {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (s.host_id === user.id) {
       navigate(`/live/${s.id}`);
       return;
     }
@@ -86,44 +73,36 @@ export default function LivePage() {
     setHours(1);
   };
 
+  /** Viewers pay with tokens (1 token per hour) to get a live pass. */
   const submit = async () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (provider === "sellapay" && !/^(?:\+?254|0)\d{9}$/.test(phone.replace(/\s+/g, ""))) {
-      toast.error("Enter a valid Kenyan M-Pesa number");
-      return;
-    }
+    if (!user || !sheet?.session) return;
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("live-create-payment", {
-        body: {
-          kind: sheet!.kind,
-          session_id: sheet!.session?.id,
-          duration_hours: hours,
-          provider,
-          phone: provider === "sellapay" ? phone : undefined,
-          pay_currency: provider === "nowpayments" ? payCurrency : undefined,
-          kes_amount: provider === "sellapay" ? kes : undefined,
-        },
+      const { error } = await (supabase as any).rpc("purchase_live_pass", {
+        _session_id: sheet.session.id,
+        _hours: hours,
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      if (provider === "sellapay") {
-        toast.success("STK push sent — approve on your phone to go live");
-      } else {
-        toast.success("Send the exact crypto amount to the address shown to activate");
-        // Could also open a detail view; for now, just close.
-      }
+      await refreshProfile();
+      const target = sheet.session.id;
       setSheet(null);
+      const ok = await requestAvPermissions();
+      navigate(`/live/${target}`);
+      if (!ok) toast.info("Enable camera/mic access to chat on the live");
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Could not start payment");
+      const msg = String(err?.message ?? "");
+      if (msg.includes("insufficient tokens")) {
+        toast.error("Not enough tokens — top up to join");
+        navigate("/buy-tokens");
+      } else {
+        toast.error(msg || "Could not join the live");
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <AppLayout>
@@ -150,7 +129,7 @@ export default function LivePage() {
             </div>
             <h2 className="mb-1 text-xl font-bold">Start your own live stream</h2>
             <p className="mb-3 text-sm opacity-90">
-              Hosting is free — you keep 60% of gifts sent by viewers.
+              Subscribers only — you keep 60% of gifts sent by viewers.
             </p>
             <Button
               onClick={openHost}
@@ -158,7 +137,7 @@ export default function LivePage() {
               disabled={desktopBlocked}
               className="w-full font-semibold"
             >
-              {desktopBlocked ? "Mobile only" : "Go Live now"}
+              {desktopBlocked ? "Mobile only" : canHost ? "Go Live now" : "Subscribe to go live"}
             </Button>
           </div>
 
@@ -216,10 +195,7 @@ export default function LivePage() {
               return (
                 <button
                   key={s.id}
-                  onClick={async () => {
-                    const ok = await requestAvPermissions();
-                    if (ok) navigate(`/live/${s.id}`);
-                  }}
+                  onClick={() => openViewer(s)}
                   className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition active:scale-[0.98]"
                 >
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
@@ -266,12 +242,12 @@ export default function LivePage() {
         )}
       </div>
 
-      {/* Payment sheet */}
+      {/* Token join sheet */}
       <Sheet open={!!sheet} onOpenChange={(o) => !o && setSheet(null)}>
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
             <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
-            <SheetDescription>Pick how long you want to watch.</SheetDescription>
+            <SheetDescription>1 token per hour — pick how long you want to watch.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
@@ -291,83 +267,26 @@ export default function LivePage() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                ${usd.toFixed(2)} USD {provider === "sellapay" && <>· ≈ KES {kes}</>}
+                Costs {hours} token{hours === 1 ? "" : "s"} · your balance: {balance} token
+                {balance === 1 ? "" : "s"}
               </p>
             </div>
 
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Pay with</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setProvider("sellapay")}
-                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                    provider === "sellapay" ? "border-primary bg-primary/10 text-primary" : "border-border"
-                  }`}
-                >
-                  <Smartphone className="h-4 w-4" /> M-Pesa
-                </button>
-                <button
-                  onClick={() => setProvider("nowpayments")}
-                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                    provider === "nowpayments" ? "border-primary bg-primary/10 text-primary" : "border-border"
-                  }`}
-                >
-                  <Bitcoin className="h-4 w-4" /> Crypto
-                </button>
-              </div>
-            </div>
-
-            {provider === "sellapay" ? (
-              <div>
-                <Label htmlFor="phone" className="text-xs uppercase text-muted-foreground">M-Pesa phone</Label>
-                <Input id="phone" inputMode="tel" placeholder="07XXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" />
-              </div>
+            {balance < hours ? (
+              <Button onClick={() => navigate("/buy-tokens")} className="w-full" size="lg">
+                Buy tokens to join
+              </Button>
             ) : (
-              <div>
-                <Label className="text-xs uppercase text-muted-foreground">Coin</Label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {(["usdttrc20", "ltc"] as const).map((c) => {
-                    const disabled = c === "usdttrc20" && usdtBelowMin;
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                          if (disabled) {
-                            toast.error(
-                              `USDT (TRC20) needs at least $${USDT_MIN_USD}. Pick a longer duration or pay with Litecoin / M-Pesa.`
-                            );
-                            return;
-                          }
-                          setPayCurrency(c);
-                        }}
-                        className={`rounded-xl border px-2 py-2 text-sm font-semibold transition ${
-                          disabled
-                            ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground opacity-60"
-                            : payCurrency === c
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border"
-                        }`}
-                      >
-                        {c === "usdttrc20" ? "USDT (TRC20)" : "Litecoin"}
-                      </button>
-                    );
-                  })}
-                </div>
-                {usdtBelowMin && (
-                  <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                    USDT (TRC20) requires at least ${USDT_MIN_USD}. For this duration, pay with Litecoin or switch to M-Pesa.
-                  </p>
+              <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  `Spend ${hours} token${hours === 1 ? "" : "s"} & Join`
                 )}
-              </div>
+              </Button>
             )}
-
-            <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay $${usd.toFixed(2)} & Join`}
-            </Button>
             <p className="text-center text-[11px] text-muted-foreground">
-              Access expires automatically when your paid time runs out.
+              Access expires automatically when your time runs out. Tokens can't be withdrawn as cash.
             </p>
           </div>
         </SheetContent>
@@ -375,3 +294,4 @@ export default function LivePage() {
     </AppLayout>
   );
 }
+
