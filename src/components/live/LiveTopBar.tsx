@@ -124,39 +124,7 @@ export function LiveTopBar({
       </div>
 
 
-      <AlertDialog open={confirmEnd} onOpenChange={(o) => !ending && setConfirmEnd(o)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>End this live?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your stream will end now and disappear from the Live page, even though your scheduled
-              time isn't finished. The timer only shows how long you've been live — it doesn't keep
-              the stream open once you end it. This can't be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={ending}>Keep streaming</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={ending}
-              onClick={async (e) => {
-                e.preventDefault();
-                setEnding(true);
-                try {
-                  await onEndLive?.();
-                } finally {
-                  setEnding(false);
-                  setConfirmEnd(false);
-                }
-              }}
-            >
-              {ending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              End live
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
     </div>
-
   );
 }
+
