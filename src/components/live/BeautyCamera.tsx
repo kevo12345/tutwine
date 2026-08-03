@@ -42,7 +42,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   /**
    * When the device exposes no zoom control we can still coach framing: if a
-   * detected face covers more than 60% of the frame, nudge the host back.
+   * detected face covers more than ~40% of the frame (TikTok-like framing keeps
+   * the face around 30%), nudge the host back.
    */
   const startFaceDistanceHint = (video: HTMLVideoElement) => {
     const Detector = (window as any).FaceDetector;
@@ -62,7 +63,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             box.width / video.videoWidth,
             box.height / video.videoHeight,
           );
-          setTooClose(coverage > 0.6);
+          setTooClose(coverage > 0.4);
         } else {
           setTooClose(false);
         }
