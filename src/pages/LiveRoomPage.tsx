@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveLiveSessions } from "@/hooks/useActiveLiveSessions";
 import { LivePanel } from "@/components/live/LivePanel";
+import { useViewportStageHeight } from "@/hooks/useViewportStageHeight";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -21,6 +22,8 @@ export default function LiveRoomPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  useViewportStageHeight();
 
   // Determine which sessions the user can watch
   useEffect(() => {
