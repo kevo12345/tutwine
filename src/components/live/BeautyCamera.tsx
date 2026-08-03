@@ -21,7 +21,7 @@ type Props = {
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
   /** Extra digital zoom applied on top of the cover fit. 1 = none. */
-  /** Values below 1 shrink the subject (letterbox pillars filled black). */
+  /** Minimum is 1 (full 9:16 cover fit); higher values crop in further. */
   zoom?: number;
 };
 
@@ -34,7 +34,7 @@ type Props = {
  * sharpening zone for "eye enhancement" — no ML.
  */
 export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function BeautyCamera(
-  { settings, width = 720, height = 1280, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1 },
+  { settings, width = 1080, height = 1920, className, onProcessedTrack, active = true, mirror = true, facingMode = "user", zoom = 1 },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -124,43 +124,19 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             return;
           }
 
-          // Match the on-screen stage aspect so the broadcast frame fills the
-          // player exactly (no letterbox, no double crop).
-          const stage = canvas.parentElement;
-          const stageAspect =
-            stage && stage.clientWidth > 0 && stage.clientHeight > 0
-              ? stage.clientWidth / stage.clientHeight
-              : TARGET_ASPECT;
-          const outH = Math.max(vw, vh);
-          const outW = Math.max(2, Math.round(outH * stageAspect));
+          // Fixed TikTok-standard 9:16 output (1080x1920). Always cover-fit so
+          // there are never black bars above/below the subject.
+          const outW = width;
+          const outH = height;
           if (canvas.width !== outW || canvas.height !== outH) {
             canvas.width = outW;
             canvas.height = outH;
           }
 
-          const z = zoomRef.current || 1;
-          // Base "cover" scale that fills the frame at 1x.
+          // Cover scale fills the 9:16 frame; zoom only ever crops in further.
+          const z = Math.max(1, zoomRef.current || 1);
           const cover = Math.max(outW / vw, outH / vh);
 
-          // Background: a blurred, full-bleed copy of the frame so sub-1x zoom
-          // looks polished (TikTok/IG blurred-backdrop) instead of black bars.
-          const bgScale = Math.max(outW / vw, outH / vh) * 1.1;
-          const bgW = vw * bgScale;
-          const bgH = vh * bgScale;
-          const bgX = (outW - bgW) / 2;
-          const bgY = (outH - bgH) / 2;
-
-          ctx.save();
-          ctx.filter = "blur(28px) brightness(0.85)";
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, outW, outH);
-          ctx.drawImage(video, bgX, bgY, bgW, bgH);
-          // Draw it again edge-overlapping to remove blur seams at the borders.
-          ctx.drawImage(video, bgX, bgY, bgW, bgH);
-          ctx.restore();
-
-          // Subject: scaled by the chosen zoom (cover * z). Below 1x the subject
-          // shrinks and floats over the blurred backdrop.
           const scale = cover * z;
           let dw = vw * scale;
           const dh = vh * scale;
@@ -173,9 +149,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
           ctx.save();
           ctx.filter = beautyFilterCss(st);
-          // Soft shadow under the subject so it lifts off the backdrop.
-          ctx.shadowColor = "rgba(0,0,0,0.45)";
-          ctx.shadowBlur = z < 1 ? 40 : 0;
           ctx.drawImage(video, dx, dy, dw, dh);
           ctx.restore();
 
