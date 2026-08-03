@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { BeautySettings, beautyFilterCss } from "@/lib/beautyFilter";
 import { isNativeApp } from "@/lib/platform";
+import { StageVideo } from "./StageVideo";
 
 
 export type BeautyCameraHandle = {
@@ -37,6 +38,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   const rawStreamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tooClose, setTooClose] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const hintTimerRef = useRef<number | null>(null);
   const native = isNativeApp();
 
@@ -157,6 +159,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           return;
         }
         rawStreamRef.current = stream;
+        setStream(stream);
         const video = videoRef.current;
         if (!video) {
           stream.getTracks().forEach((track) => track.stop());
@@ -206,6 +209,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
       onProcessedTrack?.(null);
       rawStreamRef.current?.getTracks().forEach((t) => t.stop());
       rawStreamRef.current = null;
+      setStream(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, facingMode]);
@@ -214,24 +218,14 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
     <div
       className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}
     >
-      {/*
-        A single native video layer fills the portrait stage. There is no canvas,
-        CSS scale, or aspect-ratio constraint that can introduce digital zoom.
-      */}
-      <video
-        ref={videoRef}
-        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-cover object-center"
-        style={{
-          filter: beautyFilterCss(settings),
-          transform: mirror ? "scaleX(-1)" : undefined,
-          transformOrigin: "center center",
-        }}
-
-        playsInline
+      <StageVideo
+        videoRef={videoRef}
+        stream={stream}
         muted
-        autoPlay
+        mirror={mirror}
+        filter={beautyFilterCss(settings)}
+        className="absolute inset-0 h-full w-full overflow-hidden bg-black"
       />
-
 
       {tooClose && !native && !error && (
         <div className="pointer-events-none absolute left-1/2 top-[18%] z-[3] -translate-x-1/2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] text-white/90 backdrop-blur-sm">
