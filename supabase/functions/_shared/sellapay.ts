@@ -7,12 +7,11 @@
 // attempt still comes back empty it is a provider-side outage, so we throw a typed
 // error the callers turn into an actionable message instead of a generic 500.
 
-// Their merchant dashboard lives on app.sellapay.co.ke while the documented API host is
-// pay.sellapay.co.ke (both resolve to the same server). We try every host/version pair and
-// remember whichever one authorizes, so an outage or host move on their side self-heals.
-const HOSTS = ['https://pay.sellapay.co.ke', 'https://app.sellapay.co.ke'];
-const VERSIONS = ['v1', 'v2', 'v3'];
-const AUTH_ATTEMPTS_PER_VERSION = 2;
+// Per their docs only `v1` exists (v2/v3 are listed as "planned"), and POST /authorize is
+// rate limited to 10 requests per minute per IP — so we hit the single documented endpoint
+// with a small backoff instead of fanning out across hosts/versions.
+const API_BASE = 'https://pay.sellapay.co.ke/api/v1';
+const AUTH_ATTEMPTS = 3;
 const REQUEST_TIMEOUT_MS = 20_000;
 
 export const SELLAPAY_UNAVAILABLE = 'SELLAPAY_UNAVAILABLE';
@@ -40,7 +39,7 @@ async function fetchWithTimeout(url: string, init: RequestInit) {
 }
 
 /** Base URL of the API version that last authorized successfully. */
-let activeBase = `${HOSTS[0]}/api/v1`;
+let activeBase = API_BASE;
 
 export function sellapayBase() {
   return activeBase;
@@ -55,67 +54,54 @@ export async function getSellapayToken(): Promise<string> {
 
   let lastDetail = 'no response';
 
-  for (const host of HOSTS) {
-    for (const version of VERSIONS) {
-      const base = `${host}/api/${version}`;
-      for (let attempt = 1; attempt <= AUTH_ATTEMPTS_PER_VERSION; attempt++) {
-        const label = `${host} ${version} attempt ${attempt}`;
-        let res: Response;
-        try {
-          res = await fetchWithTimeout(`${base}/authorize`, {
-            method: 'POST',
-            headers: {
-              'X-API-KEY': apiKey,
-              'X-API-SECRET': apiSecret,
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({}),
-          });
-        } catch (e) {
-          lastDetail = `network error: ${e instanceof Error ? e.message : String(e)}`;
-          console.error(`SellaPay authorize ${label}: ${lastDetail}`);
-          await sleep(500 * attempt);
-          continue;
-        }
-
-        const raw = (await res.text()).trim();
-        console.log(
-          `SellaPay authorize ${label}: status ${res.status}, body ${raw ? raw.slice(0, 200) : 'empty'}`,
-        );
-
-        if (res.status === 401 || res.status === 403) {
-          throw new SellapayError(
-            'SellaPay rejected the configured API key/secret. The credentials need to be updated.',
-            'SELLAPAY_BAD_CREDENTIALS',
-          );
-        }
-
-        // 404 means this host/version combination does not exist — move on immediately.
-        if (res.status === 404) {
-          lastDetail = `HTTP 404 at ${base}/authorize`;
-          break;
-        }
-
-        if (raw) {
-          try {
-            const data = JSON.parse(raw);
-            const accessToken = data.access_token || data.token;
-            if (accessToken) {
-              activeBase = base;
-              return accessToken as string;
-            }
-            lastDetail = data.error || data.message || raw.slice(0, 200);
-          } catch {
-            lastDetail = `non-JSON response: ${raw.slice(0, 200)}`;
-          }
-        } else {
-          lastDetail = `HTTP ${res.status} with empty body`;
-        }
-
-        await sleep(500 * attempt);
-      }
+  for (let attempt = 1; attempt <= AUTH_ATTEMPTS; attempt++) {
+    const label = `attempt ${attempt}`;
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(`${API_BASE}/authorize`, {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'X-API-SECRET': apiSecret,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'User-Agent': 'Tutwine/1.0',
+        },
+        body: JSON.stringify({}),
+      });
+    } catch (e) {
+      lastDetail = `network error: ${e instanceof Error ? e.message : String(e)}`;
+      console.error(`SellaPay authorize ${label}: ${lastDetail}`);
+      await sleep(750 * attempt);
+      continue;
     }
+
+    const raw = (await res.text()).trim();
+    console.log(
+      `SellaPay authorize ${label}: status ${res.status}, body ${raw ? raw.slice(0, 200) : 'empty'}`,
+    );
+
+    if (res.status === 401 || res.status === 403) {
+      throw new SellapayError(
+        'SellaPay rejected the configured API key/secret. The credentials need to be updated.',
+        'SELLAPAY_BAD_CREDENTIALS',
+      );
+    }
+
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        const accessToken = data.access_token || data.token;
+        if (accessToken) return accessToken as string;
+        lastDetail = data.error || data.message || raw.slice(0, 200);
+      } catch {
+        lastDetail = `non-JSON response: ${raw.slice(0, 200)}`;
+      }
+    } else {
+      lastDetail = `HTTP ${res.status} with empty body`;
+    }
+
+    await sleep(750 * attempt);
   }
 
   throw new SellapayError(
