@@ -35,7 +35,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   const rawStreamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bgVideoRef = useRef<HTMLVideoElement>(null);
-  const [portraitStream, setPortraitStream] = useState(true);
 
   useImperativeHandle(ref, () => ({
     getStream: () => rawStreamRef.current,
@@ -123,9 +122,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         const actualWidth = video.videoWidth || trackSettings?.width || 0;
         const actualHeight = video.videoHeight || trackSettings?.height || 0;
         const actualRatio = actualHeight > 0 ? actualWidth / actualHeight : 9 / 16;
-        // Only use cover when the browser really supplied a portrait stream.
-        // A landscape fallback with cover is what creates the giant face crop.
-        setPortraitStream(actualRatio <= 0.75);
         console.info("Live camera capture", {
           width: actualWidth,
           height: actualHeight,
@@ -165,10 +161,10 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         muted
         autoPlay
       />
-      {/* Foreground: full camera image, original proportions, never stretched */}
+      {/* TikTok-style foreground: proportional full-viewport fill. */}
       <video
         ref={videoRef}
-        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-contain object-center"
+        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-cover object-center"
         style={{
           filter: beautyFilterCss(settings),
           transform: mirror ? "scaleX(-1)" : undefined,
