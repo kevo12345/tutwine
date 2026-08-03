@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke';
 
 function sellapayActionUrl(action: string) {
   return `${SELLAPAY_BASE}/index.php?action=${action}`;
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch('https://pay.sellapay.co.ke/api/v1/requestStkPush', {
+    const stkRes = await fetch('https://pay.sellapay.co.ke/v1/requestStkPush', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,

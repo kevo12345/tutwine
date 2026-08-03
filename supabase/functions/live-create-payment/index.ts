@@ -9,7 +9,7 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SELLAPAY_BASE = 'https://pay.sellapay.co.ke/api';
+const SELLAPAY_BASE = 'https://pay.sellapay.co.ke';
 const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
 // NOWPayments rejects USDT-TRC20 invoices below this amount (AMOUNT_MINIMAL_ERROR).
