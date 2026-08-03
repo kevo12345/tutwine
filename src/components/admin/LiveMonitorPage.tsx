@@ -178,13 +178,27 @@ export default function LiveMonitorPage() {
                 <TableHead className="text-right">Likes</TableHead>
                 <TableHead className="text-right">Host 60%</TableHead>
                 <TableHead className="text-right">Tutwine 40%</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((r) => {
                 const isLive = r.status === "active" || r.status === "live";
                 return (
-                  <TableRow key={`${r.source}-${r.live_id}`}>
+                  <TableRow
+                    key={`${r.source}-${r.live_id}`}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setDetail({
+                        liveId: r.live_id,
+                        source: r.source,
+                        hostName: r.display_name,
+                        emrandId: r.emrand_id,
+                        title: r.title,
+                      })
+                    }
+                  >
+
                     <TableCell>
                       <p className="font-medium">{r.display_name ?? "Unknown"}</p>
                       <p className="text-xs text-muted-foreground">
