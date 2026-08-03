@@ -13,8 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RefreshCw, Radio, Ticket, Gift, Clock } from "lucide-react";
+import { Loader2, RefreshCw, Radio, Ticket, Gift, Clock, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LiveSessionDetailSheet,
+  type DetailTarget,
+} from "./LiveSessionDetailSheet";
+
 
 type Row = {
   live_id: string;
@@ -51,6 +56,8 @@ export default function LiveMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [scope, setScope] = useState<"live" | "all">("live");
   const [search, setSearch] = useState("");
+  const [detail, setDetail] = useState<DetailTarget | null>(null);
+
 
   const load = async (includeEnded: boolean) => {
     setLoading(true);
@@ -171,13 +178,27 @@ export default function LiveMonitorPage() {
                 <TableHead className="text-right">Likes</TableHead>
                 <TableHead className="text-right">Host 60%</TableHead>
                 <TableHead className="text-right">Tutwine 40%</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((r) => {
                 const isLive = r.status === "active" || r.status === "live";
                 return (
-                  <TableRow key={`${r.source}-${r.live_id}`}>
+                  <TableRow
+                    key={`${r.source}-${r.live_id}`}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setDetail({
+                        liveId: r.live_id,
+                        source: r.source,
+                        hostName: r.display_name,
+                        emrandId: r.emrand_id,
+                        title: r.title,
+                      })
+                    }
+                  >
+
                     <TableCell>
                       <p className="font-medium">{r.display_name ?? "Unknown"}</p>
                       <p className="text-xs text-muted-foreground">
@@ -216,6 +237,9 @@ export default function LiveMonitorPage() {
                     <TableCell className="text-right tabular-nums">
                       {num(r.platform_earning).toFixed(2)}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -223,6 +247,9 @@ export default function LiveMonitorPage() {
           </Table>
         )}
       </Card>
+
+      <LiveSessionDetailSheet target={detail} onClose={() => setDetail(null)} />
     </div>
+
   );
 }

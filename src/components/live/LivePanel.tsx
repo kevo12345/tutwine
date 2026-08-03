@@ -300,8 +300,12 @@ export function LivePanel({
   const dropHeart = (id: string) => setHearts((prev) => prev.filter((h) => h.id !== id));
 
   const shareLive = async () => {
-    const url = `${window.location.origin}/live/${sessionId}`;
+    // Carry the sharer's unique code so we can attribute the invite and route
+    // brand-new users into this exact live after they create an account.
+    const inviteCode = (profile as any)?.emrand_id ?? null;
+    const url = `${window.location.origin}/live/${sessionId}${inviteCode ? `?ref=${inviteCode}` : ""}`;
     const title = `${hostName ?? "Someone"} is live on Tutwine`;
+
     try {
       if (navigator.share) {
         await navigator.share({ title, text: title, url });

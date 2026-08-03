@@ -1182,6 +1182,22 @@ export type Database = {
           viewers_now: number
         }[]
       }
+      admin_live_session_detail: {
+        Args: { _live_id: string; _source: string }
+        Returns: {
+          coins: number
+          created_at: string
+          display_name: string
+          emrand_id: string
+          event_id: string
+          expires_at: string
+          host_share: number
+          kind: string
+          label: string
+          platform_share: number
+          user_id: string
+        }[]
+      }
       approve_withdrawal: {
         Args: { _note?: string; _withdrawal_id: string }
         Returns: undefined
