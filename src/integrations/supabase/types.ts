@@ -391,7 +391,9 @@ export type Database = {
           host_earning: number
           host_id: string
           id: string
+          is_paused: boolean
           like_count: number
+          paused_at: string | null
           platform_earning: number
           provider: string
           provider_ref: string | null
@@ -412,7 +414,9 @@ export type Database = {
           host_earning?: number
           host_id: string
           id?: string
+          is_paused?: boolean
           like_count?: number
+          paused_at?: string | null
           platform_earning?: number
           provider: string
           provider_ref?: string | null
@@ -433,7 +437,9 @@ export type Database = {
           host_earning?: number
           host_id?: string
           id?: string
+          is_paused?: boolean
           like_count?: number
+          paused_at?: string | null
           platform_earning?: number
           provider?: string
           provider_ref?: string | null
@@ -1281,6 +1287,7 @@ export type Database = {
           expires_at: string
           host_id: string
           id: string
+          is_paused: boolean
           started_at: string
           status: string
           thumbnail_url: string
@@ -1426,6 +1433,10 @@ export type Database = {
           new_balance: number
           platform_share: number
         }[]
+      }
+      set_live_paused: {
+        Args: { _paused: boolean; _session_id: string }
+        Returns: boolean
       }
       settle_live_earnings: {
         Args: { _live_id: string }
