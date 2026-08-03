@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -230,6 +230,11 @@ export function LivePanel({
     closeLive();
   };
 
+  const abortFailedLive = useCallback(async () => {
+    await (supabase as any).rpc("end_live_session", { _session_id: sessionId });
+    closeLive();
+  }, [sessionId, onExit, navigate]);
+
 
   return (
     <div className="absolute inset-0 h-full min-h-full w-full overflow-hidden bg-black">
@@ -248,7 +253,12 @@ export function LivePanel({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative h-full w-full overflow-hidden bg-black">
             {isHost ? (
-              <HostBroadcaster roomUrl={roomUrl} token="" onLeave={endLive} />
+              <HostBroadcaster
+                roomUrl={roomUrl}
+                token=""
+                onLeave={endLive}
+                onJoinFailed={abortFailedLive}
+              />
             ) : (
               <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
             )}

@@ -12,6 +12,8 @@ type Props = {
   token?: string;
   /** Ends the live for everyone (server-side), not just this tab. */
   onLeave?: () => void;
+  /** Cleans up a session when the video provider refuses the host connection. */
+  onJoinFailed?: () => void;
 };
 
 /**
@@ -19,7 +21,7 @@ type Props = {
  * feed the browser's native camera track as the outgoing camera.
  * Viewers keep using the Daily iframe embed — no change on their side.
  */
-export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
+export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const camRef = useRef<BeautyCameraHandle>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -64,7 +66,12 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
         }
         setJoined(true);
       } catch (e: any) {
-        toast.error(e?.message ?? "Failed to join live");
+        const message = e?.errorMsg ?? e?.message ?? "Failed to join live";
+        console.error("Host live join failed", e);
+        toast.error(message === "account-missing-payment-method"
+          ? "Video streaming provider billing must be activated"
+          : message);
+        onJoinFailed?.();
       } finally {
         setConnecting(false);
       }
@@ -75,7 +82,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
       call.destroy().catch(() => {});
       callRef.current = null;
     };
-  }, [roomUrl, token]);
+  }, [roomUrl, token, onJoinFailed]);
 
   // Push the native camera track whenever it changes.
   function handleTrack(track: MediaStreamTrack | null) {
