@@ -1,11 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { BeautySettings, beautyFilterCss } from "@/lib/beautyFilter";
-import { useStageFit } from "@/hooks/useStageFit";
 import { isNativeApp } from "@/lib/platform";
-
-
-/** Uniform zoom applied to the rendered frame — keeps aspect ratio, centres subject. */
-const SUBJECT_ZOOM = 1;
 
 
 export type BeautyCameraHandle = {
@@ -42,16 +37,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   const rawStreamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tooClose, setTooClose] = useState(false);
-  /** Aspect ratio (w/h) of the track the device actually delivered. */
-  const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const hintTimerRef = useRef<number | null>(null);
-  /**
-   * In the native app the WebView is portrait-locked and the camera delivers a
-   * real portrait track, so we can fill the stage edge-to-edge with `cover`
-   * without cropping the subject. In a mobile browser we keep auto-fitting.
-   */
   const native = isNativeApp();
-  const { stageRef, objectFit } = useStageFit(trackRatio, native);
 
 
 
@@ -110,12 +97,10 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Native app: the WebView is portrait-locked, so a true 9:16 portrait
-        // track (1080x1920) comes straight off the sensor — full-screen with no
-        // crop and no digital zoom.
-        // Mobile browser: Android Chrome satisfies a 9:16 request by digitally
-        // cropping the sensor, which is the "zoomed in" look we want to avoid,
-        // so we ask for the full-sensor 3:4 portrait frame instead.
+        // Do not constrain aspectRatio on mobile web. Chrome may satisfy a 9:16
+        // or 3:4 request by digitally cropping the sensor before we receive the
+        // track, which looks like an unwanted camera zoom. Ask for the front
+        // camera's natural stream and let CSS handle the portrait viewport.
         const nativePortraitAttempts: MediaStreamConstraints[] = native
           ? [
               {
@@ -133,11 +118,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         const attempts: MediaStreamConstraints[] = [
           ...nativePortraitAttempts,
           {
-
             video: {
               width: { ideal: 1080 },
-              height: { ideal: 1440 },
-              aspectRatio: { ideal: 3 / 4 },
               frameRate: { ideal: 30, min: 24 },
               facingMode: { ideal: facingMode },
             },
@@ -146,19 +128,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           {
             video: {
               width: { ideal: 720 },
-              height: { ideal: 960 },
-              aspectRatio: { ideal: 3 / 4 },
               frameRate: { ideal: 30 },
-              facingMode: { ideal: facingMode },
-            },
-            audio: false,
-          },
-
-          {
-            video: {
-              width: { ideal: 1080 },
-              height: { ideal: 1440 },
-              aspectRatio: { ideal: 3 / 4 },
               facingMode: { ideal: facingMode },
             },
             audio: false,
@@ -224,7 +194,6 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           aspectRatio: actualRatio,
           facingMode: trackSettings?.facingMode,
         });
-        if (actualRatio > 0) setTrackRatio(actualRatio);
         onProcessedTrack?.(track);
         if (!native) startFaceDistanceHint(video);
       } catch (e: any) {
@@ -243,22 +212,18 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   return (
     <div
-      ref={stageRef}
       className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}
     >
       {/*
-        Automatic aspect-ratio matching: the stage measures itself and compares
-        its ratio with the track the device actually delivered. Matching ratios
-        fill edge-to-edge with `cover` (no crop, no zoom); mismatched ratios are
-        fitted so framing stays natural.
+        A single native video layer fills the portrait stage. There is no canvas,
+        CSS scale, or aspect-ratio constraint that can introduce digital zoom.
       */}
       <video
         ref={videoRef}
-        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-center"
+        className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-cover object-center"
         style={{
-          objectFit,
           filter: beautyFilterCss(settings),
-          transform: `${mirror ? "scaleX(-1) " : ""}scale(${SUBJECT_ZOOM})`,
+          transform: mirror ? "scaleX(-1)" : undefined,
           transformOrigin: "center center",
         }}
 

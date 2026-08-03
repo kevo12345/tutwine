@@ -22,6 +22,7 @@ type Props = {
 export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const camRef = useRef<BeautyCameraHandle>(null);
+  const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const [joined, setJoined] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -56,6 +57,11 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
             },
           })
           .catch(() => {});
+        const cameraTrack = cameraTrackRef.current;
+        if (cameraTrack?.readyState === "live") {
+          await call.setInputDevicesAsync({ videoSource: cameraTrack });
+          await call.setLocalVideo(true);
+        }
         setJoined(true);
       } catch (e: any) {
         toast.error(e?.message ?? "Failed to join live");
@@ -73,10 +79,12 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
 
   // Push the native camera track whenever it changes.
   function handleTrack(track: MediaStreamTrack | null) {
+    cameraTrackRef.current = track;
     const call = callRef.current;
     if (!call || !track) return;
     call
       .setInputDevicesAsync({ videoSource: track })
+      .then(() => call.setLocalVideo(true))
       .catch((e) => console.warn("Failed to set video source", e));
   }
 
