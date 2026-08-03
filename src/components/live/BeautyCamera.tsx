@@ -1,5 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { BeautySettings, beautyFilterCss } from "@/lib/beautyFilter";
+import { useStageFit } from "@/hooks/useStageFit";
+
 
 /** Uniform zoom applied to the rendered frame — keeps aspect ratio, centres subject. */
 const SUBJECT_ZOOM = 1;
