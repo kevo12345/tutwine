@@ -26,6 +26,8 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   /** Aspect ratio (w/h) of the host's incoming track. */
   const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const [connecting, setConnecting] = useState(true);
+  const { stageRef, objectFit } = useStageFit(trackRatio);
+
 
   useEffect(() => {
     if (!active || !roomUrl) return;
