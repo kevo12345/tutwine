@@ -97,16 +97,15 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Widest natural framing wins over an exact portrait track. A 3:4 (full
-        // sensor) capture keeps the camera's entire vertical field of view, so
-        // cover-cropping it into the 9:16 stage trims only the sides — head room
-        // and shoulders stay in frame instead of cropping into the face.
+        // Ask the device for a true 9:16 portrait track first: when the capture
+        // shape already matches the stage, `object-cover` has nothing to crop,
+        // so the frame looks exactly like the phone's normal camera app.
         const attempts: MediaStreamConstraints[] = [
           {
             video: {
-              width: { ideal: 1440 },
-              height: { ideal: 1920 },
-              aspectRatio: { ideal: 3 / 4 },
+              width: { ideal: width },
+              height: { ideal: height },
+              aspectRatio: { ideal: 9 / 16 },
               frameRate: { ideal: 30, min: 24 },
               facingMode: { ideal: facingMode },
             },
@@ -114,9 +113,9 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           },
           {
             video: {
-              width: { ideal: 960 },
+              width: { ideal: 720 },
               height: { ideal: 1280 },
-              aspectRatio: { ideal: 3 / 4 },
+              aspectRatio: { ideal: 9 / 16 },
               frameRate: { ideal: 30 },
               facingMode: { ideal: facingMode },
             },
@@ -124,9 +123,9 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           },
           {
             video: {
-              width: { ideal: width, min: 720 },
-              height: { ideal: height, min: 1280 },
-              aspectRatio: { ideal: 9 / 16 },
+              width: { ideal: 1080 },
+              height: { ideal: 1440 },
+              aspectRatio: { ideal: 3 / 4 },
               facingMode: { ideal: facingMode },
             },
             audio: false,
