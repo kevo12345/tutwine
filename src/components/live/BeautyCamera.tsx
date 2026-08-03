@@ -59,6 +59,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           video: {
             width: { ideal: width },
             height: { ideal: height },
+            // Ask the camera for a portrait 9:16 frame so we crop as little as possible.
+            aspectRatio: { ideal: width / height },
             facingMode: "user",
           },
           audio: false,
@@ -75,34 +77,51 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         await video.play().catch(() => {});
 
         const canvas = canvasRef.current!;
-        const track = stream.getVideoTracks()[0];
-        const s = track.getSettings();
-        canvas.width = s.width ?? width;
-        canvas.height = s.height ?? height;
+        // Fixed 9:16 output buffer — the broadcast frame is always vertical,
+        // matching the full-screen player so the CSS layer never crops again.
+        const TARGET_ASPECT = width / height; // 9:16
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext("2d", { desynchronized: true });
         if (!ctx) throw new Error("Canvas 2D unavailable");
 
         const render = () => {
           if (cancelled) return;
           const st = settingsRef.current;
-          const vw = video.videoWidth || canvas.width;
-          const vh = video.videoHeight || canvas.height;
-          if (canvas.width !== vw || canvas.height !== vh) {
-            canvas.width = vw;
-            canvas.height = vh;
+          const vw = video.videoWidth;
+          const vh = video.videoHeight;
+          if (!vw || !vh) {
+            rafRef.current = requestAnimationFrame(render);
+            return;
           }
-          ctx.save();
-          ctx.filter = beautyFilterCss(st);
+
+          // Keep the output buffer vertical, following the source resolution
+          // so we never upscale (which is what read as "zoomed in").
+          const outH = Math.max(vw, vh);
+          const outW = Math.round(outH * TARGET_ASPECT);
+          if (canvas.width !== outW || canvas.height !== outH) {
+            canvas.width = outW;
+            canvas.height = outH;
+          }
+
+          // "Cover" fit: scale the source to fill the 9:16 frame, centered,
+          // cropping only the minimum needed — no distortion, no extra zoom.
+          const scale = Math.max(outW / vw, outH / vh);
+          let dw = vw * scale;
+          const dh = vh * scale;
           if (st.enabled && st.faceSlim > 0) {
             // subtle horizontal squeeze up to ~7% at max
-            const squeeze = 1 - (st.faceSlim / 100) * 0.07;
-            const dw = canvas.width * squeeze;
-            const dx = (canvas.width - dw) / 2;
-            ctx.drawImage(video, dx, 0, dw, canvas.height);
-          } else {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            dw *= 1 - (st.faceSlim / 100) * 0.07;
           }
+          const dx = (outW - dw) / 2;
+          const dy = (outH - dh) / 2;
+
+          ctx.save();
+          ctx.filter = beautyFilterCss(st);
+          ctx.clearRect(0, 0, outW, outH);
+          ctx.drawImage(video, dx, dy, dw, dh);
           ctx.restore();
+
 
           if (st.enabled && st.eyeEnhance > 0) {
             // gentle central "vignette" contrast bump — no ML face detection
