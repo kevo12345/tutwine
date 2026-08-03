@@ -115,8 +115,10 @@ export default function LivePage() {
     <AppLayout>
       <div className="px-3 pb-6 pt-3">
         <div className="mb-3 px-1">
-          <h1 className="text-2xl font-bold tracking-tight">Live</h1>
-          <p className="text-sm text-muted-foreground">Go live or join a live stream</p>
+          <h1 className="text-3xl font-bold tracking-tight">Live</h1>
+          <p className="text-sm text-muted-foreground">
+            See who's here right now, or open the floor yourself.
+          </p>
           {desktopBlocked && (
             <div className="mt-3 flex items-start gap-2 rounded-2xl border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
               <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -126,63 +128,58 @@ export default function LivePage() {
             </div>
           )}
         </div>
-        {/* Hero CTAs: Go Live (host) + Join Live (viewer) */}
-        <div className="mb-4 grid gap-3 sm:grid-cols-2">
-          {/* Go Live (host) */}
-          <div className="rounded-3xl bg-gradient-to-br from-primary via-primary to-accent p-4 text-primary-foreground shadow-lg">
-            <div className="mb-2 flex items-center gap-2">
-              <Radio className="h-5 w-5" />
-              <span className="text-sm font-semibold uppercase tracking-wide">Go Live</span>
+
+        {/* Hero: host + viewer */}
+        <div className="mb-6 space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+                <Radio className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-foreground">Open your room</h2>
+                <p className="text-sm text-muted-foreground">Free to host. Keep 60% of gifts.</p>
+              </div>
             </div>
-            <h2 className="mb-1 text-xl font-bold">Start your own live stream</h2>
-            <p className="mb-3 text-sm opacity-90">
-              Subscribers only — you keep 60% of gifts sent by viewers.
-            </p>
-            <Button
-              onClick={openHost}
-              variant="secondary"
-              disabled={desktopBlocked}
-              className="w-full font-semibold"
-            >
-              {desktopBlocked ? "Mobile only" : canHost ? "Go Live now" : "Subscribe to go live"}
-            </Button>
           </div>
 
-          {/* Join Live (viewer) */}
-          <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-2 text-primary">
-              <Users className="h-5 w-5" />
-              <span className="text-sm font-semibold uppercase tracking-wide">Join a Live</span>
+          <Button
+            onClick={openHost}
+            disabled={desktopBlocked}
+            size="lg"
+            className="w-full rounded-xl font-semibold"
+          >
+            {desktopBlocked ? "Mobile only" : canHost ? "Go live" : "Subscribe to go live"}
+          </Button>
+
+          <button
+            onClick={() => {
+              if (sessions.length === 0) {
+                toast.info("No one is live yet — check back soon.");
+                return;
+              }
+              const first = sessions.find((s) => s.host_id !== user?.id) ?? sessions[0];
+              openViewer(first);
+            }}
+            className="w-full rounded-2xl border border-border bg-card p-4 text-left transition active:scale-[0.99]"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/25 text-accent-foreground">
+                <Users className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-foreground">Drop into a room</h2>
+                <p className="text-sm text-muted-foreground">
+                  1 token per hour. Short on tokens? Top up in a tap.
+                </p>
+              </div>
             </div>
-            <h2 className="mb-1 text-xl font-bold text-foreground">
-              {sessions.length > 0
-                ? `${sessions.length} host${sessions.length === 1 ? "" : "s"} live now`
-                : "No streams live right now"}
-            </h2>
-            <p className="mb-3 text-sm text-muted-foreground">
-              $1/hr · 1 token per hour. If you don't have tokens, we'll help you top up.
-            </p>
-            <Button
-              onClick={() => {
-                if (sessions.length === 0) {
-                  toast.info("No one is live yet — check back soon.");
-                  return;
-                }
-                const first = sessions.find((s) => s.host_id !== user?.id) ?? sessions[0];
-                openViewer(first);
-              }}
-              disabled={sessions.length === 0 || desktopBlocked}
-              className="w-full font-semibold"
-            >
-              {desktopBlocked ? "Mobile only" : sessions.length > 0 ? "Join Live now" : "None live yet"}
-            </Button>
-          </div>
+          </button>
         </div>
 
-
         {/* Active sessions feed */}
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h3 className="text-sm font-semibold text-foreground">Live now</h3>
+        <div className="mb-3 flex items-end justify-between px-1">
+          <h3 className="text-xl font-bold text-foreground">Live now</h3>
           <span className="text-xs text-muted-foreground">{sessions.length} streaming</span>
         </div>
 
@@ -191,9 +188,21 @@ export default function LivePage() {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : sessions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">
-            <Radio className="mx-auto mb-2 h-8 w-8 opacity-50" />
-            No one is live right now. Be the first — go live and people will see you here in real time.
+          <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-5 py-10 text-center">
+            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border">
+              <span className="h-5 w-5 rounded-full bg-primary" />
+            </span>
+            <p className="font-semibold text-foreground">No one's live yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Be the first tonight — the room fills up fast once someone opens it.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4 rounded-xl"
+              onClick={() => navigate("/live/how-it-works")}
+            >
+              How it works <ArrowUpRight className="ml-1 h-4 w-4" />
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
