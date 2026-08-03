@@ -35,6 +35,7 @@ const FaqPage = lazy(() => import("./pages/FaqPage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
 const GoLiveSetupPage = lazy(() => import("./pages/GoLiveSetupPage"));
 const LiveRoomPage = lazy(() => import("./pages/LiveRoomPage"));
+import { PhoneOnlyGate } from "./components/live/PhoneOnlyGate";
 
 const BuyTokensPage = lazy(() => import("./pages/BuyTokensPage"));
 const LivesPage = lazy(() => import("./pages/LivesPage"));
