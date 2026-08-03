@@ -112,14 +112,58 @@ export function LiveTopBar({
           <Users className="h-3.5 w-3.5" />
           <span className="tabular-nums">{viewerCount}</span>
         </div>
-        <button
-          onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/70"
-          aria-label="Close live"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {isHost ? (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setConfirmEnd(true)}
+            className="h-8 rounded-full px-3 text-xs font-semibold"
+          >
+            End live
+          </Button>
+        ) : (
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/70"
+            aria-label="Close live"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
+
+      <AlertDialog open={confirmEnd} onOpenChange={(o) => !ending && setConfirmEnd(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>End this live?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your stream will end now and disappear from the Live page, even though your scheduled
+              time isn't finished. The timer only shows how long you've been live — it doesn't keep
+              the stream open once you end it. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={ending}>Keep streaming</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={ending}
+              onClick={async (e) => {
+                e.preventDefault();
+                setEnding(true);
+                try {
+                  await onEndLive?.();
+                } finally {
+                  setEnding(false);
+                  setConfirmEnd(false);
+                }
+              }}
+            >
+              {ending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              End live
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogFooter>
+      </AlertDialog>
     </div>
+
   );
 }
