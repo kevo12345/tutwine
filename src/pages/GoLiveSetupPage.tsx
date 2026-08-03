@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
@@ -31,6 +32,7 @@ const THUMB_KEY = "tutwine:live-thumbnail";
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tier } = useSubscription();
   useViewportStageHeight();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
@@ -106,6 +108,11 @@ export default function GoLiveSetupPage() {
   const start = async () => {
     if (!user) {
       navigate("/login");
+      return;
+    }
+    if (tier === "free") {
+      toast.error("An active subscription is required to go live");
+      navigate("/pricing");
       return;
     }
     if (hours < 1) {
@@ -275,7 +282,7 @@ export default function GoLiveSetupPage() {
           )}
         </Button>
         <p className="text-center text-[11px] text-foreground/70">
-          Viewers pay $1/hr (1 token) to join.
+          Subscribers only. Viewers pay 1 token per hour to join.
         </p>
       </div>
 
