@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
 import { useSubscription } from "@/hooks/useSubscription";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 
 type Kind = "host" | "viewer";
 
@@ -37,6 +38,7 @@ export default function LivePage() {
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
   const [hours, setHours] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
+  const [shortfall, setShortfall] = useState<number | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
   const canHost = tier !== "free";
 
@@ -76,6 +78,11 @@ export default function LivePage() {
   /** Viewers pay with tokens (1 token per hour) to get a live pass. */
   const submit = async () => {
     if (!user || !sheet?.session) return;
+    if (balance < hours) {
+      setSheet(null);
+      setShortfall(hours);
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await (supabase as any).rpc("purchase_live_pass", {
@@ -93,8 +100,8 @@ export default function LivePage() {
       console.error(err);
       const msg = String(err?.message ?? "");
       if (msg.includes("insufficient tokens")) {
-        toast.error("Not enough tokens — top up to join");
-        navigate("/buy-tokens");
+        setSheet(null);
+        setShortfall(hours);
       } else {
         toast.error(msg || "Could not join the live");
       }
@@ -273,8 +280,8 @@ export default function LivePage() {
             </div>
 
             {balance < hours ? (
-              <Button onClick={() => navigate("/buy-tokens")} className="w-full" size="lg">
-                Buy tokens to join
+              <Button onClick={() => { setSheet(null); setShortfall(hours); }} className="w-full" size="lg">
+                Buy coins to join
               </Button>
             ) : (
               <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
@@ -291,6 +298,14 @@ export default function LivePage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <InsufficientTokensDialog
+        open={shortfall !== null}
+        onOpenChange={(o) => !o && setShortfall(null)}
+        needed={shortfall ?? 0}
+        balance={balance}
+        action="join this live"
+      />
     </AppLayout>
   );
 }

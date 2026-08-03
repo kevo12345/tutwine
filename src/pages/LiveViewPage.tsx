@@ -40,6 +40,7 @@ import {
 
 import { toast } from "sonner";
 import { GiftSheet } from "@/components/live/GiftSheet";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 import { HostBroadcaster } from "@/components/live/HostBroadcaster";
 
 
@@ -404,6 +405,14 @@ export default function LiveViewPage() {
         onExit={() => navigate("/lives")}
         onRenew={() => { setPhase("loading"); void ensureTicketAndJoin(); }}
         onBuyTokens={() => navigate("/buy-tokens")}
+      />
+
+      <InsufficientTokensDialog
+        open={phase === "insufficient"}
+        onOpenChange={(o) => !o && navigate("/lives")}
+        needed={TICKET_PRICE_TOKENS}
+        balance={balance}
+        action="join this live"
       />
 
     </div>

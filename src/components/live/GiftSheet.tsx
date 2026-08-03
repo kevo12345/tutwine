@@ -12,6 +12,7 @@ import {
 import { Coins, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 
 type CatalogGift = {
   id: string;
@@ -34,6 +35,7 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   const [sending, setSending] = useState<string | null>(null);
   const [gifts, setGifts] = useState<CatalogGift[]>([]);
   const [loading, setLoading] = useState(false);
+  const [shortfall, setShortfall] = useState<number | null>(null);
   const balance = Number((profile as any)?.token_balance ?? 0);
 
   useEffect(() => {
@@ -54,9 +56,8 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   async function send(gift: CatalogGift) {
     if (hostIsSelf) return;
     if (balance < gift.token_price) {
-      toast.warning(`Need ${gift.token_price} tokens — top up.`);
       setOpen(false);
-      navigate("/buy-tokens");
+      setShortfall(gift.token_price);
       return;
     }
     setSending(gift.key);
@@ -68,9 +69,8 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
     setSending(null);
     if (error) {
       if (error.message?.includes("insufficient")) {
-        toast.warning("Not enough tokens.");
         setOpen(false);
-        navigate("/buy-tokens");
+        setShortfall(gift.token_price);
         return;
       }
       toast.error(error.message ?? "Could not send gift");
@@ -82,6 +82,7 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   }
 
   return (
+    <>
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
@@ -108,13 +109,14 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
         ) : (
           <div className="grid grid-cols-3 gap-3 pb-4">
             {gifts.map((g) => {
-              const disabled = sending !== null || balance < g.token_price;
+              const disabled = sending !== null;
+              const tooPoor = balance < g.token_price;
               return (
                 <button
                   key={g.key}
                   onClick={() => send(g)}
                   disabled={disabled}
-                  className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 transition active:scale-95 disabled:opacity-50"
+                  className={`flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 transition active:scale-95 disabled:opacity-50 ${tooPoor ? "opacity-60" : ""}`}
                 >
                   <span className="text-3xl">{g.emoji}</span>
                   <span className="text-xs font-medium">{g.label}</span>
@@ -133,5 +135,13 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
         </Button>
       </SheetContent>
     </Sheet>
+    <InsufficientTokensDialog
+      open={shortfall !== null}
+      onOpenChange={(o) => !o && setShortfall(null)}
+      needed={shortfall ?? 0}
+      balance={balance}
+      action="send this gift"
+    />
+    </>
   );
 }
