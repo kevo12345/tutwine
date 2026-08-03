@@ -7,7 +7,10 @@
 // attempt still comes back empty it is a provider-side outage, so we throw a typed
 // error the callers turn into an actionable message instead of a generic 500.
 
-const HOST = 'https://pay.sellapay.co.ke';
+// Their merchant dashboard lives on app.sellapay.co.ke while the documented API host is
+// pay.sellapay.co.ke (both resolve to the same server). We try every host/version pair and
+// remember whichever one authorizes, so an outage or host move on their side self-heals.
+const HOSTS = ['https://pay.sellapay.co.ke', 'https://app.sellapay.co.ke'];
 const VERSIONS = ['v1', 'v2', 'v3'];
 const AUTH_ATTEMPTS_PER_VERSION = 2;
 const REQUEST_TIMEOUT_MS = 20_000;
