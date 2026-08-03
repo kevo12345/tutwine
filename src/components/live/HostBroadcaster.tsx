@@ -10,6 +10,7 @@ import { toast } from "sonner";
 type Props = {
   roomUrl: string;
   token?: string;
+  /** Ends the live for everyone (server-side), not just this tab. */
   onLeave?: () => void;
 };
 
