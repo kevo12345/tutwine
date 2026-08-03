@@ -128,7 +128,7 @@ export default function LiveHowItWorksPage() {
             size="lg"
             variant="outline"
             className="rounded-xl"
-            onClick={() => navigate("/earnings")}
+            onClick={() => navigate("/host/earnings")}
           >
             View my earnings
           </Button>
