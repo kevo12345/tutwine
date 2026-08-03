@@ -95,17 +95,24 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             return;
           }
 
-          // Keep a 9:16 output buffer sized off the source so we never upscale.
+          // Match the on-screen stage aspect so the broadcast frame fills the
+          // player exactly (no letterbox, no double crop).
+          const stage = canvas.parentElement;
+          const stageAspect =
+            stage && stage.clientWidth > 0 && stage.clientHeight > 0
+              ? stage.clientWidth / stage.clientHeight
+              : TARGET_ASPECT;
           const outH = Math.max(vw, vh);
-          const outW = Math.round(outH * TARGET_ASPECT);
+          const outW = Math.max(2, Math.round(outH * stageAspect));
           if (canvas.width !== outW || canvas.height !== outH) {
             canvas.width = outW;
             canvas.height = outH;
           }
 
-          // "Cover" fit: the camera frame fills the whole 9:16 broadcast frame
+          // "Cover" fit: the camera frame fills the whole broadcast frame
           // (TikTok/IG Live style) — sides are cropped instead of letterboxed.
           const scale = Math.max(outW / vw, outH / vh);
+
           let dw = vw * scale;
           const dh = vh * scale;
           if (st.enabled && st.faceSlim > 0) {
@@ -164,12 +171,16 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   }, [active]);
 
   return (
-    <div className={className ?? "relative h-full w-full bg-black"}>
+    <div className={className ?? "absolute inset-0 h-full w-full bg-black"}>
       <video ref={videoRef} className="hidden" playsInline muted />
       <canvas
         ref={canvasRef}
-        className="h-full w-full object-cover"
-        style={{ transform: mirror ? "scaleX(-1)" : undefined }}
+        className="absolute inset-0 block h-full w-full"
+        style={{
+          objectFit: "cover",
+          objectPosition: "center",
+          transform: mirror ? "scaleX(-1)" : undefined,
+        }}
       />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center text-center text-xs text-white/80 p-4">
