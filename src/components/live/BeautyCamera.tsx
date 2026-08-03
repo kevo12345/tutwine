@@ -95,8 +95,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             return;
           }
 
-          // Keep the output buffer vertical, following the source resolution
-          // so we never upscale (which is what read as "zoomed in").
+          // Keep a 9:16 output buffer sized off the source so we never upscale.
           const outH = Math.max(vw, vh);
           const outW = Math.round(outH * TARGET_ASPECT);
           if (canvas.width !== outW || canvas.height !== outH) {
@@ -104,9 +103,9 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          // "Cover" fit: scale the source to fill the 9:16 frame, centered,
-          // cropping only the minimum needed — no distortion, no extra zoom.
-          const scale = Math.max(outW / vw, outH / vh);
+          // "Contain" fit: the entire camera frame is always visible inside the
+          // 9:16 broadcast frame — nothing is cropped, so no zoom-in effect.
+          const scale = Math.min(outW / vw, outH / vh);
           let dw = vw * scale;
           const dh = vh * scale;
           if (st.enabled && st.faceSlim > 0) {
@@ -118,7 +117,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
           ctx.save();
           ctx.filter = beautyFilterCss(st);
-          ctx.clearRect(0, 0, outW, outH);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, outW, outH);
           ctx.drawImage(video, dx, dy, dw, dh);
           ctx.restore();
 
@@ -168,7 +168,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
       <video ref={videoRef} className="hidden" playsInline muted />
       <canvas
         ref={canvasRef}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-contain"
         style={{ transform: mirror ? "scaleX(-1)" : undefined }}
       />
       {error && (
