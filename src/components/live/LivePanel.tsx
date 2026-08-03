@@ -247,7 +247,7 @@ export function LivePanel({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative h-full max-h-full w-full max-w-full overflow-hidden bg-black aspect-[9/16] mx-auto">
             {isHost ? (
-              <HostBroadcaster roomUrl={roomUrl} token="" onLeave={closeLive} />
+              <HostBroadcaster roomUrl={roomUrl} token="" onLeave={endLive} />
             ) : (
               <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
             )}
