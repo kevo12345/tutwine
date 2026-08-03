@@ -107,27 +107,13 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
       <video
-        ref={bgVideoRef}
-        aria-hidden
-        className="pointer-events-none absolute z-0 block object-cover"
-        style={{
-          inset: "-20px",
-          width: "calc(100% + 40px)",
-          height: "calc(100% + 40px)",
-          filter: "blur(20px) brightness(0.55)",
-          transform: "scale(1.08)",
-        }}
-        playsInline
-        autoPlay
-        muted
-      />
-      <video
         ref={videoRef}
         className="absolute inset-0 z-[1] block h-full w-full object-cover object-center"
         playsInline
         autoPlay
         muted={false}
       />
+
       <audio ref={audioRef} autoPlay />
       {(connecting || !hasVideo) && (
         <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
