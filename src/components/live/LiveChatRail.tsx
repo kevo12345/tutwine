@@ -84,7 +84,7 @@ export function LiveChatRail({ sessionId, active }: Props) {
   }, [sessionId, active]);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] flex max-h-[38%] flex-col justify-end gap-1.5 overflow-hidden px-2 sm:bottom-24 sm:max-h-[45%] sm:px-3">
+    <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-20 flex max-h-[38%] flex-col justify-end gap-1.5 overflow-hidden px-2 sm:bottom-24 sm:max-h-[45%] sm:px-3">
       {messages.slice(-12).map((m) => (
         <div
           key={m.id}
