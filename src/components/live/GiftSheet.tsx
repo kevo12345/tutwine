@@ -116,7 +116,7 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
                   key={g.key}
                   onClick={() => send(g)}
                   disabled={disabled}
-                  className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 transition active:scale-95 disabled:opacity-50"
+                  className={`flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 transition active:scale-95 disabled:opacity-50 ${tooPoor ? "opacity-60" : ""}`}
                 >
                   <span className="text-3xl">{g.emoji}</span>
                   <span className="text-xs font-medium">{g.label}</span>
@@ -135,5 +135,13 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
         </Button>
       </SheetContent>
     </Sheet>
+    <InsufficientTokensDialog
+      open={shortfall !== null}
+      onOpenChange={(o) => !o && setShortfall(null)}
+      needed={shortfall ?? 0}
+      balance={balance}
+      action="send this gift"
+    />
+    </>
   );
 }
