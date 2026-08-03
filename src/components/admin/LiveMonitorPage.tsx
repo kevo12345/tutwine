@@ -13,8 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RefreshCw, Radio, Ticket, Gift, Clock } from "lucide-react";
+import { Loader2, RefreshCw, Radio, Ticket, Gift, Clock, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LiveSessionDetailSheet,
+  type DetailTarget,
+} from "./LiveSessionDetailSheet";
+
 
 type Row = {
   live_id: string;
