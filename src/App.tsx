@@ -33,6 +33,7 @@ const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const FaqPage = lazy(() => import("./pages/FaqPage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
+const LiveHowItWorksPage = lazy(() => import("./pages/LiveHowItWorksPage"));
 const GoLiveSetupPage = lazy(() => import("./pages/GoLiveSetupPage"));
 const LiveRoomPage = lazy(() => import("./pages/LiveRoomPage"));
 import { PhoneOnlyGate } from "./components/live/PhoneOnlyGate";
@@ -92,6 +93,7 @@ const App = () => (
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/live" element={<ProtectedRoute><LivePage /></ProtectedRoute>} />
+              <Route path="/live/how-it-works" element={<ProtectedRoute><LiveHowItWorksPage /></ProtectedRoute>} />
               <Route path="/live/start" element={<ProtectedRoute><PhoneOnlyGate><GoLiveSetupPage /></PhoneOnlyGate></ProtectedRoute>} />
               <Route path="/live/:sessionId" element={<ProtectedRoute><PhoneOnlyGate><LiveRoomPage /></PhoneOnlyGate></ProtectedRoute>} />
 
