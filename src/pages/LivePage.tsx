@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LIVE_DURATION_OPTIONS, priceForLiveHours } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
+import { useIsPhone } from "@/hooks/useIsPhone";
 
 type Kind = "host" | "viewer";
 
@@ -30,6 +31,8 @@ export default function LivePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { sessions, loading } = useActiveLiveSessions();
+  const isPhone = useIsPhone();
+  const desktopBlocked = isPhone === false;
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
   const [hours, setHours] = useState<number>(1);
   const [provider, setProvider] = useState<"sellapay" | "nowpayments">("sellapay");
@@ -59,6 +62,10 @@ export default function LivePage() {
   }, [sessions, user, sheet]);
 
   const openHost = () => {
+    if (desktopBlocked) {
+      toast.info("Live only works on mobile — open tutwine.com on your phone.");
+      return;
+    }
     if (!user) {
       navigate("/login");
       return;
@@ -67,6 +74,10 @@ export default function LivePage() {
     navigate("/live/start");
   };
   const openViewer = (s: ActiveLiveSession) => {
+    if (desktopBlocked) {
+      toast.info("Live only works on mobile — open tutwine.com on your phone.");
+      return;
+    }
     if (s.host_id === user?.id) {
       navigate(`/live/${s.id}`);
       return;
@@ -120,6 +131,14 @@ export default function LivePage() {
         <div className="mb-3 px-1">
           <h1 className="text-2xl font-bold tracking-tight">Live</h1>
           <p className="text-sm text-muted-foreground">Go live or join a live stream</p>
+          {desktopBlocked && (
+            <div className="mt-3 flex items-start gap-2 rounded-2xl border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+              <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span>
+                Live streaming is mobile-only. Open tutwine.com on your phone to host or join a live.
+              </span>
+            </div>
+          )}
         </div>
         {/* Hero CTAs: Go Live (host) + Join Live (viewer) */}
         <div className="mb-4 grid gap-3 sm:grid-cols-2">
@@ -133,8 +152,13 @@ export default function LivePage() {
             <p className="mb-3 text-sm opacity-90">
               Hosting is free — you keep 60% of gifts sent by viewers.
             </p>
-            <Button onClick={openHost} variant="secondary" className="w-full font-semibold">
-              Go Live now
+            <Button
+              onClick={openHost}
+              variant="secondary"
+              disabled={desktopBlocked}
+              className="w-full font-semibold"
+            >
+              {desktopBlocked ? "Mobile only" : "Go Live now"}
             </Button>
           </div>
 
@@ -161,10 +185,10 @@ export default function LivePage() {
                 const first = sessions.find((s) => s.host_id !== user?.id) ?? sessions[0];
                 openViewer(first);
               }}
-              disabled={sessions.length === 0}
+              disabled={sessions.length === 0 || desktopBlocked}
               className="w-full font-semibold"
             >
-              {sessions.length > 0 ? "Join Live now" : "None live yet"}
+              {desktopBlocked ? "Mobile only" : sessions.length > 0 ? "Join Live now" : "None live yet"}
             </Button>
           </div>
         </div>
