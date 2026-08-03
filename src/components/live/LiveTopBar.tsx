@@ -161,8 +161,9 @@ export function LiveTopBar({
               End live
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
+
     </div>
 
   );
