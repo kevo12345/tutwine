@@ -141,17 +141,30 @@ export default function GoLiveSetupPage() {
         {/* Thumbnail */}
         <section className="mb-5">
           <Label className="mb-2 block text-xs uppercase text-muted-foreground">Thumbnail</Label>
-          {thumbPreview ? (
+          {shownThumb ? (
             <div className="relative overflow-hidden rounded-2xl border border-border">
-              <img src={thumbPreview} alt="Live thumbnail preview" className="h-48 w-full object-cover" />
-              <button
-                type="button"
-                onClick={() => onPickThumb(null)}
-                className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white"
-                aria-label="Remove thumbnail"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <img src={shownThumb} alt="Live thumbnail preview" className="h-48 w-full object-cover" />
+              <div className="absolute right-2 top-2 flex items-center gap-2">
+                <label
+                  htmlFor="thumb"
+                  className="flex cursor-pointer items-center gap-1 rounded-full bg-black/60 px-2.5 py-1.5 text-[11px] font-semibold text-white"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Change
+                </label>
+                <button
+                  type="button"
+                  onClick={clearThumb}
+                  className="rounded-full bg-black/60 p-1.5 text-white"
+                  aria-label="Remove thumbnail"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {!thumbPreview && (
+                <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white">
+                  Saved banner
+                </span>
+              )}
             </div>
           ) : (
             <label
@@ -168,6 +181,7 @@ export default function GoLiveSetupPage() {
             type="file"
             accept="image/*"
             className="hidden"
+
             onChange={(e) => onPickThumb(e.target.files?.[0] ?? null)}
           />
         </section>
