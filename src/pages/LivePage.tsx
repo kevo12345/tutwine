@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
 import { useSubscription } from "@/hooks/useSubscription";
+import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 
 type Kind = "host" | "viewer";
 
@@ -37,6 +38,7 @@ export default function LivePage() {
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
   const [hours, setHours] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
+  const [shortfall, setShortfall] = useState<number | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
   const canHost = tier !== "free";
 
