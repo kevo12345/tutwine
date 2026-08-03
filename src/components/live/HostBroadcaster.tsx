@@ -48,8 +48,11 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
             video: {
               maxQuality: "high",
               encodings: {
+                low: { maxBitrate: 300_000, scaleResolutionDownBy: 4, maxFramerate: 15 },
+                medium: { maxBitrate: 900_000, scaleResolutionDownBy: 2, maxFramerate: 30 },
                 high: { maxBitrate: 2_500_000, scaleResolutionDownBy: 1, maxFramerate: 30 },
               },
+
             },
           })
           .catch(() => {});
