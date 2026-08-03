@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   roomUrl: string;
@@ -114,8 +115,10 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
 
       <audio ref={audioRef} autoPlay />
       {audioBlocked && hasVideo && (
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           className="absolute left-1/2 top-1/2 z-[3] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/80 px-4 py-2 text-sm font-semibold text-foreground backdrop-blur-sm"
           onClick={() => {
             Promise.all([
@@ -125,7 +128,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
           }}
         >
           Tap to hear live
-        </button>
+        </Button>
       )}
       {(connecting || !hasVideo) && (
         <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center gap-2 bg-black/40 text-white">

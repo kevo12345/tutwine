@@ -177,8 +177,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         // the selfie camera. Ask the hardware for its minimum zoom when exposed.
         try {
           const caps: any = track?.getCapabilities?.() ?? {};
-          if (caps.zoom && typeof caps.zoom.min === "number") {
-            await track!.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] } as any);
+          if (track && caps.zoom && typeof caps.zoom.min === "number") {
+            await track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] } as any);
           }
         } catch {
           /* zoom unsupported — fall back to the face-distance hint below */
