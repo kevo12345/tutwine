@@ -32,7 +32,7 @@ async function getSellapayToken(): Promise<string> {
   const apiKey = Deno.env.get('SELLAPAY_API_KEY');
   const apiSecret = Deno.env.get('SELLAPAY_SECRET_KEY');
   if (!apiKey || !apiSecret) throw new Error('SellaPay credentials not configured');
-  const res = await fetch(`${SELLAPAY_BASE}/index.php?action=authorize`, {
+  const res = await fetch(`${SELLAPAY_BASE}/authorize`, {
     method: 'POST',
     headers: { 'X-API-KEY': apiKey, 'X-API-SECRET': apiSecret, 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({}),
