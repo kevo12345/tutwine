@@ -45,7 +45,14 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
   /** Aspect ratio (w/h) of the track the device actually delivered. */
   const [trackRatio, setTrackRatio] = useState<number | null>(null);
   const hintTimerRef = useRef<number | null>(null);
-  const { stageRef, objectFit } = useStageFit(trackRatio);
+  /**
+   * In the native app the WebView is portrait-locked and the camera delivers a
+   * real portrait track, so we can fill the stage edge-to-edge with `cover`
+   * without cropping the subject. In a mobile browser we keep auto-fitting.
+   */
+  const native = isNativeApp();
+  const { stageRef, objectFit } = useStageFit(trackRatio, native);
+
 
 
   /**
