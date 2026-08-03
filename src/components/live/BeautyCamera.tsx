@@ -111,9 +111,10 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          // "Cover" fit: the camera frame fills the whole broadcast frame
-          // (TikTok/IG Live style) — sides are cropped instead of letterboxed.
-          const scale = Math.max(outW / vw, outH / vh);
+          // "Cover" fit plus an extra zoom-in so the subject fills the frame
+          // (TikTok/IG Live style) — sides/top are cropped, never letterboxed.
+          const scale = Math.max(outW / vw, outH / vh) * zoom;
+
 
           let dw = vw * scale;
           const dh = vh * scale;
