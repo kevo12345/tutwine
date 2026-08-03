@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch('https://pay.sellapay.co.ke/v1/requestStkPush', {
+    const stkRes = await fetch(`${SELLAPAY_BASE}/requestStkPush`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${sellapayToken}`,
@@ -173,9 +173,9 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: Number(amount),
         phone: cleanPhone,
-        note: `TutWine ${tier} subscription`,
-        reference: subRef,
-        description: `TutWine ${tier} subscription`,
+        // docs: reference max 20 chars
+        reference: String(subRef).replace(/-/g, '').slice(0, 20),
+        description: `TutWine ${tier}`,
         callbackUrl,
         callback_url: callbackUrl,
       }),
