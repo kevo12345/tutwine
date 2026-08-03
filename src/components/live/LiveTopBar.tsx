@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Users, UserPlus, Check } from "lucide-react";
+import { X, Users, UserPlus, Check, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,8 +10,11 @@ type Props = {
   hostPhoto: string | null;
   isHost: boolean;
   viewerCount: number;
+  likeCount?: number;
   remaining: string;
   onClose: () => void;
+  /** Share this live with anyone (host and viewers). */
+  onShare?: () => void | Promise<void>;
   currentUserId?: string;
   /** Host only: ends the live for everyone (handled by the broadcaster controls). */
   onEndLive?: () => void | Promise<void>;
@@ -23,8 +26,10 @@ export function LiveTopBar({
   hostPhoto,
   isHost,
   viewerCount,
+  likeCount = 0,
   remaining,
   onClose,
+  onShare,
   currentUserId,
 }: Props) {
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -99,6 +104,19 @@ export function LiveTopBar({
           <Users className="h-3.5 w-3.5" />
           <span className="tabular-nums">{viewerCount}</span>
         </div>
+        <div className="flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+          <Heart className="h-3.5 w-3.5 fill-red-500 text-red-500" />
+          <span className="tabular-nums">{likeCount}</span>
+        </div>
+        {onShare && (
+          <button
+            onClick={() => void onShare()}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/70"
+            aria-label="Share live"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+        )}
         {!isHost && (
           <button
             onClick={onClose}

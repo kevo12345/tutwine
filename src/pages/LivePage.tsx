@@ -138,7 +138,7 @@ export default function LivePage() {
               </span>
               <div className="min-w-0">
                 <h2 className="font-semibold text-foreground">Open your room</h2>
-                <p className="text-sm text-muted-foreground">Free to host. Keep 60% of gifts.</p>
+                <p className="text-sm text-muted-foreground">Free to host. Keep 60% of tickets and gifts.</p>
               </div>
             </div>
           </div>

@@ -52,7 +52,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    // Preserve the deep link (e.g. a shared live) so we can return after auth.
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/login?redirect=${next}`} replace />;
+  }
 
   if (suspended) {
     return (
