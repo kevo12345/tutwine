@@ -138,11 +138,30 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          // "Cover" fit plus an extra zoom-in so the subject fills the frame
-          // (TikTok/IG Live style) — sides/top are cropped, never letterboxed.
-          const scale = Math.max(outW / vw, outH / vh) * (zoomRef.current || 1);
+          const z = zoomRef.current || 1;
+          // Base "cover" scale that fills the frame at 1x.
+          const cover = Math.max(outW / vw, outH / vh);
 
+          // Background: a blurred, full-bleed copy of the frame so sub-1x zoom
+          // looks polished (TikTok/IG blurred-backdrop) instead of black bars.
+          const bgScale = Math.max(outW / vw, outH / vh) * 1.1;
+          const bgW = vw * bgScale;
+          const bgH = vh * bgScale;
+          const bgX = (outW - bgW) / 2;
+          const bgY = (outH - bgH) / 2;
 
+          ctx.save();
+          ctx.filter = "blur(28px) brightness(0.85)";
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, outW, outH);
+          ctx.drawImage(video, bgX, bgY, bgW, bgH);
+          // Draw it again edge-overlapping to remove blur seams at the borders.
+          ctx.drawImage(video, bgX, bgY, bgW, bgH);
+          ctx.restore();
+
+          // Subject: scaled by the chosen zoom (cover * z). Below 1x the subject
+          // shrinks and floats over the blurred backdrop.
+          const scale = cover * z;
           let dw = vw * scale;
           const dh = vh * scale;
           if (st.enabled && st.faceSlim > 0) {
@@ -154,8 +173,9 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
           ctx.save();
           ctx.filter = beautyFilterCss(st);
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, outW, outH);
+          // Soft shadow under the subject so it lifts off the backdrop.
+          ctx.shadowColor = "rgba(0,0,0,0.45)";
+          ctx.shadowBlur = z < 1 ? 40 : 0;
           ctx.drawImage(video, dx, dy, dw, dh);
           ctx.restore();
 
