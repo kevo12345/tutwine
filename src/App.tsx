@@ -35,6 +35,7 @@ const FaqPage = lazy(() => import("./pages/FaqPage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
 const GoLiveSetupPage = lazy(() => import("./pages/GoLiveSetupPage"));
 const LiveRoomPage = lazy(() => import("./pages/LiveRoomPage"));
+
 const BuyTokensPage = lazy(() => import("./pages/BuyTokensPage"));
 const LivesPage = lazy(() => import("./pages/LivesPage"));
 const LiveViewPage = lazy(() => import("./pages/LiveViewPage"));
@@ -90,8 +91,9 @@ const App = () => (
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/live" element={<ProtectedRoute><LivePage /></ProtectedRoute>} />
-              <Route path="/live/start" element={<ProtectedRoute><GoLiveSetupPage /></ProtectedRoute>} />
-              <Route path="/live/:sessionId" element={<ProtectedRoute><LiveRoomPage /></ProtectedRoute>} />
+              <Route path="/live/start" element={<ProtectedRoute><PhoneOnlyGate><GoLiveSetupPage /></PhoneOnlyGate></ProtectedRoute>} />
+              <Route path="/live/:sessionId" element={<ProtectedRoute><PhoneOnlyGate><LiveRoomPage /></PhoneOnlyGate></ProtectedRoute>} />
+
               <Route path="/buy-tokens" element={<ProtectedRoute><BuyTokensPage /></ProtectedRoute>} />
               <Route path="/lives" element={<ProtectedRoute><LivesPage /></ProtectedRoute>} />
               <Route path="/lives/:shareLink" element={<LiveViewPage />} />
