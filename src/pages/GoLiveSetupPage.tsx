@@ -181,7 +181,7 @@ export default function GoLiveSetupPage() {
             type="file"
             accept="image/*"
             className="hidden"
-
+            onClick={(e) => ((e.target as HTMLInputElement).value = "")}
             onChange={(e) => onPickThumb(e.target.files?.[0] ?? null)}
           />
         </section>
