@@ -119,6 +119,10 @@ export default function GoLiveSetupPage() {
       toast.error("Live session must be at least 1 hour");
       return;
     }
+    if (!thumbFile && !savedThumbUrl) {
+      toast.error("Add a cover image before going live");
+      return;
+    }
     // The preview already owns a live camera track and the initial permission
     // request included the microphone. Re-requesting video here can fail with
     // NotReadableError on Android because the preview is using the camera.
