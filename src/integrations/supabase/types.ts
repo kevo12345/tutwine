@@ -1386,7 +1386,9 @@ export type Database = {
         Args: { _gift_key: string; _live_id: string; _token_amount: number }
         Returns: {
           gift_id: string
+          host_share: number
           new_balance: number
+          platform_share: number
         }[]
       }
       settle_live_earnings: {
