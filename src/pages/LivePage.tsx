@@ -14,6 +14,7 @@ import { LIVE_DURATION_OPTIONS, priceForLiveHours } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
+import { useSubscription } from "@/hooks/useSubscription";
 
 type Kind = "host" | "viewer";
 
@@ -129,7 +130,7 @@ export default function LivePage() {
             </div>
             <h2 className="mb-1 text-xl font-bold">Start your own live stream</h2>
             <p className="mb-3 text-sm opacity-90">
-              Hosting is free — you keep 60% of gifts sent by viewers.
+              Subscribers only — you keep 60% of gifts sent by viewers.
             </p>
             <Button
               onClick={openHost}
@@ -137,7 +138,7 @@ export default function LivePage() {
               disabled={desktopBlocked}
               className="w-full font-semibold"
             >
-              {desktopBlocked ? "Mobile only" : "Go Live now"}
+              {desktopBlocked ? "Mobile only" : canHost ? "Go Live now" : "Subscribe to go live"}
             </Button>
           </div>
 
@@ -195,10 +196,7 @@ export default function LivePage() {
               return (
                 <button
                   key={s.id}
-                  onClick={async () => {
-                    const ok = await requestAvPermissions();
-                    if (ok) navigate(`/live/${s.id}`);
-                  }}
+                  onClick={() => openViewer(s)}
                   className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition active:scale-[0.98]"
                 >
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
