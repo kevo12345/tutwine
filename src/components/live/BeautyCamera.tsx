@@ -42,7 +42,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
 
   /**
    * When the device exposes no zoom control we can still coach framing: if a
-   * detected face covers more than 60% of the frame, nudge the host back.
+   * detected face covers more than ~40% of the frame (TikTok-like framing keeps
+   * the face around 30%), nudge the host back.
    */
   const startFaceDistanceHint = (video: HTMLVideoElement) => {
     const Detector = (window as any).FaceDetector;
@@ -62,7 +63,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             box.width / video.videoWidth,
             box.height / video.videoHeight,
           );
-          setTooClose(coverage > 0.6);
+          setTooClose(coverage > 0.4);
         } else {
           setTooClose(false);
         }
@@ -94,14 +95,16 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error("Camera not supported in this browser");
         }
-        // Prefer a native portrait track. `aspectRatio` is important: width and
-        // height alone are treated as loose hints by Safari and Chrome.
+        // Widest natural framing wins over an exact portrait track. A 3:4 (full
+        // sensor) capture keeps the camera's entire vertical field of view, so
+        // cover-cropping it into the 9:16 stage trims only the sides — head room
+        // and shoulders stay in frame instead of cropping into the face.
         const attempts: MediaStreamConstraints[] = [
           {
             video: {
-              width: { ideal: width, min: 720 },
-              height: { ideal: height, min: 1280 },
-              aspectRatio: { ideal: 9 / 16 },
+              width: { ideal: 1440 },
+              height: { ideal: 1920 },
+              aspectRatio: { ideal: 3 / 4 },
               frameRate: { ideal: 30, min: 24 },
               facingMode: { ideal: facingMode },
             },
@@ -109,9 +112,9 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           },
           {
             video: {
-              width: { ideal: 720 },
+              width: { ideal: 960 },
               height: { ideal: 1280 },
-              aspectRatio: { ideal: 9 / 16 },
+              aspectRatio: { ideal: 3 / 4 },
               frameRate: { ideal: 30 },
               facingMode: { ideal: facingMode },
             },
@@ -119,13 +122,20 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
           },
           {
             video: {
+              width: { ideal: width, min: 720 },
+              height: { ideal: height, min: 1280 },
               aspectRatio: { ideal: 9 / 16 },
               facingMode: { ideal: facingMode },
             },
             audio: false,
           },
+          {
+            video: { facingMode: { ideal: facingMode } },
+            audio: false,
+          },
           { video: true, audio: false },
         ];
+
 
         let stream: MediaStream | null = null;
         let lastErr: any = null;
