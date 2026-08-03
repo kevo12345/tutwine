@@ -103,9 +103,9 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          // "Contain" fit: the entire camera frame is always visible inside the
-          // 9:16 broadcast frame — nothing is cropped, so no zoom-in effect.
-          const scale = Math.min(outW / vw, outH / vh);
+          // "Cover" fit: the camera frame fills the whole 9:16 broadcast frame
+          // (TikTok/IG Live style) — sides are cropped instead of letterboxed.
+          const scale = Math.max(outW / vw, outH / vh);
           let dw = vw * scale;
           const dh = vh * scale;
           if (st.enabled && st.faceSlim > 0) {
@@ -168,7 +168,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
       <video ref={videoRef} className="hidden" playsInline muted />
       <canvas
         ref={canvasRef}
-        className="h-full w-full object-contain"
+        className="h-full w-full object-cover"
         style={{ transform: mirror ? "scaleX(-1)" : undefined }}
       />
       {error && (
