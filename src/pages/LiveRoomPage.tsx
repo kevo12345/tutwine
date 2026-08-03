@@ -112,7 +112,7 @@ export default function LiveRoomPage() {
   return (
     <div
       ref={containerRef}
-      className="no-scrollbar fixed inset-0 z-50 h-[100dvh] w-full snap-y snap-mandatory overflow-y-scroll overscroll-none bg-black"
+      className="no-scrollbar fixed inset-0 z-50 h-[100dvh] w-screen snap-y snap-mandatory overflow-y-scroll overscroll-none bg-black"
     >
       {feed.map((s, idx) => (
         <div
@@ -121,7 +121,7 @@ export default function LiveRoomPage() {
             panelRefs.current[idx] = n;
           }}
           data-idx={idx}
-          className="relative h-[100dvh] w-full snap-start snap-always"
+          className="relative h-[100dvh] min-h-[100dvh] w-screen shrink-0 snap-start snap-always"
         >
           <LivePanel
             sessionId={s.id}
