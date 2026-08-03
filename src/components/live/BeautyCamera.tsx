@@ -124,8 +124,8 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             return;
           }
 
-          // Fixed TikTok-standard 9:16 output (1080x1920). Always cover-fit so
-          // there are never black bars above/below the subject.
+          // Fixed 9:16 output (1080x1920). The camera frame is *contained*
+          // (never cropped) inside it; leftover space gets a blurred backdrop.
           const outW = width;
           const outH = height;
           if (canvas.width !== outW || canvas.height !== outH) {
@@ -133,11 +133,21 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
             canvas.height = outH;
           }
 
-          // Cover scale fills the 9:16 frame; zoom only ever crops in further.
           const z = Math.max(1, zoomRef.current || 1);
-          const cover = Math.max(outW / vw, outH / vh);
+          const fit = Math.min(outW / vw, outH / vh);
 
-          const scale = cover * z;
+          // Blurred backdrop so no hard black bars appear around the frame.
+          const bgScale = Math.max(outW / vw, outH / vh) * 1.1;
+          const bgW = vw * bgScale;
+          const bgH = vh * bgScale;
+          ctx.save();
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, outW, outH);
+          ctx.filter = "blur(28px) brightness(0.8)";
+          ctx.drawImage(video, (outW - bgW) / 2, (outH - bgH) / 2, bgW, bgH);
+          ctx.restore();
+
+          const scale = fit * z;
           let dw = vw * scale;
           const dh = vh * scale;
           if (st.enabled && st.faceSlim > 0) {
@@ -206,7 +216,7 @@ export const BeautyCamera = forwardRef<BeautyCameraHandle, Props>(function Beaut
         ref={canvasRef}
         className="absolute inset-0 block h-full w-full"
         style={{
-          objectFit: "cover",
+          objectFit: "contain",
           objectPosition: "center",
           transform: mirror ? "scaleX(-1)" : undefined,
         }}
