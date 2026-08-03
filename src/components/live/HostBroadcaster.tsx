@@ -117,19 +117,19 @@ export function HostBroadcaster({ roomUrl, token, onLeave }: Props) {
 
       {/* Overlays */}
       {connecting && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+        <div className="absolute inset-0 z-[2] flex items-center justify-center bg-black/40">
           <Loader2 className="h-8 w-8 animate-spin text-white" />
         </div>
       )}
 
       {/* Host controls */}
-      <div className="safe-top pointer-events-none absolute inset-x-0 top-0 flex justify-end p-2 sm:p-3">
+      <div className="safe-top pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-end p-2 sm:p-3">
         <div className="pointer-events-auto rounded-full bg-black/60 px-3 py-1 text-[11px] text-white">
           {joined ? "LIVE · You are broadcasting" : "Connecting…"}
         </div>
       </div>
 
-      <div className="safe-bottom pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-2 sm:p-3">
+      <div className="safe-bottom pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center p-2 sm:p-3">
         <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-black/60 p-1.5 sm:gap-2">
           <IconBtn onClick={toggleMic} title={micOn ? "Mute mic" : "Unmute mic"}>
             {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}

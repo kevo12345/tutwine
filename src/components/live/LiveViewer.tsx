@@ -130,7 +130,7 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
       />
       <audio ref={audioRef} autoPlay />
       {(connecting || !hasVideo) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
+        <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
           <Loader2 className="h-8 w-8 animate-spin" />
           <p className="text-xs opacity-80">
             {connecting ? "Connecting to live…" : "Waiting for host video…"}
