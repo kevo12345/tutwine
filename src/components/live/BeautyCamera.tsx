@@ -21,6 +21,7 @@ type Props = {
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
   /** Extra digital zoom applied on top of the cover fit. 1 = none. */
+  /** Values below 1 shrink the subject (letterbox pillars filled black). */
   zoom?: number;
 };
 
