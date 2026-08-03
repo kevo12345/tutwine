@@ -82,6 +82,7 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   }
 
   return (
+    <>
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
@@ -108,7 +109,8 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
         ) : (
           <div className="grid grid-cols-3 gap-3 pb-4">
             {gifts.map((g) => {
-              const disabled = sending !== null || balance < g.token_price;
+              const disabled = sending !== null;
+              const tooPoor = balance < g.token_price;
               return (
                 <button
                   key={g.key}
