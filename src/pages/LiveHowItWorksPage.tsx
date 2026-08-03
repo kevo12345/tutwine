@@ -78,21 +78,22 @@ export default function LiveHowItWorksPage() {
           <div className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-2 flex items-center gap-2 text-foreground">
               <Clock className="h-4 w-4 text-primary" />
-              <span className="font-semibold">Session length bonus</span>
+              <span className="font-semibold">Tickets</span>
             </div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex justify-between gap-3">
-                <span>Live for 1 hour or more</span>
-                <span className="font-semibold text-foreground">60% of ticket revenue</span>
+                <span>Your share of every ticket</span>
+                <span className="font-semibold text-foreground">60%</span>
               </li>
               <li className="flex justify-between gap-3">
-                <span>Live for under 1 hour</span>
-                <span className="font-semibold text-foreground">10% of ticket revenue</span>
+                <span>Tutwine platform commission</span>
+                <span className="font-semibold text-foreground">40%</span>
               </li>
             </ul>
             <p className="mt-3 text-xs text-muted-foreground">
-              Ticket revenue is settled once your live ends. Staying on air for a full hour is what unlocks
-              the 60% rate — short sessions settle at 10%.
+              A ticket costs 1 coin per hour and only works on that one live. Example: a $10 ticket pays you
+              $6 and Tutwine $4 — credited to your earnings the moment it's bought. If your live runs past an
+              hour, viewers renew automatically when they have coins.
             </p>
           </div>
 
