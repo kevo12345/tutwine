@@ -119,6 +119,10 @@ export default function GoLiveSetupPage() {
       toast.error("Live session must be at least 1 hour");
       return;
     }
+    if (!thumbFile && !savedThumbUrl) {
+      toast.error("Add a cover image before going live");
+      return;
+    }
     // The preview already owns a live camera track and the initial permission
     // request included the microphone. Re-requesting video here can fail with
     // NotReadableError on Android because the preview is using the camera.
@@ -241,7 +245,7 @@ export default function GoLiveSetupPage() {
           </label>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">
-              {shownThumb ? "Cover ready" : "Add a cover image"}
+              {shownThumb ? "Cover ready" : "Add a cover image (required)"}
             </p>
             <p className="flex items-center gap-1 truncate text-[11px] text-foreground/70">
               <Clock className="h-3 w-3" /> {hours}h live · ends around {expiresPreview}
@@ -269,7 +273,7 @@ export default function GoLiveSetupPage() {
 
         <Button
           onClick={start}
-          disabled={starting}
+          disabled={starting || !shownThumb}
           size="lg"
           className="h-14 w-full rounded-full gradient-warm border-0 text-base font-bold text-primary-foreground shadow-glow"
         >
@@ -282,7 +286,9 @@ export default function GoLiveSetupPage() {
           )}
         </Button>
         <p className="text-center text-[11px] text-foreground/70">
-          Subscribers only. Viewers pay 1 token per hour to join.
+          {shownThumb
+            ? "Subscribers only. Viewers pay 1 token per hour to join."
+            : "A cover image is required — it's shown when you pause your live."}
         </p>
       </div>
 

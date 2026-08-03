@@ -71,6 +71,13 @@ Deno.serve(async (req) => {
     const durationHours = Number(body?.duration_hours);
     const thumbnailUrl = typeof body?.thumbnail_url === 'string' ? body.thumbnail_url : null;
 
+    if (!thumbnailUrl) {
+      return new Response(
+        JSON.stringify({ error: 'A cover image is required to go live' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!Number.isFinite(durationHours) || durationHours < 1 || durationHours > 24) {
       return new Response(
         JSON.stringify({ error: 'duration_hours must be between 1 and 24' }),
