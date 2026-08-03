@@ -164,11 +164,11 @@ export default function GoLiveSetupPage() {
       )}
 
       {/* Scrim for legible overlays */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-background/80 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-background via-background/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-40 bg-gradient-to-b from-background/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[46%] bg-gradient-to-t from-background via-background/80 to-transparent" />
 
       {/* Top bar */}
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
+      <div className="safe-top absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -184,7 +184,7 @@ export default function GoLiveSetupPage() {
       </div>
 
       {/* Bottom control stack */}
-      <div className="absolute inset-x-0 bottom-0 space-y-4 p-4 pb-6">
+      <div className="safe-bottom absolute inset-x-0 bottom-0 z-20 space-y-4 p-4 pb-6">
         {/* Tool row */}
         <div className="flex items-start justify-around">
           <ToolButton
