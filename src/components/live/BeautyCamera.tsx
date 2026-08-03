@@ -20,9 +20,10 @@ type Props = {
   mirror?: boolean;
   /** "user" (front) or "environment" (back) camera. */
   facingMode?: "user" | "environment";
-  /** Extra digital zoom applied on top of the cover fit. 1 = none. */
-  /** Minimum is 1 (full 9:16 cover fit); higher values crop in further. */
+  /** Digital zoom for the subject layer. 1 = full 9:16 cover fit. */
+  /** Values below 1 shrink the subject inside a full-bleed background. */
   zoom?: number;
+
 };
 
 
