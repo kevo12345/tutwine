@@ -134,3 +134,47 @@ export function sellapayUserMessage(err: unknown): { message: string; code: stri
   }
   return { message: err instanceof Error ? err.message : 'Unknown error', code: 'UNKNOWN' };
 }
+
+/**
+ * Initiate an M-Pesa STK push.
+ * IMPORTANT: SellaPay's /requestStkPush only reads form-encoded fields
+ * (a JSON body returns `{"error":"Amount and phone is required"}`).
+ */
+export async function sellapayStkPush(params: {
+  token: string;
+  phone: string;
+  amount: number;
+  reference: string;
+  description: string;
+  callbackUrl?: string;
+}): Promise<{ ok: boolean; status: number; raw: string; data: any }> {
+  const body = new URLSearchParams({
+    phone: params.phone,
+    amount: String(params.amount),
+    reference: params.reference.slice(0, 20),
+    description: params.description,
+  });
+  if (params.callbackUrl) {
+    body.set('callbackUrl', params.callbackUrl);
+    body.set('callback_url', params.callbackUrl);
+  }
+
+  const res = await fetchWithTimeout(`${sellapayBase()}/requestStkPush`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${params.token}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body: body.toString(),
+  });
+
+  const raw = (await res.text()).trim();
+  let data: any = null;
+  if (raw) {
+    try { data = JSON.parse(raw); } catch { data = { raw }; }
+  }
+  const ok = res.ok && !!data && data.error == null && data.r_status !== false;
+  console.log('SellaPay STK push:', res.status, raw.slice(0, 400));
+  return { ok, status: res.status, raw, data };
+}
