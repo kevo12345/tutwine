@@ -17,5 +17,3 @@ project_id = "erhmkxbcubdopxbryetm"
     verify_jwt = false
   [functions.nowpayments-callback]
     verify_jwt = false
-  [functions.sellapay-debug]
-    verify_jwt = false
