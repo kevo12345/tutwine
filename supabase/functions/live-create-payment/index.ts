@@ -115,24 +115,17 @@ Deno.serve(async (req) => {
       const cleanPhone = cleanKenyanPhone(String(phone));
       const sellapayToken = await getSellapayToken();
       const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback?live_${kind === 'host' ? 'session' : 'pass'}_id=${rowId}`;
-      const stkRes = await fetch(`${sellapayBase()}/requestStkPush`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${sellapayToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          amount: amountKes,
-          phone: cleanPhone,
-          // docs: reference max 20 chars
-          reference: String(rowId).replace(/-/g, '').slice(0, 20),
-          description: `TutWine Live ${hours}h`,
-          callbackUrl,
-          callback_url: callbackUrl,
-        }),
+      const stkResult = await sellapayStkPush({
+        token: sellapayToken,
+        phone: cleanPhone,
+        amount: amountKes,
+        reference: String(rowId).replace(/-/g, '').slice(0, 20),
+        description: `TutWine Live ${hours}h`,
+        callbackUrl,
       });
-      const raw = await stkRes.text();
-      let stk: any = null;
-      try { stk = JSON.parse(raw); } catch { stk = { raw }; }
-      if (!stkRes.ok) {
-        console.error('Live STK push failed', stk);
+      const stk = stkResult.data;
+      if (!stkResult.ok) {
+        console.error('Live STK push failed', stkResult.raw);
         await cancelRow(service, kind, rowId);
         return new Response(JSON.stringify({ error: 'STK push failed', details: stk }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
