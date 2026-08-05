@@ -109,45 +109,25 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const callbackUrl = buildCallbackUrl(supabaseUrl, pendingSubscription.id);
 
-    const stkRes = await fetch(`${sellapayBase()}/requestStkPush`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${sellapayToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        amount: Number(amount),
-        phone: cleanPhone,
-        // docs: reference max 20 chars
-        reference: String(subRef).replace(/-/g, '').slice(0, 20),
-        description: `TutWine ${tier}`,
-        callbackUrl,
-        callback_url: callbackUrl,
-      }),
+    const stk = await sellapayStkPush({
+      token: sellapayToken,
+      phone: cleanPhone,
+      amount: Number(amount),
+      reference: String(subRef).replace(/-/g, '').slice(0, 20),
+      description: `TutWine ${tier}`,
+      callbackUrl,
     });
+    const stkData = stk.data;
 
-    const stkRaw = await stkRes.text();
-    let stkData: any = null;
-    if (stkRaw && stkRaw.trim().length > 0) {
-      try {
-        stkData = JSON.parse(stkRaw);
-      } catch (_e) {
-        stkData = { raw: stkRaw };
-      }
-    }
-    console.log('STK Push status:', stkRes.status, 'body:', stkRaw?.slice(0, 500));
-    console.log('STK Push response:', JSON.stringify(stkData));
-
-    if (!stkRes.ok || !stkData) {
-      console.error('STK Push failed:', stkData);
+    if (!stk.ok) {
+      console.error('STK Push failed:', stk.raw);
       await serviceClient
         .from('subscriptions')
         .update({ status: 'canceled' })
         .eq('id', pendingSubscription.id);
 
       return new Response(
-        JSON.stringify({ error: 'STK push failed', details: stkData || stkRaw || 'empty response' }),
+        JSON.stringify({ error: 'STK push failed', details: stkData || stk.raw || 'empty response' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
