@@ -205,7 +205,10 @@ export default function HostEarningsPage() {
   const cooldownActive =
     latestWithdrawal && new Date(latestWithdrawal.cooldown_until).getTime() > Date.now();
   const available = Number(stats?.available_earnings ?? 0);
+  const giftTokens = Number(stats?.total_gift_tokens ?? 0);
+  const ticketTokens = Math.max(0, grossTokens - giftTokens);
   const withdrawDisabled = available < MIN_WITHDRAWAL || cooldownActive;
+
 
   async function handleConvert() {
     const amt = Number(convertAmount);
