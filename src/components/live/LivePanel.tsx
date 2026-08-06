@@ -78,9 +78,21 @@ export function LivePanel({
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data: rows, error } = await (supabase as any).rpc("get_live_session_room", {
-        _session_id: sessionId,
-      });
+      // Room details and any existing ticket are independent — fetch them together.
+      const [roomRes, passRes] = await Promise.all([
+        (supabase as any).rpc("get_live_session_room", { _session_id: sessionId }),
+        supabase
+          .from("live_passes")
+          .select("expires_at, status")
+          .eq("session_id", sessionId)
+          .eq("viewer_id", user.id)
+          .eq("status", "active")
+          .gt("expires_at", new Date().toISOString())
+          .order("expires_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      const { data: rows, error } = roomRes as any;
       const session = Array.isArray(rows) ? rows[0] : rows;
       if (cancelled) return;
       if (error || !session || session.status !== "active" || !session.daily_room_url) {
@@ -98,17 +110,7 @@ export function LivePanel({
 
       let myExpiresAt = session.expires_at;
       if (session.host_id !== user.id) {
-        const { data: pass } = await supabase
-          .from("live_passes")
-          .select("expires_at, status")
-          .eq("session_id", sessionId)
-          .eq("viewer_id", user.id)
-          .eq("status", "active")
-          .gt("expires_at", new Date().toISOString())
-          .order("expires_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        let passExpiresAt = pass?.expires_at ?? null;
+        let passExpiresAt = (passRes as any)?.data?.expires_at ?? null;
         if (!passExpiresAt) {
           // No ticket yet: buy one with coins, or prompt a top-up when the balance is short.
           const { data: bought, error: buyErr } = await (supabase as any).rpc(
@@ -129,8 +131,8 @@ export function LivePanel({
             }
             return;
           }
-          await refreshProfile();
           passExpiresAt = row.expires_at;
+          refreshProfile();
         }
         myExpiresAt = new Date(
           Math.min(new Date(passExpiresAt).getTime(), new Date(session.expires_at).getTime()),
@@ -139,33 +141,34 @@ export function LivePanel({
       setRoomUrl(session.daily_room_url);
       setExpiresAt(myExpiresAt);
       setAuthorized(true);
+      // Show the stream right away; the rest is cosmetic and loads behind it.
+      setLoading(false);
 
-      // Persisted like count + pause timestamp
-      const { data: counts } = await supabase
-        .from("live_sessions")
-        .select("like_count, paused_at")
-        .eq("id", sessionId)
-        .maybeSingle();
-      if (!cancelled && counts) {
-        setLikeCount(Number((counts as any).like_count ?? 0));
-        setPausedAt((counts as any).paused_at ?? null);
-      }
-
-      // Host profile info
-      if (!initialHostName || !initialHostPhoto) {
-        const { data: profs } = await supabase.rpc("get_profiles_public", { _targets: [session.host_id] });
-        const hp = (profs ?? [])[0] as any;
-        if (!cancelled && hp) {
+      void (async () => {
+        const [countsRes, profRes] = await Promise.all([
+          supabase.from("live_sessions").select("like_count, paused_at").eq("id", sessionId).maybeSingle(),
+          !initialHostName || !initialHostPhoto
+            ? supabase.rpc("get_profiles_public", { _targets: [session.host_id] })
+            : Promise.resolve({ data: null } as any),
+        ]);
+        if (cancelled) return;
+        const counts = (countsRes as any)?.data;
+        if (counts) {
+          setLikeCount(Number(counts.like_count ?? 0));
+          setPausedAt(counts.paused_at ?? null);
+        }
+        const hp = ((profRes as any)?.data ?? [])[0] as any;
+        if (hp) {
           if (hp.display_name) setHostName((n) => n ?? hp.display_name);
           if (hp.photos?.[0]) setHostPhoto((p) => p ?? hp.photos[0]);
         }
-      }
-      setLoading(false);
+      })();
     })();
     return () => {
       cancelled = true;
     };
   }, [sessionId, user, active, navigate, onExit, initialHostName, initialHostPhoto]);
+
 
   /** Buy another hour on this live. Returns true when access was extended. */
   const renewTicket = useCallback(async (): Promise<boolean> => {

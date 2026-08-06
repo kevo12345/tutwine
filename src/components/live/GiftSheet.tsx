@@ -30,30 +30,65 @@ type Props = {
   onSent?: () => void;
 };
 
+// Cached across mounts so the sheet opens instantly after the first load.
+let catalogCache: CatalogGift[] | null = null;
+
+async function fetchCatalog(attempt = 0): Promise<CatalogGift[]> {
+  const { data, error } = await supabase
+    .from("gift_catalog")
+    .select("id, key, label, emoji, token_price")
+    .eq("active", true)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    if (attempt < 2) {
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      return fetchCatalog(attempt + 1);
+    }
+    throw error;
+  }
+  return (data as CatalogGift[]) ?? [];
+}
+
 export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   const { profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
-  const [gifts, setGifts] = useState<CatalogGift[]>([]);
+  const [gifts, setGifts] = useState<CatalogGift[]>(catalogCache ?? []);
   const [loading, setLoading] = useState(false);
   const [shortfall, setShortfall] = useState<number | null>(null);
   const balance = Number((profile as any)?.token_balance ?? 0);
 
+  // Preload the catalog as soon as the live UI mounts, with retries.
   useEffect(() => {
-    if (!open || gifts.length) return;
+    if (hostIsSelf || catalogCache) return;
+    let cancelled = false;
     setLoading(true);
-    (async () => {
-      const { data, error } = await supabase
-        .from("gift_catalog")
-        .select("id, key, label, emoji, token_price")
-        .eq("active", true)
-        .order("sort_order", { ascending: true });
-      if (error) toast.error("Couldn't load gifts");
-      setGifts((data as CatalogGift[]) ?? []);
-      setLoading(false);
-    })();
-  }, [open, gifts.length]);
+    fetchCatalog()
+      .then((list) => {
+        catalogCache = list;
+        if (!cancelled) setGifts(list);
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [hostIsSelf]);
+
+  // Retry on open if the preload failed.
+  useEffect(() => {
+    if (!open || gifts.length || loading) return;
+    setLoading(true);
+    fetchCatalog()
+      .then((list) => {
+        catalogCache = list;
+        setGifts(list);
+      })
+      .catch(() => toast.error("Couldn't load gifts — check your connection"))
+      .finally(() => setLoading(false));
+  }, [open, gifts.length, loading]);
+
 
   async function send(gift: CatalogGift) {
     if (hostIsSelf) return;
