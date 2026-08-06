@@ -215,7 +215,8 @@ export default function HostEarningsPage() {
     if (!amt || amt < MIN_WITHDRAWAL) return toast.error(`Minimum is ${MIN_WITHDRAWAL}`);
     if (amt > available) return toast.error("Insufficient earnings");
     if (!walletAddr || walletAddr.trim().length < 10)
-      return toast.error("Enter a valid Litecoin wallet address");
+      return toast.error("Enter a valid USDT (BEP20) address");
+
     setSubmitting(true);
     const { error } = await supabase.rpc("request_withdrawal" as any, {
       _amount: amt,
