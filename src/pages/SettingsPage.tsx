@@ -5,7 +5,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Shield, CreditCard, LogOut, ChevronRight, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, User, Shield, CreditCard, LogOut, ChevronRight, Loader2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,15 +23,20 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TUTWINE_URL = "https://tutwine.com";
 
+const isValidBep20 = (v: string) => /^0x[a-fA-F0-9]{40}$/.test(v.trim());
+
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
 
-  const [wallet, setWallet] = useState((profile as any)?.litecoin_wallet_address ?? "");
+  const savedWallet = ((profile as any)?.litecoin_wallet_address ?? "") as string;
+  const [wallet, setWallet] = useState(savedWallet);
   const [savingWallet, setSavingWallet] = useState(false);
+  const [editingWallet, setEditingWallet] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
-    setWallet((profile as any)?.litecoin_wallet_address ?? "");
+    setWallet(((profile as any)?.litecoin_wallet_address ?? "") as string);
   }, [profile]);
 
 
@@ -38,9 +53,14 @@ export default function SettingsPage() {
       .update({ litecoin_wallet_address: wallet.trim() || null } as any)
       .eq("user_id", user.id);
     setSavingWallet(false);
+    setConfirmOpen(false);
     if (error) toast.error(error.message);
-    else toast.success("Litecoin wallet saved");
+    else {
+      setEditingWallet(false);
+      toast.success("USDT (BEP20) address saved");
+    }
   };
+
 
   const handleLogout = async () => {
     await signOut();
@@ -105,20 +125,66 @@ export default function SettingsPage() {
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">Payouts</h2>
           <Card className="border-0 shadow-card overflow-hidden">
             <CardContent className="p-4 space-y-3">
-              <Label htmlFor="ltc" className="text-sm">Litecoin Wallet Address</Label>
-              <Input
-                id="ltc"
-                value={wallet}
-                onChange={(e) => setWallet(e.target.value)}
-                placeholder="Your LTC address (required for withdrawals)"
-              />
-              <Button size="sm" onClick={handleSaveWallet} disabled={savingWallet}>
-                {savingWallet && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Save wallet
-              </Button>
+              <Label htmlFor="usdt" className="text-sm">USDT (BEP20) Address</Label>
+              {!editingWallet ? (
+                <div className="space-y-3">
+                  <p className="break-all rounded-md bg-muted px-3 py-2 text-sm">
+                    {savedWallet || <span className="text-muted-foreground">No USDT (BEP20) address saved yet</span>}
+                  </p>
+                  <Button size="sm" variant="outline" onClick={() => { setWallet(savedWallet); setEditingWallet(true); }}>
+                    <Pencil className="h-4 w-4 mr-2" /> {savedWallet ? "Edit address" : "Add address"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Input
+                    id="usdt"
+                    value={wallet}
+                    onChange={(e) => setWallet(e.target.value)}
+                    placeholder="0x... BEP20 (BNB Smart Chain) address"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Only USDT on BEP20 (BNB Smart Chain) is supported. Sending to an address on another
+                    network will permanently lose your funds.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={savingWallet}>
+                      {savingWallet && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Save address
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setWallet(savedWallet); setEditingWallet(false); }}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
+
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm your USDT (BEP20) address</AlertDialogTitle>
+              <AlertDialogDescription>
+                Please double-check this is correct. Withdrawals sent to a wrong address cannot be
+                recovered.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <p className="break-all rounded-md bg-muted px-3 py-2 text-sm font-mono">{wallet.trim()}</p>
+            {!isValidBep20(wallet) && (
+              <p className="text-[11px] text-destructive">
+                This does not look like a BEP20 address (should start with 0x and be 42 characters).
+                You can still save it, but make sure it is correct.
+              </p>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel>Let me edit it</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSaveWallet}>Yes, it's correct</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
 
         {/* Account Actions */}
         <div className="mb-6">
