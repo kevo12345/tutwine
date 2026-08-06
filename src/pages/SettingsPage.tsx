@@ -5,7 +5,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Shield, CreditCard, LogOut, ChevronRight, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, User, Shield, CreditCard, LogOut, ChevronRight, Loader2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,15 +23,20 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TUTWINE_URL = "https://tutwine.com";
 
+const isValidBep20 = (v: string) => /^0x[a-fA-F0-9]{40}$/.test(v.trim());
+
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
 
-  const [wallet, setWallet] = useState((profile as any)?.litecoin_wallet_address ?? "");
+  const savedWallet = ((profile as any)?.litecoin_wallet_address ?? "") as string;
+  const [wallet, setWallet] = useState(savedWallet);
   const [savingWallet, setSavingWallet] = useState(false);
+  const [editingWallet, setEditingWallet] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
-    setWallet((profile as any)?.litecoin_wallet_address ?? "");
+    setWallet(((profile as any)?.litecoin_wallet_address ?? "") as string);
   }, [profile]);
 
 
@@ -38,9 +53,14 @@ export default function SettingsPage() {
       .update({ litecoin_wallet_address: wallet.trim() || null } as any)
       .eq("user_id", user.id);
     setSavingWallet(false);
+    setConfirmOpen(false);
     if (error) toast.error(error.message);
-    else toast.success("Litecoin wallet saved");
+    else {
+      setEditingWallet(false);
+      toast.success("USDT (BEP20) address saved");
+    }
   };
+
 
   const handleLogout = async () => {
     await signOut();
