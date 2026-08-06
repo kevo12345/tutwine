@@ -46,6 +46,7 @@ export function PaymentProcessingOverlay({
   onClose,
 }: PaymentProcessingOverlayProps) {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const qc = useQueryClient();
   const [state, setState] = useState<PaymentState>("waiting");
   const [phase, setPhase] = useState<Phase>("processing");
