@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Users, Flag, TrendingUp, Crown, Coins, Radio, Heart, Gift,
-  Ticket, Banknote, Wallet, ArrowUpRight, CircleDot,
+  Ticket, Banknote, Wallet, ArrowUpRight, CircleDot, Eye, EyeOff,
 } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line,
@@ -16,10 +18,18 @@ interface OverviewPageProps {
   stats: AdminStats | null;
 }
 
-const num = (v?: number | null) =>
-  v === undefined || v === null ? "—" : Math.round(v).toLocaleString();
-const money = (v?: number | null) =>
-  v === undefined || v === null ? "—" : `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+const exactNum = (v: number) => Math.round(v).toLocaleString("en-US");
+const exactMoney = (v: number) =>
+  `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Anything past 999 is rounded to k / M / B, with the exact figure on hover.
+function compact(value: number) {
+  const abs = Math.abs(value);
+  if (abs < 1000) return exactNum(value);
+  if (abs < 1_000_000) return `${(value / 1000).toFixed(abs < 10_000 ? 1 : 0)}k`;
+  if (abs < 1_000_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  return `${(value / 1_000_000_000).toFixed(1)}B`;
+}
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
@@ -28,6 +38,7 @@ const PIE_COLORS = [
   "hsl(var(--warning))",
   "hsl(var(--success))",
 ];
+
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
