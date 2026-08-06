@@ -12,7 +12,7 @@ type Props = {
   onGift: () => void;
 };
 
-const GIFT_EMOJI = ["🌹", "🎁", "💎", "🍕", "🍾", "🔥", "⭐", "⭐"];
+const GIFT_EMOJI = ["🌹", "🎁", "💎", "🍕", "🍾", "🔥", "⭐", "🦄"];
 
 export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift }: Props) {
   const [draft, setDraft] = useState("");
@@ -64,8 +64,10 @@ export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift 
         e.preventDefault();
         send();
       }}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-2 pb-3 pt-6 sm:px-3 safe-bottom"
+      style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}
+      className={`pointer-events-auto absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-2 pt-6 transition-transform duration-150 sm:px-3 ${keyboardInset ? "pb-2" : "pb-3 safe-bottom"}`}
     >
+
       <Input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
