@@ -121,13 +121,16 @@ export function LivePanel({
       setExpiresAt(myExpiresAt);
       setAuthorized(true);
 
-      // Persisted like count
+      // Persisted like count + pause timestamp
       const { data: counts } = await supabase
         .from("live_sessions")
-        .select("like_count")
+        .select("like_count, paused_at")
         .eq("id", sessionId)
         .maybeSingle();
-      if (!cancelled && counts) setLikeCount(Number((counts as any).like_count ?? 0));
+      if (!cancelled && counts) {
+        setLikeCount(Number((counts as any).like_count ?? 0));
+        setPausedAt((counts as any).paused_at ?? null);
+      }
 
       // Host profile info
       if (!initialHostName || !initialHostPhoto) {
