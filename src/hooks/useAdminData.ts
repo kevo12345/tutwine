@@ -15,6 +15,7 @@ interface AdminStats {
   giftsSent?: number;
   giftTokens?: number;
   tokensSold?: number;
+  coinsSpent?: number;
   platformEarnings?: number;
   hostEarnings?: number;
   availableEarnings?: number;

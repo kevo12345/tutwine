@@ -72,7 +72,7 @@ serve(async (req) => {
           usersRes, reportsRes, subsRes, recentRes, onlineRes, liveRes,
           purchasesRes, giftsRes, ticketsRes, passesRes, matchesRes,
           profileMoneyRes, sessionMoneyRes, livesMoneyRes, signupSeriesRes, purchaseSeriesRes, tiersRes, withdrawalsRes,
-          presenceRes, sessionListRes, passListRes,
+          presenceRes, sessionListRes, passListRes, spendRes,
         ] = await Promise.all([
           head("profiles"),
           head("reports").eq("status", "pending"),
@@ -95,6 +95,7 @@ serve(async (req) => {
           adminClient.from("user_presence").select("last_seen_at"),
           adminClient.from("live_sessions").select("id, host_id, status, started_at, ended_at, created_at").gte("created_at", thirtyDaysAgo),
           adminClient.from("live_passes").select("session_id, viewer_id, created_at, expires_at").gte("created_at", thirtyDaysAgo),
+          adminClient.from("token_transactions").select("amount").eq("type", "spend").eq("status", "completed"),
         ]);
 
 
@@ -193,6 +194,7 @@ serve(async (req) => {
           giftsSent: (giftsRes.data ?? []).length,
           giftTokens: sum(giftsRes.data, "token_amount"),
           tokensSold: sum(purchasesRes.data, "amount"),
+          coinsSpent: sum(spendRes.data, "amount"),
           platformEarnings: sum(sessionMoneyRes.data, "platform_earning") + sum(livesMoneyRes.data, "platform_earning"),
           hostEarnings: sum(sessionMoneyRes.data, "host_earning") + sum(livesMoneyRes.data, "host_earning"),
           availableEarnings: sum(profileMoneyRes.data, "available_earnings"),
