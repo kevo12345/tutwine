@@ -72,7 +72,7 @@ serve(async (req) => {
           usersRes, reportsRes, subsRes, recentRes, onlineRes, liveRes,
           purchasesRes, giftsRes, ticketsRes, passesRes, matchesRes,
           profileMoneyRes, sessionMoneyRes, livesMoneyRes, signupSeriesRes, purchaseSeriesRes, tiersRes, withdrawalsRes,
-          presenceRes, sessionListRes, passListRes,
+          presenceRes, sessionListRes, passListRes, spendRes,
         ] = await Promise.all([
           head("profiles"),
           head("reports").eq("status", "pending"),
