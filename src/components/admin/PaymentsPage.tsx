@@ -68,30 +68,77 @@ export default function PaymentsPage() {
     fetchPayments();
   }, []);
 
+  const [showExact, setShowExact] = useState(false);
+  const fmt = (v: number) => (showExact ? exactAmount(v) : compactAmount(v));
+
   const activeCount = subscriptions.filter((s) => s.status === "active" && s.tier !== "free").length;
-  const totalRevenue = subscriptions
+
+  // Revenue is grouped per currency — USD and KES are never summed together.
+  const revenueByCurrency = subscriptions
     .filter((s) => s.status === "active")
-    .reduce((sum, s) => sum + (s.price ?? 0), 0);
+    .reduce<Record<string, { total: number; count: number }>>((acc, s) => {
+      const code = (s.currency ?? "USD").toUpperCase();
+      const key = code === "KSH" ? "KES" : code;
+      acc[key] = acc[key] ?? { total: 0, count: 0 };
+      acc[key].total += Number(s.price ?? 0);
+      acc[key].count += 1;
+      return acc;
+    }, {});
+  const currencies = Object.keys(revenueByCurrency).sort();
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Payments & Subscriptions</h1>
-        <p className="text-sm text-muted-foreground mt-1">Monitor revenue and subscription activity.</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Payments & Subscriptions</h1>
+          <p className="text-sm text-muted-foreground mt-1">Monitor revenue and subscription activity.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setShowExact((v) => !v)} className="shrink-0 gap-2">
+          {showExact ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showExact ? "Rounded" : "Exact amounts"}
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card className="border border-border shadow-sm">
-          <CardContent className="flex items-center gap-4 p-5">
-            <div className="h-11 w-11 rounded-lg bg-success/10 flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-semibold">${totalRevenue.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">Monthly Revenue</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {currencies.length === 0 ? (
+          <Card className="border border-border shadow-sm">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="h-11 w-11 rounded-lg bg-success/10 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold">—</p>
+                <p className="text-xs text-muted-foreground">No revenue yet</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          currencies.map((code) => (
+            <Card key={code} className="border border-border shadow-sm">
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="h-11 w-11 rounded-lg bg-success/10 flex items-center justify-center">
+                  <DollarSign className="h-5 w-5 text-success" />
+                </div>
+                <div className="min-w-0">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-2xl font-semibold truncate cursor-help">
+                        {symbolFor(code)}{fmt(revenueByCurrency[code].total)}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {symbolFor(code)}{exactAmount(revenueByCurrency[code].total)}
+                    </TooltipContent>
+                  </Tooltip>
+                  <p className="text-xs text-muted-foreground">
+                    Revenue in {code} · {revenueByCurrency[code].count} active
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
         <Card className="border border-border shadow-sm">
           <CardContent className="flex items-center gap-4 p-5">
             <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -115,6 +162,7 @@ export default function PaymentsPage() {
           </CardContent>
         </Card>
       </div>
+
 
       <Card className="border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
