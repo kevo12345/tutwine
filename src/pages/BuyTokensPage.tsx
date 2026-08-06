@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PaymentProcessingOverlay } from "@/components/payments/PaymentProcessingOverlay";
+import { TOKEN_USD, tokensToUsd } from "@/lib/constants";
 
 type Method = "mpesa" | "crypto";
 type PayCurrency = "ltc" | "usdttrc20";
@@ -36,6 +37,8 @@ const PRESETS = [3, 5];
 const CUSTOM_MIN = 10;
 const USD_TO_KES = 130;
 const USDT_MIN_USD = 8;
+/** Minimum coins that satisfy the USDT-TRC20 invoice minimum. */
+const USDT_MIN_TOKENS = Math.ceil(USDT_MIN_USD / TOKEN_USD);
 
 export default function BuyTokensPage() {
   const navigate = useNavigate();
@@ -77,7 +80,8 @@ export default function BuyTokensPage() {
 
   const amount = selected === "custom" ? Number(customAmount || 0) : Number(selected);
   const amountValid = selected === "custom" ? amount >= CUSTOM_MIN : PRESETS.includes(amount);
-  const usdtBelowMin = amount < USDT_MIN_USD;
+  const usdAmount = tokensToUsd(amount || 0);
+  const usdtBelowMin = amount < USDT_MIN_TOKENS;
   const effectiveCurrency: PayCurrency = usdtBelowMin ? "ltc" : payCurrency;
 
   const successRedirect = joinSessionId
@@ -183,7 +187,8 @@ export default function BuyTokensPage() {
                 <span className="text-sm opacity-90">coins</span>
               </div>
               <p className="mt-1 text-[11px] opacity-75">
-                1 coin = $1 · spend only, no cash withdrawal
+                1 coin = ${TOKEN_USD.toFixed(2)} · $1 buys {Math.round(1 / TOKEN_USD)} coins · spend only, no
+                cash withdrawal
               </p>
             </div>
             <Coins className="h-10 w-10 opacity-80" />
@@ -205,7 +210,7 @@ export default function BuyTokensPage() {
               }`}
             >
               <div className="font-display text-xl font-bold">{p}</div>
-              <div className="text-xs text-muted-foreground">${p}.00</div>
+              <div className="text-xs text-muted-foreground">${tokensToUsd(p).toFixed(2)}</div>
             </button>
           ))}
           <button
@@ -218,7 +223,7 @@ export default function BuyTokensPage() {
             }`}
           >
             <div className="font-display text-xl font-bold">Custom</div>
-            <div className="text-xs text-muted-foreground">min ${CUSTOM_MIN}</div>
+            <div className="text-xs text-muted-foreground">min {CUSTOM_MIN} coins</div>
           </button>
         </div>
 
@@ -240,11 +245,11 @@ export default function BuyTokensPage() {
             />
             {customAmount !== "" && amount < CUSTOM_MIN ? (
               <p className="text-xs text-destructive">
-                Minimum custom amount is ${CUSTOM_MIN}.00
+                Minimum custom amount is {CUSTOM_MIN} coins
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                You'll be charged ${amount || 0}.00
+                You'll be charged ${usdAmount.toFixed(2)}
               </p>
             )}
           </div>
@@ -266,7 +271,7 @@ export default function BuyTokensPage() {
             <div className="text-left">
               <div className="text-sm font-semibold">M-Pesa</div>
               <div className="text-[11px] text-muted-foreground">
-                KES {Math.round((amount || 0) * USD_TO_KES)}
+                KES {Math.round(usdAmount * USD_TO_KES)}
               </div>
             </div>
           </button>
@@ -300,7 +305,7 @@ export default function BuyTokensPage() {
               disabled={submitting}
             />
             <p className="text-xs text-muted-foreground">
-              You'll get an M-Pesa prompt for KES {Math.round((amount || 0) * USD_TO_KES)}. Coins are
+              You'll get an M-Pesa prompt for KES {Math.round(usdAmount * USD_TO_KES)}. Coins are
               added only after the payment is confirmed.
             </p>
           </div>
@@ -321,12 +326,12 @@ export default function BuyTokensPage() {
               <SelectContent>
                 <SelectItem value="ltc">Litecoin (LTC)</SelectItem>
                 <SelectItem value="usdttrc20" disabled={usdtBelowMin}>
-                  USDT (TRC20){usdtBelowMin ? ` — min $${USDT_MIN_USD}` : ""}
+                  USDT (TRC20){usdtBelowMin ? ` — min ${USDT_MIN_TOKENS} coins` : ""}
                 </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              We'll generate a wallet address for ${amount || 0}.00. Coins land after the network
+              We'll generate a wallet address for ${usdAmount.toFixed(2)}. Coins land after the network
               confirms your transfer.
             </p>
           </div>
@@ -360,7 +365,7 @@ export default function BuyTokensPage() {
                   setProcessing({
                     orderId: cryptoPayment.txId,
                     paymentId: cryptoPayment.paymentId,
-                    amount,
+                    amount: usdAmount,
                     currency: "USD",
                     method: "crypto",
                   })
@@ -404,9 +409,9 @@ export default function BuyTokensPage() {
           ) : mpesaRequest || cryptoPayment ? (
             "Resend payment request"
           ) : method === "mpesa" ? (
-            `Pay KES ${Math.round((amount || 0) * USD_TO_KES)} · ${amount || 0} coins`
+            `Pay KES ${Math.round(usdAmount * USD_TO_KES)} · ${amount || 0} coins`
           ) : (
-            `Pay $${amount || 0}.00 in crypto · ${amount || 0} coins`
+            `Pay $${usdAmount.toFixed(2)} in crypto · ${amount || 0} coins`
           )}
         </Button>
 
