@@ -263,37 +263,24 @@ export default function LivePage() {
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
             <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
-            <SheetDescription>1 coin per hour ($0.25) — pick how long you want to watch.</SheetDescription>
+            <SheetDescription>1 coin ($0.25) will be deducted for this live.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Duration</Label>
-              <div className="mt-2 grid grid-cols-5 gap-2">
-                {LIVE_DURATION_OPTIONS.map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => setHours(h)}
-                    className={`rounded-xl border px-2 py-2 text-sm font-semibold transition ${
-                      hours === h ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground"
-                    }`}
-                  >
-                    {h}h
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Costs {hours} token{hours === 1 ? "" : "s"} · your balance: {balance} token
-                {balance === 1 ? "" : "s"}
+            <div className="rounded-2xl border border-border bg-muted/40 p-4">
+              <p className="text-sm font-semibold text-foreground">1 coin will be deducted</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Your ticket is valid for 1 hour on this live only. Your balance: {balance} coin
+                {balance === 1 ? "" : "s"}.
               </p>
             </div>
 
-            {balance < hours ? (
+            {balance < 1 ? (
               <Button
                 onClick={() => {
                   const sid = sheet?.session?.id;
                   setSheet(null);
-                  if (sid) setShortfall({ hours, sessionId: sid });
+                  if (sid) setShortfall({ hours: 1, sessionId: sid });
                 }}
                 className="w-full"
                 size="lg"
@@ -302,13 +289,10 @@ export default function LivePage() {
               </Button>
             ) : (
               <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  `Spend ${hours} token${hours === 1 ? "" : "s"} & Join`
-                )}
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Spend 1 coin & Join"}
               </Button>
             )}
+
             <p className="text-center text-[11px] text-muted-foreground">
               Access expires automatically when your time runs out. Tokens can't be withdrawn as cash.
             </p>
