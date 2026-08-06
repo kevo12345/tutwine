@@ -62,6 +62,8 @@ export function LivePanel({
   const [renewOpen, setRenewOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [pausedAt, setPausedAt] = useState<string | null>(null);
+  const [pauseRemaining, setPauseRemaining] = useState("5:00");
   const [coverUrl, setCoverUrl] = useState<string | null>(posterUrl ?? null);
   const heartChanRef = useRef<any>(null);
   const presenceChanRef = useRef<any>(null);
@@ -119,13 +121,16 @@ export function LivePanel({
       setExpiresAt(myExpiresAt);
       setAuthorized(true);
 
-      // Persisted like count
+      // Persisted like count + pause timestamp
       const { data: counts } = await supabase
         .from("live_sessions")
-        .select("like_count")
+        .select("like_count, paused_at")
         .eq("id", sessionId)
         .maybeSingle();
-      if (!cancelled && counts) setLikeCount(Number((counts as any).like_count ?? 0));
+      if (!cancelled && counts) {
+        setLikeCount(Number((counts as any).like_count ?? 0));
+        setPausedAt((counts as any).paused_at ?? null);
+      }
 
       // Host profile info
       if (!initialHostName || !initialHostPhoto) {
@@ -249,6 +254,7 @@ export function LivePanel({
           }
           if (typeof next?.is_paused === "boolean") {
             setIsPaused(next.is_paused);
+            setPausedAt(next.is_paused ? (next.paused_at ?? new Date().toISOString()) : null);
           }
           if (next?.thumbnail_url) setCoverUrl(next.thumbnail_url);
           if (next?.status === "ended" && !isHost) {
@@ -345,13 +351,44 @@ export function LivePanel({
       return;
     }
     setIsPaused(next);
-    toast.success(next ? "Live paused — viewers see your cover" : "You're back live");
+    setPausedAt(next ? new Date().toISOString() : null);
+    toast.success(
+      next
+        ? "Live paused — viewers see your cover. It ends automatically after 5 minutes."
+        : "You're back live",
+    );
   };
+
+  // Auto-end the live if the host stays paused for more than 5 minutes.
+  useEffect(() => {
+    if (!active || !isHost || !isPaused || !pausedAt) {
+      setPauseRemaining("5:00");
+      return;
+    }
+    let ended = false;
+    const tick = () => {
+      const left = 5 * 60 * 1000 - (Date.now() - new Date(pausedAt).getTime());
+      if (left <= 0) {
+        if (ended) return;
+        ended = true;
+        setPauseRemaining("0:00");
+        toast.info("Paused for 5 minutes — your live has ended");
+        void endLive();
+        return;
+      }
+      const total = Math.floor(left / 1000);
+      setPauseRemaining(`${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, "0")}`);
+    };
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
+  }, [active, isHost, isPaused, pausedAt]);
 
   const abortFailedLive = async () => {
     await (supabase as any).rpc("end_live_session", { _session_id: sessionId });
     closeLive();
   };
+
 
 
   return (
@@ -403,6 +440,18 @@ export function LivePanel({
               {hostName ?? "The host"} stepped away for a moment and will be right back. Stay tuned —
               your ticket keeps running.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Paused — host sees the auto-end countdown */}
+      {authorized && isHost && isPaused && (
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-[16] flex justify-center px-4">
+          <div className="pointer-events-none flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
+            <PauseCircle className="h-4 w-4 shrink-0" />
+            <span>
+              Paused — resume within 5 minutes or your live ends automatically ({pauseRemaining})
+            </span>
           </div>
         </div>
       )}
