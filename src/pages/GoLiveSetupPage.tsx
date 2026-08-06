@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import { useViewportStageHeight } from "@/hooks/useViewportStageHeight";
 import { useNavigate } from "react-router-dom";
 import {
   X,
@@ -33,7 +32,6 @@ export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tier } = useSubscription();
-  useViewportStageHeight();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
@@ -163,10 +161,7 @@ export default function GoLiveSetupPage() {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 overflow-hidden bg-background"
-      style={{ height: "var(--live-h, 100dvh)", width: "var(--live-w, 100vw)" }}
-    >
+    <div className="fixed inset-0 z-50 overflow-hidden bg-background">
       {/* Full-bleed camera preview */}
       {camReady ? (
         <BeautyCamera
