@@ -70,7 +70,7 @@ export default function LivePage() {
       return;
     }
     setSheet({ kind: "viewer", session: s });
-    setHours(1);
+    
   };
 
   /** Viewers pay with tokens (1 token per hour) to get a live pass. */
