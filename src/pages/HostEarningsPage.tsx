@@ -102,6 +102,8 @@ export default function HostEarningsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [latestWithdrawal, setLatestWithdrawal] = useState<Withdrawal | null>(null);
+  const [gifts, setGifts] = useState<ReceivedGift[]>([]);
+  const [giftsLoading, setGiftsLoading] = useState(true);
 
   const [convertOpen, setConvertOpen] = useState(false);
   const [renewOpen, setRenewOpen] = useState(false);
@@ -110,6 +112,44 @@ export default function HostEarningsPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [walletAddr, setWalletAddr] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  /** Recent gifts received, enriched with the sender name and catalog emoji. */
+  const loadGifts = async (uid: string) => {
+    setGiftsLoading(true);
+    const [giftRes, catalogRes] = await Promise.all([
+      supabase
+        .from("gifts" as any)
+        .select("id, gift_key, token_amount, created_at, sender_id")
+        .eq("host_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase.from("gift_catalog" as any).select("key, label, emoji"),
+    ]);
+    const rows = ((giftRes as any)?.data ?? []) as any[];
+    const catalog = new Map<string, { label: string; emoji: string }>(
+      (((catalogRes as any)?.data ?? []) as any[]).map((c) => [c.key, c]),
+    );
+    const senderIds = Array.from(new Set(rows.map((r) => r.sender_id).filter(Boolean)));
+    let names = new Map<string, string>();
+    if (senderIds.length) {
+      const { data: profs } = await supabase.rpc("get_profiles_public", { _targets: senderIds });
+      names = new Map(
+        (((profs as any) ?? []) as any[]).map((p) => [p.user_id, p.display_name ?? "Someone"]),
+      );
+    }
+    setGifts(
+      rows.map((r) => ({
+        id: r.id,
+        gift_key: r.gift_key,
+        token_amount: Number(r.token_amount ?? 0),
+        created_at: r.created_at,
+        senderName: names.get(r.sender_id) ?? "Someone",
+        emoji: catalog.get(r.gift_key)?.emoji ?? "🎁",
+        label: catalog.get(r.gift_key)?.label ?? r.gift_key,
+      })),
+    );
+    setGiftsLoading(false);
+  };
 
   const load = async () => {
     if (!user) return;
@@ -122,12 +162,14 @@ export default function HostEarningsPage() {
         .eq("user_id", user.id)
         .order("requested_at", { ascending: false })
         .limit(1),
+      loadGifts(user.id),
     ]);
     const row = Array.isArray(s) ? s[0] : (s as any);
     setStats(row ?? null);
     setLatestWithdrawal(((w as any)?.[0] as Withdrawal) ?? null);
     setLoading(false);
   };
+
 
   useEffect(() => {
     load();
