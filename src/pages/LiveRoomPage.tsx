@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +7,7 @@ import { useActiveLiveSessions } from "@/hooks/useActiveLiveSessions";
 import { LivePanel } from "@/components/live/LivePanel";
 import { useViewportStageHeight } from "@/hooks/useViewportStageHeight";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 /**
  * Full-screen TikTok-style vertical pager of live sessions the current user
@@ -16,7 +17,10 @@ import { Button } from "@/components/ui/button";
 export default function LiveRoomPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const joinHours = Number(searchParams.get("join") ?? 0);
+  const autoJoinRef = useRef(false);
   const { sessions } = useActiveLiveSessions();
   const [accessibleIds, setAccessibleIds] = useState<Set<string> | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -24,6 +28,45 @@ export default function LiveRoomPage() {
   const panelRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   useViewportStageHeight();
+
+  // Coming back from a coin top-up: buy the pass and drop straight into the live.
+  useEffect(() => {
+    if (!user || !sessionId || joinHours < 1 || autoJoinRef.current) return;
+    autoJoinRef.current = true;
+    (async () => {
+      const { data: existing } = await supabase
+        .from("live_passes")
+        .select("id")
+        .eq("viewer_id", user.id)
+        .eq("session_id", sessionId)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+      if (!existing) {
+        const { error } = await (supabase as any).rpc("purchase_live_pass", {
+          _session_id: sessionId,
+          _hours: Math.min(24, Math.max(1, joinHours)),
+        });
+        if (error) {
+          console.error(error);
+          const msg = String(error?.message ?? "");
+          if (msg.includes("insufficient tokens")) {
+            navigate(`/buy-tokens?amount=${Math.max(1, joinHours)}&join=${sessionId}&hours=${joinHours}`, { replace: true });
+            return;
+          }
+          toast.error(msg || "Could not join the live");
+          navigate("/live", { replace: true });
+          return;
+        }
+        await refreshProfile();
+        toast.success("You're in — enjoy the live!");
+      }
+      setAccessibleIds((prev) => new Set([...(prev ?? []), sessionId]));
+      const next = new URLSearchParams(searchParams);
+      next.delete("join");
+      setSearchParams(next, { replace: true });
+    })();
+  }, [user, sessionId, joinHours]);
 
   // Determine which sessions the user can watch
   useEffect(() => {

@@ -148,7 +148,37 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Coin (token) purchase routing: order_id is the token_transactions id
+  if (orderId) {
+    const { data: tokenTx } = await serviceClient
+      .from('token_transactions')
+      .select('id, status')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (tokenTx) {
+      if (tokenTx.status === 'pending') {
+        if (SUCCESS_STATUSES.includes(status)) {
+          const { error } = await serviceClient.rpc('complete_token_purchase', {
+            _tx_id: tokenTx.id,
+            _payment_ref: paymentId,
+          });
+          if (error) console.error('complete_token_purchase failed:', error);
+        } else if (FAILURE_STATUSES.includes(status)) {
+          await serviceClient.rpc('fail_token_purchase', {
+            _tx_id: tokenTx.id,
+            _payment_ref: paymentId,
+          });
+        }
+      }
+      await logIpn(serviceClient, { ...baseLog, signature_valid: signatureValid, activation_result: 'token_purchase' });
+      return new Response(JSON.stringify({ success: true, matched_by: 'token_transaction' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   // Try by order_id (our subscription UUID) first, then by provider_sub_id (payment_id)
+
   let sub: any = null;
   if (orderId) {
     const { data } = await serviceClient

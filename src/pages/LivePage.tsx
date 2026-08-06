@@ -38,7 +38,7 @@ export default function LivePage() {
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
   const [hours, setHours] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
-  const [shortfall, setShortfall] = useState<number | null>(null);
+  const [shortfall, setShortfall] = useState<{ hours: number; sessionId: string } | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
   const canHost = tier !== "free";
 
@@ -80,7 +80,7 @@ export default function LivePage() {
     if (!user || !sheet?.session) return;
     if (balance < hours) {
       setSheet(null);
-      setShortfall(hours);
+      setShortfall({ hours, sessionId: sheet.session.id });
       return;
     }
     setSubmitting(true);
@@ -101,7 +101,7 @@ export default function LivePage() {
       const msg = String(err?.message ?? "");
       if (msg.includes("insufficient tokens")) {
         setSheet(null);
-        setShortfall(hours);
+        setShortfall({ hours, sessionId: sheet.session.id });
       } else {
         toast.error(msg || "Could not join the live");
       }
@@ -289,7 +289,15 @@ export default function LivePage() {
             </div>
 
             {balance < hours ? (
-              <Button onClick={() => { setSheet(null); setShortfall(hours); }} className="w-full" size="lg">
+              <Button
+                onClick={() => {
+                  const sid = sheet?.session?.id;
+                  setSheet(null);
+                  if (sid) setShortfall({ hours, sessionId: sid });
+                }}
+                className="w-full"
+                size="lg"
+              >
                 Buy coins to join
               </Button>
             ) : (
@@ -311,9 +319,11 @@ export default function LivePage() {
       <InsufficientTokensDialog
         open={shortfall !== null}
         onOpenChange={(o) => !o && setShortfall(null)}
-        needed={shortfall ?? 0}
+        needed={shortfall?.hours ?? 0}
         balance={balance}
         action="join this live"
+        joinSessionId={shortfall?.sessionId}
+        joinHours={shortfall?.hours}
       />
     </AppLayout>
   );

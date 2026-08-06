@@ -422,6 +422,31 @@ Deno.serve(async (req) => {
       ...livePassIdsRaw,
     ]));
 
+    // ---- Coin (token) purchase routing ----
+    const tokenTxId = [
+      body?.token_tx_id, body?.data?.token_tx_id, body?.message?.token_tx_id,
+    ].find((v) => typeof v === 'string' && UUID_REGEX.test(v as string)) as string | undefined;
+    if (tokenTxId) {
+      const { data: tokenTx } = await serviceClientEarly
+        .from('token_transactions')
+        .select('id, status')
+        .eq('id', tokenTxId)
+        .maybeSingle();
+      if (tokenTx) {
+        if (tokenTx.status === 'pending') {
+          const rpc = isSuccessEarly ? 'complete_token_purchase' : 'fail_token_purchase';
+          const { error } = await serviceClientEarly.rpc(rpc, {
+            _tx_id: tokenTxId,
+            _payment_ref: getCandidateIdentifiers(body)[0] ?? null,
+          });
+          if (error) console.error('Token purchase callback failed:', error);
+        }
+        return new Response(JSON.stringify({ success: true, matched_by: 'token_transaction' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     if (await tryActivateLiveSession(serviceClientEarly, allRefIds, isSuccessEarly)) {
       return new Response(JSON.stringify({ success: true, matched_by: 'live_session' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -432,6 +457,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
 
 
     const subscriptionIds = getCandidateSubscriptionIds(body);
