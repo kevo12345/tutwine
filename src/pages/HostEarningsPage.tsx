@@ -50,6 +50,20 @@ type Withdrawal = {
   wallet_address: string;
 };
 
+/** A single gift the host received, with sender + catalog details resolved. */
+type ReceivedGift = {
+  id: string;
+  gift_key: string;
+  token_amount: number;
+  created_at: string;
+  senderName: string;
+  emoji: string;
+  label: string;
+};
+
+const HOST_GIFT_SHARE = 0.6;
+
+
 const MIN_WITHDRAWAL = 100;
 
 function fmtDuration(s: number) {
