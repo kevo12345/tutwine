@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, Send, Gift, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,26 @@ export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift 
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [giftOpen, setGiftOpen] = useState(false);
+  // On-screen keyboards shrink the visual viewport but not our fixed 100dvh
+  // stage, which leaves a blank strip under the input. Track it and lift the bar.
+  const [keyboardInset, setKeyboardInset] = useState(0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset(inset > 40 ? inset : 0);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
 
   const send = async () => {
     const trimmed = draft.trim();
@@ -44,8 +64,10 @@ export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift 
         e.preventDefault();
         send();
       }}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-2 pb-3 pt-6 sm:px-3 safe-bottom"
+      style={{ transform: keyboardInset ? `translateY(-${keyboardInset}px)` : undefined }}
+      className={`pointer-events-auto absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-2 pt-6 transition-transform duration-150 sm:px-3 ${keyboardInset ? "pb-2" : "pb-3 safe-bottom"}`}
     >
+
       <Input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
