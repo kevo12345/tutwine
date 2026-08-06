@@ -152,6 +152,17 @@ export default function HostEarningsPage() {
     setGiftsLoading(false);
   };
 
+  /** Gross ticket + gift coins across all of this host's lives (both tables). */
+  const loadGross = async (uid: string) => {
+    const [sessRes, livesRes] = await Promise.all([
+      supabase.from("live_sessions" as any).select("gross_tokens").eq("host_id", uid),
+      supabase.from("lives" as any).select("gross_tokens").eq("host_id", uid),
+    ]);
+    const sum = (rows: any[]) =>
+      (rows ?? []).reduce((acc, r) => acc + Number(r.gross_tokens ?? 0), 0);
+    setGrossTokens(sum(((sessRes as any)?.data ?? []) as any[]) + sum(((livesRes as any)?.data ?? []) as any[]));
+  };
+
   const load = async () => {
     if (!user) return;
     setLoading(true);
@@ -159,17 +170,21 @@ export default function HostEarningsPage() {
       supabase.rpc("host_earnings_stats", { _host_id: null }),
       supabase
         .from("withdrawals" as any)
-        .select("id, amount, status, requested_at, cooldown_until, wallet_address")
+        .select("id, amount, status, requested_at, processed_at, cooldown_until, wallet_address, admin_note")
         .eq("user_id", user.id)
         .order("requested_at", { ascending: false })
-        .limit(1),
+        .limit(25),
       loadGifts(user.id),
+      loadGross(user.id),
     ]);
     const row = Array.isArray(s) ? s[0] : (s as any);
     setStats(row ?? null);
-    setLatestWithdrawal(((w as any)?.[0] as Withdrawal) ?? null);
+    const list = (((w as any) ?? []) as Withdrawal[]);
+    setWithdrawals(list);
+    setLatestWithdrawal(list[0] ?? null);
     setLoading(false);
   };
+
 
 
   useEffect(() => {
