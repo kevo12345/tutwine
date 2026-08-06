@@ -1,9 +1,29 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CreditCard, DollarSign, TrendingUp, Users } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CreditCard, DollarSign, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const CURRENCY_SYMBOLS: Record<string, string> = { USD: "$", KES: "KSh", KSH: "KSh" };
+
+function symbolFor(code: string) {
+  return CURRENCY_SYMBOLS[code.toUpperCase()] ?? `${code.toUpperCase()} `;
+}
+
+function exactAmount(value: number) {
+  return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function compactAmount(value: number) {
+  const abs = Math.abs(value);
+  if (abs < 1000) return exactAmount(value);
+  if (abs < 1_000_000) return `${(value / 1000).toFixed(abs < 10_000 ? 1 : 0)}k`;
+  return `${(value / 1_000_000).toFixed(1)}M`;
+}
+
 
 interface Subscription {
   id: string;
