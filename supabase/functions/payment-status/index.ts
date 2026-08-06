@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { sellapayTransactionStatus } from '../_shared/sellapay.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
