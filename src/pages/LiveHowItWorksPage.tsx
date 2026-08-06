@@ -108,10 +108,12 @@ export default function LiveHowItWorksPage() {
             </div>
             <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
               <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-              Tickets last one hour. If your live runs longer, viewers renew automatically when they have
-              coins — each renewal is another ticket split the same 60/40 way. A live that runs an hour or
-              more keeps the full 60% split on tickets and gifts.
+              Duration matters: shares are credited as you earn, but they are finalised on the actual length of
+              your live. Stream for 1 hour or more and you keep 60% of tickets and gifts. End before 60
+              minutes and your share is adjusted down to 10% — the difference is returned to Tutwine. You get
+              a notification with the exact duration of your live and the share applied.
             </p>
+
           </div>
 
 

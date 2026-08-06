@@ -374,9 +374,37 @@ export function LivePanel({
     }
     // Tell every connected viewer immediately.
     heartChanRef.current?.send({ type: "broadcast", event: "live_ended", payload: {} });
-    toast.success("Your live has ended");
+
+    // Show the host the real duration and the share that was applied.
+    try {
+      const { data } = await (supabase as any)
+        .from("live_sessions")
+        .select("started_at, ended_at, created_at, gross_tokens, host_earning")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (data) {
+        const start = new Date(data.started_at ?? data.created_at).getTime();
+        const end = new Date(data.ended_at ?? Date.now()).getTime();
+        const secs = Math.max(0, Math.floor((end - start) / 1000));
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const label = h > 0 ? `${h}h ${m}m` : `${m}m ${secs % 60}s`;
+        const full = secs >= 3600;
+        toast.success(`Live ended — duration ${label}`, {
+          description: full
+            ? `You reached 1 hour, so you keep 60% (${Number(data.host_earning ?? 0)} coins of ${Number(data.gross_tokens ?? 0)}).`
+            : `Under 60 minutes, so your share is 10% (${Number(data.host_earning ?? 0)} coins of ${Number(data.gross_tokens ?? 0)}). Stream 1 hour or more to keep 60%.`,
+          duration: 8000,
+        });
+      } else {
+        toast.success("Your live has ended");
+      }
+    } catch {
+      toast.success("Your live has ended");
+    }
     closeLive();
   };
+
 
   /** Host-only: pause / resume the broadcast. Viewers see the cover image. */
   const togglePause = async () => {
