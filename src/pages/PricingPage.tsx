@@ -453,6 +453,22 @@ export default function PricingPage() {
                     ⚠️ Your subscription will only activate after you complete the M-Pesa payment on your phone.
                   </p>
                 </div>
+                {mpesaRequest ? (
+                  <Button
+                    className="w-full gradient-warm border-0 text-primary-foreground shadow-glow"
+                    onClick={() => {
+                      setDialogOpen(false);
+                      setProcessing({
+                        paymentMethod: "mpesa",
+                        orderId: mpesaRequest.subscription_id,
+                        amount: mpesaRequest.amount,
+                        currency: "KES",
+                      });
+                    }}
+                  >
+                    I’ve Completed the Payment
+                  </Button>
+                ) : null}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setMethod(null)} disabled={mpesaLoading} className="flex-1">
                     Back
@@ -629,6 +645,25 @@ export default function PricingPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {processing ? (
+        <PaymentProcessingOverlay
+          open
+          paymentMethod={processing.paymentMethod}
+          purchaseType="subscription"
+          orderId={processing.orderId}
+          paymentId={processing.paymentId}
+          amount={processing.amount}
+          currency={processing.currency}
+          successRedirect="/discover"
+          retryCallback={() => {
+            setProcessing(null);
+            setMethod(processing.paymentMethod);
+            setDialogOpen(true);
+          }}
+          onClose={() => setProcessing(null)}
+        />
+      ) : null}
     </div>
   );
 }
