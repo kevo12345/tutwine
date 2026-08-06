@@ -272,8 +272,24 @@ export function LivePanel({
         (payload) => {
           const next = payload.new as any;
           if (typeof next?.like_count === "number") {
-            setLikeCount((c) => Math.max(c, next.like_count));
+            setLikeCount((c) => {
+              const server = Number(next.like_count);
+              // Someone liked and we didn't get the broadcast — animate the delta.
+              const delta = Math.min(Math.max(server - c, 0), 5);
+              if (delta > 0) {
+                setHearts((prev) => [
+                  ...prev,
+                  ...Array.from({ length: delta }, (_, i) => ({
+                    id: `db-${server}-${i}-${Math.random()}`,
+                    color: randomHeartColor(),
+                    startX: Math.random(),
+                  })),
+                ]);
+              }
+              return Math.max(c, server);
+            });
           }
+
           if (typeof next?.is_paused === "boolean") {
             setIsPaused(next.is_paused);
             setPausedAt(next.is_paused ? (next.paused_at ?? new Date().toISOString()) : null);
