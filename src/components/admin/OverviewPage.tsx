@@ -135,9 +135,16 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             Everything happening across Tutwine — growth, revenue, lives and community health.
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-        </p>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setShowExact((v) => !v)} className="shrink-0 gap-2">
+            {showExact ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showExact ? "Rounded" : "Exact amounts"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+          </p>
+        </div>
+
       </div>
 
       {/* Hero KPI cards */}
