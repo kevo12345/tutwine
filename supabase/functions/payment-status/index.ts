@@ -134,9 +134,44 @@ Deno.serve(async (req) => {
         }
       }
 
-      // M-Pesa (and crypto without a provider answer): the callback is the source of truth.
-      return json({ state: 'waiting', order_id: sub.id });
+      // M-Pesa: verify with SellaPay directly if the callback never landed.
+      if (paymentMethod === 'mpesa') {
+        const ref = String(sub.id).replace(/-/g, '').slice(0, 20);
+        const verdict = await sellapayTransactionStatus(sub.provider_sub_id || ref);
+        if (verdict === 'success') {
+          const durationDays = sub.tier === 'simp' ? 14 : 30;
+          await service
+            .from('subscriptions')
+            .update({
+              status: 'active',
+              started_at: new Date().toISOString(),
+              ends_at: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            .eq('id', sub.id)
+            .eq('status', 'past_due');
+          return json({ state: 'finished', order_id: sub.id, provider_status: 'completed' });
+        }
+        if (verdict === 'failed') {
+          return json({ state: 'failed', order_id: sub.id, provider_status: 'failed' });
+        }
+      }
+
+      // Re-read in case a callback landed meanwhile.
+      const { data: freshSub } = await service
+        .from('subscriptions')
+        .select('status, ends_at')
+        .eq('id', sub.id)
+        .maybeSingle();
+      if (
+        freshSub?.status === 'active' &&
+        (!freshSub.ends_at || new Date(freshSub.ends_at) > new Date())
+      ) {
+        return json({ state: 'finished', order_id: sub.id });
+      }
+
+      return json({ state: 'confirming', order_id: sub.id });
     }
+
 
     // ---------- Token purchases / other token-backed purchases ----------
     const { data: tx, error: txErr } = await service
