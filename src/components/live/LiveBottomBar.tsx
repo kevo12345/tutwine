@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, Send, Gift, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,12 +12,32 @@ type Props = {
   onGift: () => void;
 };
 
-const GIFT_EMOJI = ["🌹", "🎁", "💎", "🍕", "🍾", "🔥", "⭐", "🦄"];
+const GIFT_EMOJI = ["🌹", "🎁", "💎", "🍕", "🍾", "🔥", "⭐", "⭐"];
 
 export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift }: Props) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [giftOpen, setGiftOpen] = useState(false);
+  // On-screen keyboards shrink the visual viewport but not our fixed 100dvh
+  // stage, which leaves a blank strip under the input. Track it and lift the bar.
+  const [keyboardInset, setKeyboardInset] = useState(0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset(inset > 40 ? inset : 0);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
 
   const send = async () => {
     const trimmed = draft.trim();
