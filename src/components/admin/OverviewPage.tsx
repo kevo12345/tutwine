@@ -415,7 +415,37 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
         </Card>
       </div>
 
+      {/* Coin ledger: bought / available / spent */}
+      <Card className="border border-border/70 shadow-sm">
+        <CardContent className="p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold">Coins bought, available & spent</h3>
+            <p className="text-[11px] text-muted-foreground">
+              Coin totals with their cash value at 1 coin = ${COIN_USD.toFixed(2)}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {coinLedger.map((c) => (
+              <div key={c.label} className="rounded-2xl border border-border/70 bg-muted/30 p-4">
+                <div className="flex items-center gap-2">
+                  <Coins className={`h-4 w-4 ${c.tone}`} />
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{c.label}</p>
+                </div>
+                <p className="mt-2 text-2xl font-bold leading-none" title={titleNum(c.coins)}>
+                  {num(c.coins)} <span className="text-xs font-medium text-muted-foreground">coins</span>
+                </p>
+                <p className={`mt-1 text-sm font-semibold ${c.tone}`} title={titleMoney(c.coins * COIN_USD)}>
+                  {money(c.coins * COIN_USD)}
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{c.note}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Money flow + operations */}
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="border border-border/70 shadow-sm xl:col-span-2">
           <CardContent className="p-5">
