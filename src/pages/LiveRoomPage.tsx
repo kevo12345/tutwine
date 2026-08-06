@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveLiveSessions } from "@/hooks/useActiveLiveSessions";
 import { LivePanel } from "@/components/live/LivePanel";
-import { useViewportStageHeight } from "@/hooks/useViewportStageHeight";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -26,8 +25,6 @@ export default function LiveRoomPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Array<HTMLDivElement | null>>([]);
-
-  useViewportStageHeight();
 
   // Coming back from a coin top-up: buy the pass and drop straight into the live.
   useEffect(() => {
@@ -159,10 +156,6 @@ export default function LiveRoomPage() {
     <div
       ref={containerRef}
       className="no-scrollbar fixed inset-0 z-50 snap-y snap-mandatory overflow-y-scroll overscroll-none bg-black"
-      style={{
-        height: "var(--live-h, 100dvh)",
-        width: "var(--live-w, 100vw)",
-      }}
     >
       {feed.map((s, idx) => (
         <div
@@ -171,11 +164,7 @@ export default function LiveRoomPage() {
             panelRefs.current[idx] = n;
           }}
           data-idx={idx}
-          className="relative w-full shrink-0 snap-start snap-always"
-          style={{
-            height: "var(--live-h, 100dvh)",
-            minHeight: "var(--live-h, 100dvh)",
-          }}
+          className="relative h-full min-h-full w-full shrink-0 snap-start snap-always"
         >
           <LivePanel
             sessionId={s.id}
