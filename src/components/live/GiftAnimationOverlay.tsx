@@ -12,6 +12,15 @@ export type GiftEvent = {
 
 export const giftChannelName = (liveId: string) => `live_gifts_${liveId}`;
 
+/** Local bus so the sender always sees their own gift instantly, even if the
+ * broadcast round-trip is slow or drops. */
+type LocalGift = Omit<GiftEvent, "id">;
+const localListeners = new Map<string, Set<(g: LocalGift) => void>>();
+
+export function emitLocalGift(liveId: string, gift: LocalGift) {
+  localListeners.get(liveId)?.forEach((fn) => fn(gift));
+}
+
 /**
  * Full-screen celebratory overlay shown whenever a gift is purchased in a live.
  * Listens on a broadcast channel so the sender, the host and every viewer all
@@ -22,11 +31,8 @@ export function GiftAnimationOverlay({ liveId }: { liveId: string }) {
 
   useEffect(() => {
     if (!liveId) return;
-    const ch = supabase.channel(giftChannelName(liveId), {
-      config: { broadcast: { self: true } },
-    });
-    ch.on("broadcast", { event: "gift" }, (payload) => {
-      const p = (payload.payload ?? {}) as Partial<GiftEvent>;
+
+    const push = (p: Partial<GiftEvent>) => {
       const evt: GiftEvent = {
         id: `${Date.now()}-${Math.random()}`,
         emoji: p.emoji ?? "🎁",
@@ -36,11 +42,26 @@ export function GiftAnimationOverlay({ liveId }: { liveId: string }) {
       };
       setEvents((prev) => [...prev.slice(-3), evt]);
       setTimeout(() => setEvents((prev) => prev.filter((e) => e.id !== evt.id)), 3200);
+    };
+
+    const ch = supabase.channel(giftChannelName(liveId), {
+      config: { broadcast: { self: true } },
+    });
+    ch.on("broadcast", { event: "gift" }, (payload) => {
+      push((payload.payload ?? {}) as Partial<GiftEvent>);
     }).subscribe();
+
+    const set = localListeners.get(liveId) ?? new Set();
+    set.add(push);
+    localListeners.set(liveId, set);
+
     return () => {
       supabase.removeChannel(ch);
+      set.delete(push);
+      if (set.size === 0) localListeners.delete(liveId);
     };
   }, [liveId]);
+
 
   if (events.length === 0) return null;
 

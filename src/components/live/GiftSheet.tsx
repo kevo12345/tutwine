@@ -13,7 +13,7 @@ import { Coins, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
-import { giftChannelName } from "@/components/live/GiftAnimationOverlay";
+import { giftChannelName, emitLocalGift } from "@/components/live/GiftAnimationOverlay";
 
 
 type CatalogGift = {
@@ -111,7 +111,9 @@ export function GiftSheet({
 
 
   async function send(gift: CatalogGift) {
-    if (hostIsSelf) return;
+    if (hostIsSelf || sending) return;
+    // Strictly a gift: never fall back to anything else. If coins are short,
+    // prompt a top-up instead of sending.
     if (balance < gift.token_price) {
       setOpen(false);
       setShortfall(gift.token_price);
@@ -141,24 +143,27 @@ export function GiftSheet({
       return;
     }
     setOpen(false);
-    // Broadcast so the sender, host and all viewers see the same animation.
-    const ch = supabase.channel(giftChannelName(liveId), { config: { broadcast: { self: true } } });
+
+    const payload = {
+      emoji: gift.emoji,
+      label: gift.label,
+      amount: gift.token_price,
+      senderName: profile?.display_name ?? "Someone",
+    };
+    // Instant local animation for the sender, then broadcast to everyone else.
+    emitLocalGift(liveId, payload);
+    const ch = supabase.channel(giftChannelName(liveId), { config: { broadcast: { self: false } } });
     ch.subscribe((status) => {
       if (status !== "SUBSCRIBED") return;
-      ch.send({
-        type: "broadcast",
-        event: "gift",
-        payload: {
-          emoji: gift.emoji,
-          label: gift.label,
-          amount: gift.token_price,
-          senderName: profile?.display_name ?? "Someone",
-        },
-      }).then(() => setTimeout(() => supabase.removeChannel(ch), 500));
+      ch.send({ type: "broadcast", event: "gift", payload }).then(() =>
+        setTimeout(() => supabase.removeChannel(ch), 500),
+      );
     });
+    toast.success(`${gift.emoji} ${gift.label} sent — ${gift.token_price} coin${gift.token_price === 1 ? "" : "s"}`);
     await refreshProfile();
     onSent?.();
   }
+
 
 
   return (
@@ -167,10 +172,12 @@ export function GiftSheet({
       {!hideTrigger && (
       <SheetTrigger asChild>
         <button
+          type="button"
           className={triggerClassName ?? "flex h-11 items-center gap-1 rounded-full bg-black/60 px-3 text-white disabled:opacity-50"}
           aria-label="Send gift"
           disabled={hostIsSelf}
         >
+
           <Gift className="h-4 w-4" /> <span className="text-xs">Gift</span>
         </button>
       </SheetTrigger>
@@ -196,8 +203,14 @@ export function GiftSheet({
               return (
                 <button
                   key={g.key}
-                  onClick={() => send(g)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void send(g);
+                  }}
                   disabled={disabled}
+
                   className={`flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 transition active:scale-95 disabled:opacity-50 ${tooPoor ? "opacity-60" : ""}`}
                 >
                   <span className="text-3xl">{g.emoji}</span>
