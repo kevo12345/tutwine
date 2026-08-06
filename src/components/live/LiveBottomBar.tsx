@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, Send, Gift, Loader2 } from "lucide-react";
+import { Heart, Send, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
