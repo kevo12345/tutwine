@@ -203,8 +203,14 @@ export function GiftSheet({
               return (
                 <button
                   key={g.key}
-                  onClick={() => send(g)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void send(g);
+                  }}
                   disabled={disabled}
+
                   className={`flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 transition active:scale-95 disabled:opacity-50 ${tooPoor ? "opacity-60" : ""}`}
                 >
                   <span className="text-3xl">{g.emoji}</span>
