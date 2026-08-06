@@ -31,6 +31,8 @@ function compact(value: number) {
   return `${(value / 1_000_000_000).toFixed(1)}B`;
 }
 
+const COIN_USD = 0.25;
+
 const PIE_COLORS = [
   "hsl(var(--primary))",
   "hsl(var(--accent))",
@@ -66,6 +68,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
 
   const series = (stats?.series ?? []).map((d) => ({
     ...d,
+    revenue: Number((Number(d.revenue ?? 0) * COIN_USD).toFixed(2)),
     label: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
   }));
 
@@ -82,7 +85,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
     },
     {
       label: "Coins Sold", value: num(stats?.tokensSold), exact: titleNum(stats?.tokensSold), icon: Coins,
-      sub: `${money(stats?.tokensSold)} gross volume`, tone: "success" as const, href: "/admin/payments",
+      sub: `${money(Number(stats?.tokensSold ?? 0) * COIN_USD)} gross volume`, tone: "success" as const, href: "/admin/payments",
     },
     {
       label: "Platform Earnings", value: money(stats?.platformEarnings), exact: titleMoney(stats?.platformEarnings), icon: Wallet,
@@ -113,10 +116,10 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
   const moneyFlow = [
     { name: "Coins sold", value: Number(stats?.tokensSold ?? 0) },
     { name: "Gift coins", value: Number(stats?.giftTokens ?? 0) },
-    { name: "Host earnings", value: Number(stats?.hostEarnings ?? 0) },
-    { name: "Platform cut", value: Number(stats?.platformEarnings ?? 0) },
-    { name: "Paid out", value: Number(stats?.paidWithdrawalTokens ?? 0) },
-    { name: "Pending payout", value: Number(stats?.pendingWithdrawalTokens ?? 0) },
+    { name: "In wallets", value: Number(stats?.coinsInCirculation ?? 0) },
+    { name: "Host earnings", value: Number(stats?.hostEarnings ?? 0) / COIN_USD },
+    { name: "Platform cut", value: Number(stats?.platformEarnings ?? 0) / COIN_USD },
+    { name: "Paid out", value: Number(stats?.paidWithdrawalTokens ?? 0) / COIN_USD },
   ];
 
   const toneClass = {
@@ -220,7 +223,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             </div>
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={series} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                <ComposedChart data={series} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
                   <defs>
                     <linearGradient id="cumulativeFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--info))" stopOpacity={0.3} />
@@ -229,8 +232,8 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" width={40} allowDecimals={false} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis yAxisId="right" orientation="right" width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
                   <Area yAxisId="right" type="monotone" dataKey="cumulativeUsers" name="Total users" stroke="hsl(var(--info))" strokeWidth={2} fill="url(#cumulativeFill)" />
                   <Bar yAxisId="left" dataKey="signups" name="New signups" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={22} />
@@ -287,10 +290,10 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             ) : (
               <div className="h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sessionActivity} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                  <BarChart data={sessionActivity} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="when" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <YAxis width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
                     <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
                     <Bar dataKey="viewers" name="Total viewers" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={26} />
@@ -353,7 +356,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             </div>
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={series} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                <ComposedChart data={series} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
                   <defs>
                     <linearGradient id="signupFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.35} />
@@ -362,7 +365,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip content={<ChartTooltip />} />
                   <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--success))" strokeWidth={2} fill="url(#signupFill)" />
                 </ComposedChart>
@@ -412,10 +415,10 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             </div>
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={moneyFlow} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                <BarChart data={moneyFlow} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <YAxis width={52} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
                   <Bar dataKey="value" name="Coins" radius={[6, 6, 0, 0]}>
                     {moneyFlow.map((_, i) => (
