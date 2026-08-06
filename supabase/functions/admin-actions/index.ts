@@ -120,8 +120,69 @@ serve(async (req) => {
         const tierCounts: Record<string, number> = {};
         (tiersRes.data ?? []).forEach((s: any) => { tierCounts[s.tier] = (tierCounts[s.tier] ?? 0) + 1; });
 
+        // ---- Signup growth ----
+        const today = new Date(now).toISOString().substring(0, 10);
+        const yesterday = new Date(now - 86400000).toISOString().substring(0, 10);
+        const signupsToday = signupMap[today] ?? 0;
+        const signupsYesterday = signupMap[yesterday] ?? 0;
+        const last7 = days.slice(-7).reduce((a, d) => a + (signupMap[d] ?? 0), 0);
+        const prev7 = days.slice(-14, -7).reduce((a, d) => a + (signupMap[d] ?? 0), 0);
+        const signupGrowthPct = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+        // Cumulative total users across the window (running total, ending at totalUsers)
+        const totalUsers = usersRes.count ?? 0;
+        const signupsWindow = days.reduce((a, d) => a + (signupMap[d] ?? 0), 0);
+        let running = totalUsers - signupsWindow;
+
+        // ---- Active users (presence based) ----
+        const seen = (presenceRes.data ?? []).map((p: any) => new Date(p.last_seen_at).getTime());
+        const activeSince = (ms: number) => seen.filter((t) => t >= now - ms).length;
+        const dau = activeSince(86400000);
+        const wau = activeSince(7 * 86400000);
+        const mau = activeSince(30 * 86400000);
+
+        // ---- Active users per live session ----
+        const passesBySession = new Map<string, { viewers: Set<string>; active: Set<string> }>();
+        (passListRes.data ?? []).forEach((p: any) => {
+          const rec = passesBySession.get(p.session_id) ?? { viewers: new Set(), active: new Set() };
+          rec.viewers.add(p.viewer_id);
+          if (p.expires_at && new Date(p.expires_at).getTime() > now) rec.active.add(p.viewer_id);
+          passesBySession.set(p.session_id, rec);
+        });
+        const sessionRows = (sessionListRes.data ?? []).map((s: any) => {
+          const rec = passesBySession.get(s.id);
+          const start = s.started_at ?? s.created_at;
+          const end = s.ended_at ? new Date(s.ended_at).getTime() : now;
+          return {
+            id: s.id,
+            status: s.status,
+            startedAt: start,
+            minutes: Math.max(0, Math.round((end - new Date(start).getTime()) / 60000)),
+            viewers: rec ? rec.viewers.size : 0,
+            activeViewers: rec ? rec.active.size : 0,
+          };
+        });
+        const sessionsWithViewers = sessionRows.filter((s) => s.viewers > 0);
+        const avgViewersPerSession = sessionsWithViewers.length
+          ? Number((sessionsWithViewers.reduce((a, s) => a + s.viewers, 0) / sessionsWithViewers.length).toFixed(1))
+          : 0;
+        const activeSessions = sessionRows
+          .filter((s) => s.status === "active")
+          .sort((a, b) => b.activeViewers - a.activeViewers)
+          .slice(0, 8);
+        const sessionActivity = sessionRows
+          .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+          .slice(0, 12)
+          .reverse()
+          .map((s, i) => ({
+            label: `S${i + 1}`,
+            startedAt: s.startedAt,
+            viewers: s.viewers,
+            activeViewers: s.activeViewers,
+            minutes: s.minutes,
+          }));
+
         result = {
-          totalUsers: usersRes.count ?? 0,
+          totalUsers,
           pendingReports: reportsRes.count ?? 0,
           subscribers: subsRes.count ?? 0,
           recentSignups: recentRes.count ?? 0,
@@ -145,12 +206,27 @@ serve(async (req) => {
             .filter((w: any) => w.status === "paid")
             .reduce((a: number, w: any) => a + Number(w.amount ?? 0), 0),
           tierCounts,
-          series: days.map((d) => ({
-            date: d,
-            signups: signupMap[d] ?? 0,
-            revenue: Number((revenueMap[d] ?? 0).toFixed(2)),
-          })),
+          signupsToday,
+          signupsYesterday,
+          signupGrowthPct,
+          dau,
+          wau,
+          mau,
+          avgViewersPerSession,
+          activeSessions,
+          sessionActivity,
+          series: days.map((d) => {
+            const s = signupMap[d] ?? 0;
+            running += s;
+            return {
+              date: d,
+              signups: s,
+              cumulativeUsers: running,
+              revenue: Number((revenueMap[d] ?? 0).toFixed(2)),
+            };
+          }),
         };
+
         break;
       }
 
