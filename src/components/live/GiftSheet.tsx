@@ -172,10 +172,12 @@ export function GiftSheet({
       {!hideTrigger && (
       <SheetTrigger asChild>
         <button
+          type="button"
           className={triggerClassName ?? "flex h-11 items-center gap-1 rounded-full bg-black/60 px-3 text-white disabled:opacity-50"}
           aria-label="Send gift"
           disabled={hostIsSelf}
         >
+
           <Gift className="h-4 w-4" /> <span className="text-xs">Gift</span>
         </button>
       </SheetTrigger>
