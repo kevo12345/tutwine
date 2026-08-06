@@ -581,7 +581,9 @@ export function LivePanel({
         }}
         needed={TICKET_TOKENS}
         balance={balance}
-        action="keep watching this live"
+        action="watch this live"
+        joinSessionId={sessionId}
+        joinHours={TICKET_TOKENS}
       />
     </div>
   );
