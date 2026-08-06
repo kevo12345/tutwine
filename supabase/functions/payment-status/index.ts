@@ -179,7 +179,43 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ state: 'waiting', order_id: tx.id });
+    // M-Pesa coin purchases: actively verify with SellaPay in case the callback
+    // never reached us. `complete_token_purchase` is idempotent.
+    if (paymentMethod === 'mpesa') {
+      const refs = [tx.payment_ref, String(tx.id).replace(/-/g, '').slice(0, 20)].filter(
+        Boolean,
+      ) as string[];
+      for (const ref of refs) {
+        const verdict = await sellapayTransactionStatus(ref);
+        if (verdict === 'success') {
+          const { error: rpcErr } = await service.rpc('complete_token_purchase', {
+            _tx_id: tx.id,
+            _payment_ref: ref,
+          });
+          if (rpcErr) {
+            console.error('complete_token_purchase failed:', rpcErr);
+            break;
+          }
+          return json({ state: 'finished', order_id: tx.id, provider_status: 'completed' });
+        }
+        if (verdict === 'failed') {
+          await service.rpc('fail_token_purchase', { _tx_id: tx.id, _payment_ref: ref });
+          return json({ state: 'failed', order_id: tx.id, provider_status: 'failed' });
+        }
+      }
+    }
+
+    // Re-read: a callback may have landed while we were probing the provider.
+    const { data: fresh } = await service
+      .from('token_transactions')
+      .select('status')
+      .eq('id', tx.id)
+      .maybeSingle();
+    if (fresh?.status === 'completed') return json({ state: 'finished', order_id: tx.id });
+    if (fresh?.status === 'failed') return json({ state: 'failed', order_id: tx.id });
+
+    return json({ state: 'confirming', order_id: tx.id });
+
 
   } catch (err) {
     console.error('payment-status error:', err);
