@@ -12,7 +12,7 @@ const steps = [
   {
     icon: Ticket,
     title: "Viewers buy time",
-    body: "Anyone can join for 1 token per hour ($1/hr, dropping to $0.35/hr after 2 hours). Their pass expires automatically and they can renew in a tap.",
+    body: "Anyone can join for 1 coin per hour — 1 coin costs $0.25, so $1 buys 4 hours of watch time. Their pass expires automatically and they can renew in a tap.",
   },
   {
     icon: Gift,
@@ -101,7 +101,7 @@ export default function LiveHowItWorksPage() {
             </ul>
             <div className="mt-3 rounded-xl bg-muted/30 p-3 text-xs text-muted-foreground">
               <p className="font-semibold text-foreground">Example</p>
-              <p className="mt-1">$10 of tickets sold → you earn $6, Tutwine earns $4.</p>
+              <p className="mt-1">40 coins of tickets sold ($10) → you earn 24 coins, Tutwine earns 16 coins.</p>
               <p className="mt-1">
                 20 viewers × 1 coin/hour = 20 coins → 12 coins to you, 8 coins to Tutwine.
               </p>

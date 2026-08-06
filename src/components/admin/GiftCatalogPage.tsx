@@ -146,7 +146,7 @@ export default function GiftCatalogPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Gift Catalog</h1>
-          <p className="text-sm text-muted-foreground">Gifts viewers can send in lives. Prices are in tokens (1 token = $1).</p>
+          <p className="text-sm text-muted-foreground">Gifts viewers can send in lives. Prices are in tokens (1 token = $0.25).</p>
         </div>
         <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> New gift</Button>
       </div>

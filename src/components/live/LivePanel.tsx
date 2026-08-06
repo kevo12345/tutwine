@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const TICKET_TOKENS = 1; // 1 token = 1 hour of access to this live
+const TICKET_TOKENS = 1; // 1 coin ($0.25) = 1 hour of access to this live
 
 type Props = {
   sessionId: string;

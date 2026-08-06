@@ -26,7 +26,7 @@ function compactAmount(value: number) {
   return `${(value / 1_000_000_000).toFixed(1)}B`;
 }
 
-// Token purchases are priced at 1 token = $1. Litecoin buyers settle in USD,
+// Token purchases are priced at 1 token = $0.25 ($1 buys 4 coins). Litecoin buyers settle in USD,
 // M-Pesa buyers settle in KES — so they are reported as separate currencies.
 function currencyForMethod(method: string | null) {
   return (method ?? "").toLowerCase() === "mpesa" ? "KES" : "USD";
@@ -320,7 +320,7 @@ export default function PaymentsPage() {
             </div>
 
             <p className="text-xs text-muted-foreground mb-3">
-              1 coin = $1. M-Pesa purchases are settled in KES, Litecoin purchases in USD — the two are never summed together.
+              1 coin = $0.25 ($1 buys 4 coins). M-Pesa purchases are settled in KES, Litecoin purchases in USD — the two are never summed together.
             </p>
 
             <Card className="border border-border shadow-sm overflow-hidden">
