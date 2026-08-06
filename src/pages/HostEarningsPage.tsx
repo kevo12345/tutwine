@@ -383,6 +383,64 @@ export default function HostEarningsPage() {
               />
             </div>
 
+            {/* Total earnings breakdown: tickets + gifts in USD */}
+            <Card className="p-4">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <Coins className="h-4 w-4" /> Total earnings breakdown
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                Gross value collected on your lives and your host share. 1 coin = $
+                {TOKEN_USD.toFixed(2)}.
+              </p>
+              <div className="mt-3 divide-y divide-border/60 text-sm">
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-medium">Live tickets</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {ticketTokens.toFixed(2)} coins collected
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatTokensUsd(ticketTokens)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      your share {formatTokensUsd(ticketTokens * HOST_GIFT_SHARE)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-medium">Gifts</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {giftTokens.toFixed(2)} coins received
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatTokensUsd(giftTokens)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      your share {formatTokensUsd(giftTokens * HOST_GIFT_SHARE)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-semibold">Total</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(ticketTokens + giftTokens).toFixed(2)} coins gross
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-base font-semibold">
+                      {formatTokensUsd(ticketTokens + giftTokens)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      earned by you {formatTokensUsd(Number(stats.total_lifetime_earnings ?? 0))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+
             {/* Gifts received — detail list with a shortcut to convert earnings */}
             <Card className="p-4">
               <div className="flex items-center justify-between gap-3">
