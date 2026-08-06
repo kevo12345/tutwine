@@ -199,7 +199,7 @@ export default function HostEarningsPage() {
   }, [user]);
 
   useEffect(() => {
-    setWalletAddr(profile?.litecoin_wallet_address ?? "");
+    setWalletAddr(profile?.usdt_wallet_address ?? "");
   }, [profile]);
 
   const cooldownActive =
@@ -345,7 +345,7 @@ export default function HostEarningsPage() {
                     {new Date(latestWithdrawal.cooldown_until).toLocaleString()} (72h cooldown).
                   </p>
                 )}
-                {!profile?.litecoin_wallet_address && (
+                {!profile?.usdt_wallet_address && (
                   <p className="text-[11px] text-muted-foreground">
                     Tip: set a default USDT (BEP20) address in{" "}
                     <Link to="/settings" className="underline">

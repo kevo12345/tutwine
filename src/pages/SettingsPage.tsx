@@ -29,14 +29,14 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
 
-  const savedWallet = ((profile as any)?.litecoin_wallet_address ?? "") as string;
+  const savedWallet = ((profile as any)?.usdt_wallet_address ?? "") as string;
   const [wallet, setWallet] = useState(savedWallet);
   const [savingWallet, setSavingWallet] = useState(false);
   const [editingWallet, setEditingWallet] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
-    setWallet(((profile as any)?.litecoin_wallet_address ?? "") as string);
+    setWallet(((profile as any)?.usdt_wallet_address ?? "") as string);
   }, [profile]);
 
 
@@ -50,7 +50,7 @@ export default function SettingsPage() {
     setSavingWallet(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ litecoin_wallet_address: wallet.trim() || null } as any)
+      .update({ usdt_wallet_address: wallet.trim() || null } as any)
       .eq("user_id", user.id);
     setSavingWallet(false);
     setConfirmOpen(false);
