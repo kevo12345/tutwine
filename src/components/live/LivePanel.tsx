@@ -254,6 +254,7 @@ export function LivePanel({
           }
           if (typeof next?.is_paused === "boolean") {
             setIsPaused(next.is_paused);
+            setPausedAt(next.is_paused ? (next.paused_at ?? new Date().toISOString()) : null);
           }
           if (next?.thumbnail_url) setCoverUrl(next.thumbnail_url);
           if (next?.status === "ended" && !isHost) {
