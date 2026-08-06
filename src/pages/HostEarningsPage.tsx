@@ -323,13 +323,14 @@ export default function HostEarningsPage() {
                 )}
                 {!profile?.litecoin_wallet_address && (
                   <p className="text-[11px] text-muted-foreground">
-                    Tip: set a default Litecoin wallet in{" "}
+                    Tip: set a default USDT (BEP20) address in{" "}
                     <Link to="/settings" className="underline">
                       Settings
                     </Link>
                     .
                   </p>
                 )}
+
               </div>
             </Card>
 
