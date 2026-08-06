@@ -1,23 +1,21 @@
 import { useEffect, useState } from "react";
-import { Heart, Send, Gift, Loader2 } from "lucide-react";
+import { Heart, Send, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GiftSheet } from "@/components/live/GiftSheet";
 
 type Props = {
   sessionId: string;
   userId: string;
   placeholder?: string;
   onHeart: () => void; // fires local + broadcast heart
-  onGift: () => void;
+  onGift?: () => void; // called after a gift is successfully sent
 };
-
-const GIFT_EMOJI = ["🌹", "🎁", "💎", "🍕", "🍾", "🔥", "⭐", "🦄"];
 
 export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift }: Props) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [giftOpen, setGiftOpen] = useState(false);
   // On-screen keyboards shrink the visual viewport but not our fixed 100dvh
   // stage, which leaves a blank strip under the input. Track it and lift the bar.
   const [keyboardInset, setKeyboardInset] = useState(0);
@@ -86,37 +84,13 @@ export function LiveBottomBar({ sessionId, userId, placeholder, onHeart, onGift 
         </button>
       ) : (
         <>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setGiftOpen((o) => !o)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm active:scale-95"
-              aria-label="Gift"
-            >
-              <Gift className="h-5 w-5" />
-            </button>
-            {giftOpen && (
-              <div className="absolute bottom-12 right-0 flex max-w-[80vw] flex-wrap justify-end gap-1.5 rounded-2xl bg-black/80 p-2 shadow-lg backdrop-blur-sm">
-                {GIFT_EMOJI.map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => {
-                      setGiftOpen(false);
-                      onGift();
-                      // Post the gift as an overlay message so everyone sees it
-                      (supabase as any)
-                        .from("live_overlay_messages")
-                        .insert({ session_id: sessionId, author_id: userId, content: `${g} sent a gift!` });
-                    }}
-                    className="text-2xl transition hover:scale-125"
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <GiftSheet
+            liveId={sessionId}
+            hostIsSelf={false}
+            source="session"
+            onSent={onGift}
+            triggerClassName="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm active:scale-95"
+          />
           <button
             type="button"
             onClick={onHeart}
