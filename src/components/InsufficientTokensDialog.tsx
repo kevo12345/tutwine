@@ -19,6 +19,10 @@ type Props = {
   balance: number;
   /** Short description of what they were trying to do */
   action?: string;
+  /** When topping up to join a live, the session to auto-join after payment */
+  joinSessionId?: string;
+  /** Hours of access to buy after the top-up */
+  joinHours?: number;
 };
 
 const PRESETS = [3, 5, 10];
@@ -29,13 +33,22 @@ export function InsufficientTokensDialog({
   needed,
   balance,
   action = "continue",
+  joinSessionId,
+  joinHours,
 }: Props) {
   const navigate = useNavigate();
   const short = Math.max(0, Math.ceil(needed - balance));
 
   const topUp = (amount?: number) => {
     onOpenChange(false);
-    navigate(amount ? `/buy-tokens?amount=${amount}` : "/buy-tokens");
+    const params = new URLSearchParams();
+    if (amount) params.set("amount", String(amount));
+    if (joinSessionId) {
+      params.set("join", joinSessionId);
+      params.set("hours", String(Math.max(1, joinHours ?? 1)));
+    }
+    const qs = params.toString();
+    navigate(qs ? `/buy-tokens?${qs}` : "/buy-tokens");
   };
 
   return (
