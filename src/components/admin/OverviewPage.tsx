@@ -232,7 +232,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
-                  <YAxis yAxisId="left" width={40} allowDecimals={false} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis yAxisId="left" width={40} allowDecimals={false} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                   <YAxis yAxisId="right" orientation="right" width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
                   <Area yAxisId="right" type="monotone" dataKey="cumulativeUsers" name="Total users" stroke="hsl(var(--info))" strokeWidth={2} fill="url(#cumulativeFill)" />
