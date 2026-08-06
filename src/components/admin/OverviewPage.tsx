@@ -55,6 +55,15 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 export default function OverviewPage({ stats }: OverviewPageProps) {
+  const [showExact, setShowExact] = useState(false);
+
+  const num = (v?: number | null) =>
+    v === undefined || v === null ? "—" : showExact ? exactNum(Number(v)) : compact(Number(v));
+  const money = (v?: number | null) =>
+    v === undefined || v === null ? "—" : showExact ? exactMoney(Number(v)) : `$${compact(Number(v))}`;
+  const titleNum = (v?: number | null) => (v === undefined || v === null ? undefined : exactNum(Number(v)));
+  const titleMoney = (v?: number | null) => (v === undefined || v === null ? undefined : exactMoney(Number(v)));
+
   const series = (stats?.series ?? []).map((d) => ({
     ...d,
     label: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -62,31 +71,33 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
 
   const heroCards = [
     {
-      label: "Total Users", value: num(stats?.totalUsers), icon: Users,
+      label: "Total Users", value: num(stats?.totalUsers), exact: titleNum(stats?.totalUsers), icon: Users,
       sub: `${num(stats?.recentSignups)} new this week`, tone: "primary" as const, href: "/admin/users",
     },
     {
-      label: "Coins Sold", value: num(stats?.tokensSold), icon: Coins,
+      label: "Coins Sold", value: num(stats?.tokensSold), exact: titleNum(stats?.tokensSold), icon: Coins,
       sub: `${money(stats?.tokensSold)} gross volume`, tone: "success" as const, href: "/admin/payments",
     },
     {
-      label: "Platform Earnings", value: money(stats?.platformEarnings), icon: Wallet,
+      label: "Platform Earnings", value: money(stats?.platformEarnings), exact: titleMoney(stats?.platformEarnings), icon: Wallet,
       sub: `${money(stats?.hostEarnings)} paid to hosts`, tone: "info" as const, href: "/admin/live-monitor",
     },
     {
-      label: "Live Right Now", value: num(stats?.liveNow), icon: Radio,
+      label: "Live Right Now", value: num(stats?.liveNow), exact: titleNum(stats?.liveNow), icon: Radio,
       sub: `${num(stats?.onlineNow)} users online`, tone: "accent" as const, href: "/admin/live-monitor",
     },
   ];
 
   const secondary = [
-    { label: "Active Subscribers", value: num(stats?.subscribers), icon: Crown },
-    { label: "Tickets Sold", value: num(stats?.ticketsSold), icon: Ticket },
-    { label: "Gifts Sent", value: num(stats?.giftsSent), icon: Gift },
-    { label: "Matches", value: num(stats?.totalMatches), icon: Heart },
-    { label: "Pending Reports", value: num(stats?.pendingReports), icon: Flag },
-    { label: "Pending Payouts", value: num(stats?.pendingWithdrawalCount), icon: Banknote },
+    { label: "Active Subscribers", value: num(stats?.subscribers), exact: titleNum(stats?.subscribers), icon: Crown },
+    { label: "Tickets Sold", value: num(stats?.ticketsSold), exact: titleNum(stats?.ticketsSold), icon: Ticket },
+    { label: "Gifts Sent", value: num(stats?.giftsSent), exact: titleNum(stats?.giftsSent), icon: Gift },
+    { label: "Matches", value: num(stats?.totalMatches), exact: titleNum(stats?.totalMatches), icon: Heart },
+    { label: "Pending Reports", value: num(stats?.pendingReports), exact: titleNum(stats?.pendingReports), icon: Flag },
+    { label: "Pending Payouts", value: num(stats?.pendingWithdrawalCount), exact: titleNum(stats?.pendingWithdrawalCount), icon: Banknote },
   ];
+
+
 
   const tierData = Object.entries(stats?.tierCounts ?? {}).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
