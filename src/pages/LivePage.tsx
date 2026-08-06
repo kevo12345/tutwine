@@ -4,12 +4,10 @@ import { Radio, Users, Clock, Loader2, Smartphone, ArrowUpRight } from "lucide-r
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useActiveLiveSessions, type ActiveLiveSession } from "@/hooks/useActiveLiveSessions";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
@@ -36,7 +34,7 @@ export default function LivePage() {
   const isPhone = useIsPhone();
   const desktopBlocked = isPhone === false;
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
-  const [hours, setHours] = useState<number>(1);
+  const hours = 1;
   const [submitting, setSubmitting] = useState(false);
   const [shortfall, setShortfall] = useState<{ hours: number; sessionId: string } | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
@@ -263,37 +261,24 @@ export default function LivePage() {
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
             <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
-            <SheetDescription>1 coin per hour ($0.25) — pick how long you want to watch.</SheetDescription>
+            <SheetDescription>1 coin ($0.25) will be deducted for this live.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Duration</Label>
-              <div className="mt-2 grid grid-cols-5 gap-2">
-                {LIVE_DURATION_OPTIONS.map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => setHours(h)}
-                    className={`rounded-xl border px-2 py-2 text-sm font-semibold transition ${
-                      hours === h ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground"
-                    }`}
-                  >
-                    {h}h
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Costs {hours} token{hours === 1 ? "" : "s"} · your balance: {balance} token
-                {balance === 1 ? "" : "s"}
+            <div className="rounded-2xl border border-border bg-muted/40 p-4">
+              <p className="text-sm font-semibold text-foreground">1 coin will be deducted</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Your ticket is valid for 1 hour on this live only. Your balance: {balance} coin
+                {balance === 1 ? "" : "s"}.
               </p>
             </div>
 
-            {balance < hours ? (
+            {balance < 1 ? (
               <Button
                 onClick={() => {
                   const sid = sheet?.session?.id;
                   setSheet(null);
-                  if (sid) setShortfall({ hours, sessionId: sid });
+                  if (sid) setShortfall({ hours: 1, sessionId: sid });
                 }}
                 className="w-full"
                 size="lg"
@@ -302,13 +287,10 @@ export default function LivePage() {
               </Button>
             ) : (
               <Button onClick={submit} disabled={submitting} className="w-full" size="lg">
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  `Spend ${hours} token${hours === 1 ? "" : "s"} & Join`
-                )}
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Spend 1 coin & Join"}
               </Button>
             )}
+
             <p className="text-center text-[11px] text-muted-foreground">
               Access expires automatically when your time runs out. Tokens can't be withdrawn as cash.
             </p>
