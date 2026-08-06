@@ -1476,6 +1476,17 @@ export type Database = {
           platform_share: number
         }[]
       }
+      settle_live_session_earnings: {
+        Args: { _session_id: string }
+        Returns: {
+          duration_seconds: number
+          gross: number
+          host_pct: number
+          host_share: number
+          platform_share: number
+          session_id: string
+        }[]
+      }
       who_liked_me: {
         Args: never
         Returns: {
