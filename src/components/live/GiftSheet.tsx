@@ -111,7 +111,9 @@ export function GiftSheet({
 
 
   async function send(gift: CatalogGift) {
-    if (hostIsSelf) return;
+    if (hostIsSelf || sending) return;
+    // Strictly a gift: never fall back to anything else. If coins are short,
+    // prompt a top-up instead of sending.
     if (balance < gift.token_price) {
       setOpen(false);
       setShortfall(gift.token_price);
@@ -141,24 +143,27 @@ export function GiftSheet({
       return;
     }
     setOpen(false);
-    // Broadcast so the sender, host and all viewers see the same animation.
-    const ch = supabase.channel(giftChannelName(liveId), { config: { broadcast: { self: true } } });
+
+    const payload = {
+      emoji: gift.emoji,
+      label: gift.label,
+      amount: gift.token_price,
+      senderName: profile?.display_name ?? "Someone",
+    };
+    // Instant local animation for the sender, then broadcast to everyone else.
+    emitLocalGift(liveId, payload);
+    const ch = supabase.channel(giftChannelName(liveId), { config: { broadcast: { self: false } } });
     ch.subscribe((status) => {
       if (status !== "SUBSCRIBED") return;
-      ch.send({
-        type: "broadcast",
-        event: "gift",
-        payload: {
-          emoji: gift.emoji,
-          label: gift.label,
-          amount: gift.token_price,
-          senderName: profile?.display_name ?? "Someone",
-        },
-      }).then(() => setTimeout(() => supabase.removeChannel(ch), 500));
+      ch.send({ type: "broadcast", event: "gift", payload }).then(() =>
+        setTimeout(() => supabase.removeChannel(ch), 500),
+      );
     });
+    toast.success(`${gift.emoji} ${gift.label} sent — ${gift.token_price} coin${gift.token_price === 1 ? "" : "s"}`);
     await refreshProfile();
     onSent?.();
   }
+
 
 
   return (
