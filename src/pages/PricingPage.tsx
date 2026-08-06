@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { PaymentProcessingOverlay } from "@/components/payments/PaymentProcessingOverlay";
 import {
   Dialog,
   DialogContent,
@@ -95,6 +96,8 @@ const USDT_MIN_USD = 12;
 type Method = null | "mpesa" | "crypto";
 
 type CryptoPayment = {
+  payment_id?: string;
+  subscription_id?: string;
   pay_address: string;
   pay_amount: number;
   pay_currency: string;
@@ -111,6 +114,7 @@ export default function PricingPage() {
 
   // M-Pesa state
   const [phone, setPhone] = useState("");
+  const [mpesaRequest, setMpesaRequest] = useState<null | { subscription_id: string; amount: number }>(null);
   const [mpesaLoading, setMpesaLoading] = useState(false);
 
   // Crypto state — default to LTC, the only coin that supports all tiers
@@ -118,6 +122,15 @@ export default function PricingPage() {
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [cryptoPayment, setCryptoPayment] = useState<CryptoPayment | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Shared payment verification overlay
+  const [processing, setProcessing] = useState<null | {
+    paymentMethod: "mpesa" | "crypto";
+    orderId: string;
+    paymentId?: string | null;
+    amount: number;
+    currency: string;
+  }>(null);
 
   const selectedUsd = selectedTier ? USD_PRICES[selectedTier] ?? 0 : 0;
   const usdtBelowMin = selectedUsd > 0 && selectedUsd < USDT_MIN_USD;
@@ -134,6 +147,7 @@ export default function PricingPage() {
   const resetDialog = () => {
     setMethod(null);
     setPhone("");
+    setMpesaRequest(null);
     setCryptoPayment(null);
     setPayCurrency("ltc");
     setCopied(false);
@@ -167,11 +181,13 @@ export default function PricingPage() {
       if (error) throw error;
       if (data?.success) {
         toast.success("M-Pesa prompt sent!", {
-          description: "Check your phone and enter your M-Pesa PIN. Your subscription will activate once payment is confirmed.",
+          description: "Check your phone and enter your M-Pesa PIN, then tap “I’ve Completed the Payment”.",
           duration: 8000,
         });
-        setDialogOpen(false);
-        resetDialog();
+        setMpesaRequest({
+          subscription_id: String(data.subscription_id),
+          amount: KES_PRICES[selectedTier],
+        });
       } else {
         toast.error(data?.error || "Payment failed. Please try again.");
       }
@@ -203,6 +219,8 @@ export default function PricingPage() {
       if (error) throw error;
       if (data?.success) {
         setCryptoPayment({
+          payment_id: data.payment_id ? String(data.payment_id) : undefined,
+          subscription_id: data.subscription_id ? String(data.subscription_id) : undefined,
           pay_address: data.pay_address,
           pay_amount: data.pay_amount,
           pay_currency: data.pay_currency,
@@ -435,6 +453,22 @@ export default function PricingPage() {
                     ⚠️ Your subscription will only activate after you complete the M-Pesa payment on your phone.
                   </p>
                 </div>
+                {mpesaRequest ? (
+                  <Button
+                    className="w-full gradient-warm border-0 text-primary-foreground shadow-glow"
+                    onClick={() => {
+                      setDialogOpen(false);
+                      setProcessing({
+                        paymentMethod: "mpesa",
+                        orderId: mpesaRequest.subscription_id,
+                        amount: mpesaRequest.amount,
+                        currency: "KES",
+                      });
+                    }}
+                  >
+                    I’ve Completed the Payment
+                  </Button>
+                ) : null}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setMethod(null)} disabled={mpesaLoading} className="flex-1">
                     Back
@@ -590,14 +624,46 @@ export default function PricingPage() {
                     Your subscription activates automatically once the network confirms the payment. You can close this window.
                   </p>
                 </div>
-                <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full">
-                  Done
+                <Button
+                  className="w-full gradient-warm border-0 text-primary-foreground shadow-glow"
+                  disabled={!cryptoPayment.subscription_id}
+                  onClick={() => {
+                    setDialogOpen(false);
+                    setProcessing({
+                      paymentMethod: "crypto",
+                      orderId: cryptoPayment.subscription_id!,
+                      paymentId: cryptoPayment.payment_id ?? null,
+                      amount: cryptoPayment.pay_amount,
+                      currency: cryptoPayment.pay_currency,
+                    });
+                  }}
+                >
+                  I’ve Sent the Payment
                 </Button>
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {processing ? (
+        <PaymentProcessingOverlay
+          open
+          paymentMethod={processing.paymentMethod}
+          purchaseType="subscription"
+          orderId={processing.orderId}
+          paymentId={processing.paymentId}
+          amount={processing.amount}
+          currency={processing.currency}
+          successRedirect="/discover"
+          retryCallback={() => {
+            setProcessing(null);
+            setMethod(processing.paymentMethod);
+            setDialogOpen(true);
+          }}
+          onClose={() => setProcessing(null)}
+        />
+      ) : null}
     </div>
   );
 }

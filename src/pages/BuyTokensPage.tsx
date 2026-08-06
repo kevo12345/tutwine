@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Coins, Loader2, Smartphone, Bitcoin, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PaymentProcessingOverlay } from "@/components/payments/PaymentProcessingOverlay";
 
 type Method = "mpesa" | "litecoin";
 const PRESETS = [3, 5];
@@ -31,6 +32,7 @@ export default function BuyTokensPage() {
   );
   const [method, setMethod] = useState<Method>("mpesa");
   const [submitting, setSubmitting] = useState(false);
+  const [processing, setProcessing] = useState<null | { orderId: string; amount: number }>(null);
 
   const balance = Number((profile as any)?.token_balance ?? 0);
 
@@ -85,12 +87,8 @@ export default function BuyTokensPage() {
       );
       if (fnErr) throw fnErr;
 
-      toast.success(`Purchased ${amount} tokens.`, {
-        description:
-          method === "mpesa"
-            ? "M-Pesa flow is stubbed — payment auto-confirmed for now."
-            : "Litecoin flow is stubbed — payment auto-confirmed for now.",
-      });
+      // Verification (and crediting) happens server-side; the overlay waits for it.
+      setProcessing({ orderId: tx.id, amount });
       await refreshProfile();
       qc.invalidateQueries({ queryKey: ["token-transactions", user.id] });
     } catch (e: any) {
@@ -254,6 +252,20 @@ export default function BuyTokensPage() {
           )}
         </div>
       </div>
+
+      {processing ? (
+        <PaymentProcessingOverlay
+          open
+          paymentMethod={method === "mpesa" ? "mpesa" : "crypto"}
+          purchaseType="tokens"
+          orderId={processing.orderId}
+          amount={processing.amount}
+          currency="USD"
+          successRedirect="/buy-tokens"
+          retryCallback={() => setProcessing(null)}
+          onClose={() => setProcessing(null)}
+        />
+      ) : null}
     </AppLayout>
   );
 }
