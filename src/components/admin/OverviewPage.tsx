@@ -179,7 +179,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                 <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-lg font-semibold leading-none tracking-tight">{s.value}</p>
+                <p className="text-lg font-semibold leading-none tracking-tight" title={s.exact}>{s.value}</p>
                 <p className="mt-1 text-[11px] text-muted-foreground">{s.label}</p>
               </div>
             </div>
