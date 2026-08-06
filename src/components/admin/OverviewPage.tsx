@@ -160,7 +160,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   </div>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
-                <p className="text-3xl font-semibold tracking-tight text-foreground">{c.value}</p>
+                <p className="text-3xl font-semibold tracking-tight text-foreground" title={c.exact}>{c.value}</p>
                 <p className="mt-1 text-xs font-medium text-foreground/80">{c.label}</p>
                 <p className="mt-2 text-[11px] text-muted-foreground">{c.sub}</p>
               </CardContent>
