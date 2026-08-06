@@ -28,6 +28,7 @@ import {
   Banknote,
 } from "lucide-react";
 import { toast } from "sonner";
+import { TOKEN_USD, formatTokensUsd } from "@/lib/constants";
 
 type Stats = {
   available_earnings: number;
@@ -193,7 +194,7 @@ export default function HostEarningsPage() {
     const { error } = await supabase.rpc("convert_earnings_to_tokens" as any, { _amount: amt });
     setSubmitting(false);
     if (error) return toast.error(error.message);
-    toast.success(`Converted ${amt} to tokens`);
+    toast.success(`Converted ${amt} coins (${formatTokensUsd(amt)}) to your balance`);
     setConvertOpen(false);
     setConvertAmount("");
     await Promise.all([load(), refreshProfile()]);
@@ -256,23 +257,26 @@ export default function HostEarningsPage() {
               <StatCard
                 icon={<Wallet className="h-3.5 w-3.5" />}
                 label="Available Earnings"
-                value={available.toFixed(2)}
-                sub="tokens ($1 each)"
+                value={formatTokensUsd(available)}
+                sub={`${available.toFixed(2)} coins · 1 coin = $${TOKEN_USD.toFixed(2)}`}
               />
               <StatCard
                 icon={<Clock className="h-3.5 w-3.5" />}
                 label="Pending Withdrawals"
-                value={Number(stats.pending_withdrawals).toFixed(2)}
+                value={formatTokensUsd(Number(stats.pending_withdrawals))}
+                sub={`${Number(stats.pending_withdrawals).toFixed(2)} coins`}
               />
               <StatCard
                 icon={<Coins className="h-3.5 w-3.5" />}
                 label="Paid Withdrawals"
-                value={Number(stats.paid_withdrawals).toFixed(2)}
+                value={formatTokensUsd(Number(stats.paid_withdrawals))}
+                sub={`${Number(stats.paid_withdrawals).toFixed(2)} coins`}
               />
               <StatCard
                 icon={<Coins className="h-3.5 w-3.5" />}
                 label="Total Lifetime Earnings"
-                value={Number(stats.total_lifetime_earnings).toFixed(2)}
+                value={formatTokensUsd(Number(stats.total_lifetime_earnings))}
+                sub={`${Number(stats.total_lifetime_earnings).toFixed(2)} coins`}
               />
             </div>
 
@@ -285,7 +289,7 @@ export default function HostEarningsPage() {
                   onClick={() => setConvertOpen(true)}
                   disabled={available <= 0}
                 >
-                  <ArrowRightLeft className="h-4 w-4" /> Convert to Tokens (1:1)
+                  <ArrowRightLeft className="h-4 w-4" /> Convert to Coins (1:1)
                 </Button>
                 <Button
                   variant="outline"
@@ -306,7 +310,8 @@ export default function HostEarningsPage() {
                 </Button>
                 {available < MIN_WITHDRAWAL && (
                   <p className="text-[11px] text-muted-foreground">
-                    Minimum withdrawal is {MIN_WITHDRAWAL}. You have {available.toFixed(2)}.
+                    Minimum withdrawal is {MIN_WITHDRAWAL} coins ({formatTokensUsd(MIN_WITHDRAWAL)}
+                    ). You have {available.toFixed(2)} coins ({formatTokensUsd(available)}).
                   </p>
                 )}
                 {cooldownActive && latestWithdrawal && (
@@ -337,7 +342,11 @@ export default function HostEarningsPage() {
                 icon={<Gift className="h-3.5 w-3.5" />}
                 label="Total Gifts Received"
                 value={stats.total_gifts_received ?? 0}
-                sub={`${Number(stats.total_gift_tokens ?? 0).toFixed(0)} tokens`}
+                sub={`${Number(stats.total_gift_tokens ?? 0).toFixed(0)} coins · ${formatTokensUsd(
+                  Number(stats.total_gift_tokens ?? 0),
+                )} gifted · your share ${formatTokensUsd(
+                  Number(stats.total_gift_tokens ?? 0) * HOST_GIFT_SHARE,
+                )}`}
               />
               <StatCard
                 icon={<Heart className="h-3.5 w-3.5" />}
@@ -359,7 +368,8 @@ export default function HostEarningsPage() {
                     <Gift className="h-4 w-4" /> Gifts Received
                   </h2>
                   <p className="text-[11px] text-muted-foreground">
-                    You keep {Math.round(HOST_GIFT_SHARE * 100)}% of every gift as earnings.
+                    You keep {Math.round(HOST_GIFT_SHARE * 100)}% of every gift as earnings. 1 coin
+                    = ${TOKEN_USD.toFixed(2)}.
                   </p>
                 </div>
                 <Button
@@ -400,10 +410,11 @@ export default function HostEarningsPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold">
-                          +{(g.token_amount * HOST_GIFT_SHARE).toFixed(2)}
+                          +{formatTokensUsd(g.token_amount * HOST_GIFT_SHARE)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          of {g.token_amount} coins
+                          {(g.token_amount * HOST_GIFT_SHARE).toFixed(2)} of {g.token_amount} coins
+                          ({formatTokensUsd(g.token_amount)} gift)
                         </p>
                       </div>
                     </div>
@@ -422,7 +433,8 @@ export default function HostEarningsPage() {
           <DialogHeader>
             <DialogTitle>Convert Earnings to Tokens</DialogTitle>
             <DialogDescription>
-              Move earnings to your token balance at a 1:1 rate. Available: {available.toFixed(2)}.
+              Move earnings to your coin balance at a 1:1 coin rate. Available:{" "}
+              {available.toFixed(2)} coins ({formatTokensUsd(available)}).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
