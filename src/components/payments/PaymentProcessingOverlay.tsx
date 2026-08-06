@@ -70,12 +70,14 @@ export function PaymentProcessingOverlay({
   const finish = useCallback(() => {
     stopped.current = true;
     clearPendingPayment(orderId);
+    void refreshProfile?.();
     qc.invalidateQueries();
     setTimeout(() => {
       onClose?.();
       navigate(redirectTo);
     }, 1500);
-  }, [navigate, onClose, orderId, qc, redirectTo]);
+  }, [navigate, onClose, orderId, qc, redirectTo, refreshProfile]);
+
 
   // Poll the backend for the real payment status.
   useEffect(() => {
