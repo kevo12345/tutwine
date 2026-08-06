@@ -72,6 +72,7 @@ serve(async (req) => {
           usersRes, reportsRes, subsRes, recentRes, onlineRes, liveRes,
           purchasesRes, giftsRes, ticketsRes, passesRes, matchesRes,
           profileMoneyRes, sessionMoneyRes, livesMoneyRes, signupSeriesRes, purchaseSeriesRes, tiersRes, withdrawalsRes,
+          presenceRes, sessionListRes, passListRes,
         ] = await Promise.all([
           head("profiles"),
           head("reports").eq("status", "pending"),
@@ -91,7 +92,11 @@ serve(async (req) => {
           adminClient.from("token_transactions").select("amount, created_at, type, status").gte("created_at", thirtyDaysAgo),
           adminClient.from("subscriptions").select("tier").eq("status", "active"),
           adminClient.from("withdrawals").select("amount, status"),
+          adminClient.from("user_presence").select("last_seen_at"),
+          adminClient.from("live_sessions").select("id, host_id, status, started_at, ended_at, created_at").gte("created_at", thirtyDaysAgo),
+          adminClient.from("live_passes").select("session_id, viewer_id, created_at, expires_at").gte("created_at", thirtyDaysAgo),
         ]);
+
 
         const sum = (rows: any[] | null, key: string) =>
           (rows ?? []).reduce((acc: number, r: any) => acc + Number(r[key] ?? 0), 0);
