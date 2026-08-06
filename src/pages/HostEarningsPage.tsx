@@ -47,9 +47,12 @@ type Withdrawal = {
   amount: number;
   status: "pending" | "paid" | "rejected";
   requested_at: string;
+  processed_at?: string | null;
   cooldown_until: string;
   wallet_address: string;
+  admin_note?: string | null;
 };
+
 
 /** A single gift the host received, with sender + catalog details resolved. */
 type ReceivedGift = {
