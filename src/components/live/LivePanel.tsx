@@ -62,6 +62,8 @@ export function LivePanel({
   const [renewOpen, setRenewOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [pausedAt, setPausedAt] = useState<string | null>(null);
+  const [pauseRemaining, setPauseRemaining] = useState("5:00");
   const [coverUrl, setCoverUrl] = useState<string | null>(posterUrl ?? null);
   const heartChanRef = useRef<any>(null);
   const presenceChanRef = useRef<any>(null);
