@@ -488,7 +488,7 @@ export default function HostEarningsPage() {
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Withdraw to Litecoin</DialogTitle>
+            <DialogTitle>Withdraw to USDT (BEP20)</DialogTitle>
             <DialogDescription>
               Minimum {MIN_WITHDRAWAL}. A 72-hour cooldown applies to each request.
             </DialogDescription>
@@ -505,17 +505,24 @@ export default function HostEarningsPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Litecoin wallet address</Label>
+              <Label>USDT (BEP20) address</Label>
               <Input
                 value={walletAddr}
                 onChange={(e) => setWalletAddr(e.target.value)}
-                placeholder="LTC address"
+                placeholder="0x... BEP20 (BNB Smart Chain) address"
               />
               <p className="text-[11px] text-muted-foreground">
-                This will be saved as your default wallet.
+                This will be saved as your default address. Please confirm it is correct — USDT sent
+                to a wrong address or a different network cannot be recovered. You can edit it any
+                time in{" "}
+                <Link to="/settings" className="underline">
+                  Settings
+                </Link>
+                .
               </p>
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="ghost" onClick={() => setWithdrawOpen(false)}>
               Cancel
