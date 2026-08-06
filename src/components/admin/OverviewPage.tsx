@@ -187,6 +187,149 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
         </CardContent>
       </Card>
 
+      {/* Signups & audience */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Card className="border border-border/70 shadow-sm xl:col-span-2">
+          <CardContent className="p-5">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">Daily signups & growth</h3>
+                <p className="text-[11px] text-muted-foreground">New accounts per day with cumulative user growth, last 30 days</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-2xl font-semibold leading-none tracking-tight" title={titleNum(stats?.signupsToday)}>
+                    {num(stats?.signupsToday)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Signups today</p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`gap-1 text-[10px] ${growthUp ? "border-success/30 bg-success/10 text-success" : "border-destructive/30 bg-destructive/10 text-destructive"}`}
+                >
+                  {growthUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  {Math.abs(Number(stats?.signupGrowthPct ?? 0))}% vs prev 7d
+                </Badge>
+              </div>
+            </div>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={series} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="cumulativeFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--info))" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(var(--info))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
+                  <Area yAxisId="right" type="monotone" dataKey="cumulativeUsers" name="Total users" stroke="hsl(var(--info))" strokeWidth={2} fill="url(#cumulativeFill)" />
+                  <Bar yAxisId="left" dataKey="signups" name="New signups" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={22} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/70 shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold">Active audience</h3>
+              <p className="text-[11px] text-muted-foreground">Users seen in the last 24h / 7d / 30d</p>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: "Online right now", value: stats?.onlineNow, icon: CircleDot, tone: "text-success" },
+                { label: "Active today (DAU)", value: stats?.dau, icon: Activity, tone: "text-primary" },
+                { label: "Active this week (WAU)", value: stats?.wau, icon: Activity, tone: "text-info" },
+                { label: "Active this month (MAU)", value: stats?.mau, icon: Activity, tone: "text-accent" },
+              ].map((r) => (
+                <div key={r.label} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <r.icon className={`h-3.5 w-3.5 ${r.tone}`} /> {r.label}
+                  </span>
+                  <span className="text-base font-semibold tracking-tight" title={titleNum(r.value)}>{num(r.value)}</span>
+                </div>
+              ))}
+            </div>
+            <Separator className="my-4" />
+            <div className="flex items-baseline justify-between">
+              <p className="text-[11px] text-muted-foreground">Avg viewers per live session</p>
+              <p className="text-lg font-semibold tracking-tight">{stats?.avgViewersPerSession ?? 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active users per live session */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Card className="border border-border/70 shadow-sm xl:col-span-2">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold">Active users per live session</h3>
+              <p className="text-[11px] text-muted-foreground">
+                Viewers who bought into each of the last {sessionActivity.length || 0} sessions, and how many are still active
+              </p>
+            </div>
+            {sessionActivity.length === 0 ? (
+              <div className="flex h-[240px] items-center justify-center text-xs text-muted-foreground">
+                No live sessions in the last 30 days
+              </div>
+            ) : (
+              <div className="h-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={sessionActivity} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="when" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+                    <Bar dataKey="viewers" name="Total viewers" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                    <Bar dataKey="activeViewers" name="Still active" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/70 shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold">Live now</h3>
+                <p className="text-[11px] text-muted-foreground">Active sessions and their viewers</p>
+              </div>
+              <Link to="/admin/live-monitor" className="text-[11px] font-medium text-primary hover:underline">
+                Monitor
+              </Link>
+            </div>
+            {(stats?.activeSessions ?? []).length === 0 ? (
+              <div className="flex h-[200px] items-center justify-center text-xs text-muted-foreground">
+                Nobody is live right now
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(stats?.activeSessions ?? []).map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5">
+                    <div>
+                      <p className="text-xs font-medium">Session {s.id.slice(0, 6)}</p>
+                      <p className="text-[11px] text-muted-foreground">{s.minutes} min running</p>
+                    </div>
+                    <Badge variant="secondary" className="gap-1 text-[11px] font-semibold">
+                      <Users className="h-3 w-3" /> {s.activeViewers}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Growth + revenue */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="border border-border/70 shadow-sm xl:col-span-2">
