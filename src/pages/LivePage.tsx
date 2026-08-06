@@ -170,7 +170,7 @@ export default function LivePage() {
               <div className="min-w-0">
                 <h2 className="font-semibold text-foreground">Drop into a room</h2>
                 <p className="text-sm text-muted-foreground">
-                  1 token per hour. Short on tokens? Top up in a tap.
+                  1 coin per hour ($0.25). Short on coins? Top up in a tap.
                 </p>
               </div>
             </div>
@@ -263,7 +263,7 @@ export default function LivePage() {
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader>
             <SheetTitle>Join {sheet?.session?.display_name ?? "live"}</SheetTitle>
-            <SheetDescription>1 token per hour — pick how long you want to watch.</SheetDescription>
+            <SheetDescription>1 coin per hour ($0.25) — pick how long you want to watch.</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">

@@ -51,7 +51,7 @@ const faqs = [
       },
       {
         q: "How does 'Go Live' work?",
-        a: "Hosting a live is free — from the Live tab, tap Go Live to start streaming. Viewers pay $1/hr (1 token per hour) to join, and if they don't have enough tokens they'll be prompted to top up. Your live ends automatically when the host stops or paid viewer time runs out.",
+        a: "Hosting a live is free — from the Live tab, tap Go Live to start streaming. Viewers pay 1 coin per hour ($0.25/hr, since $1 buys 4 coins) to join, and if they don't have enough tokens they'll be prompted to top up. Your live ends automatically when the host stops or paid viewer time runs out.",
       },
 
     ],

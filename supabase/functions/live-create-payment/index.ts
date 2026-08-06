@@ -18,9 +18,10 @@ const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
 const USDT_TRC20_MIN_USD = 8;
 
 function priceForHours(hours: number): number {
-  // Viewers pay $1/hr (1 token per hour). Hosting is free (blocked above).
+  // Viewers pay 1 coin per hour and 1 coin = $0.25, so $0.25/hr.
+  // Hosting is free (blocked above).
   const h = Math.max(1, Math.floor(hours));
-  return h * 1;
+  return Math.round(h * 0.25 * 100) / 100;
 }
 
 Deno.serve(async (req) => {

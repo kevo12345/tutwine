@@ -21,6 +21,8 @@ const NOWPAYMENTS_BASE = 'https://api.nowpayments.io/v1';
 const ALLOWED_CRYPTO = ['ltc', 'usdttrc20'];
 const USDT_TRC20_MIN_USD = 8;
 const USD_TO_KES = 130;
+// 1 coin = $0.25, so $1 buys 4 coins.
+const TOKEN_USD = 0.25;
 const PRESETS = [3, 5];
 const CUSTOM_MIN = 10;
 
@@ -59,6 +61,7 @@ Deno.serve(async (req) => {
     if (!PRESETS.includes(amount) && amount < CUSTOM_MIN) {
       return json({ error: `Minimum custom purchase is ${CUSTOM_MIN} coins` }, 400);
     }
+    const usdAmount = Math.round(amount * TOKEN_USD * 100) / 100;
     if (!['sellapay', 'nowpayments'].includes(provider)) {
       return json({ error: 'unsupported provider' }, 400);
     }
@@ -90,7 +93,7 @@ Deno.serve(async (req) => {
         await fail(service, tx.id);
         return json({ error: 'phone is required for M-Pesa' }, 400);
       }
-      const amountKes = Math.max(1, Math.round(amount * USD_TO_KES));
+      const amountKes = Math.max(1, Math.round(usdAmount * USD_TO_KES));
       try {
         const token = await getSellapayToken();
         const callbackUrl = `${supabaseUrl}/functions/v1/sellapay-callback?token_tx_id=${tx.id}`;
@@ -131,11 +134,11 @@ Deno.serve(async (req) => {
       await fail(service, tx.id);
       return json({ error: 'Unsupported pay_currency. Allowed: ltc, usdttrc20' }, 400);
     }
-    if (payCurrency === 'usdttrc20' && amount < USDT_TRC20_MIN_USD) {
+    if (payCurrency === 'usdttrc20' && usdAmount < USDT_TRC20_MIN_USD) {
       await fail(service, tx.id);
       return json(
         {
-          error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD}. Choose Litecoin (LTC) for this amount.`,
+          error: `USDT (TRC20) requires at least $${USDT_TRC20_MIN_USD} (${Math.ceil(USDT_TRC20_MIN_USD / TOKEN_USD)} coins). Choose Litecoin (LTC) for this amount.`,
           code: 'USDT_MIN_AMOUNT',
           min_usd: USDT_TRC20_MIN_USD,
         },
@@ -153,7 +156,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'x-api-key': npKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        price_amount: amount,
+        price_amount: usdAmount,
         price_currency: 'usd',
         pay_currency: payCurrency,
         order_id: tx.id,

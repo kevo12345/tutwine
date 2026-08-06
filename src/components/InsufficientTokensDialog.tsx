@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { tokensToUsd } from "@/lib/constants";
 
 type Props = {
   open: boolean;
@@ -77,7 +78,7 @@ export function InsufficientTokensDialog({
                 {Math.max(amount, short)}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                ${Math.max(amount, short)}
+                ${tokensToUsd(Math.max(amount, short)).toFixed(2)}
               </span>
             </button>
           ))}
