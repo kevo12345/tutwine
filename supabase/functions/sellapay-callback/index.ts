@@ -155,7 +155,90 @@ async function findSubscriptionByPhone(
   return profileSub || null;
 }
 
+/**
+ * SellaPay's dashboard callback does not echo our reference, so coin purchases
+ * must be matched heuristically: recent pending M-Pesa purchase whose expected
+ * KES amount matches what was paid, preferring the payer's own phone number.
+ */
+const TOKEN_USD = 0.25;
+const USD_TO_KES = 130;
+
+function expectedKes(coins: number) {
+  return Math.max(1, Math.round(Math.round(coins * TOKEN_USD * 100) / 100 * USD_TO_KES));
+}
+
+function phoneVariants(phone: string) {
+  const list = [phone];
+  if (phone.startsWith('0')) {
+    list.push(phone.substring(1), '254' + phone.substring(1), '+254' + phone.substring(1));
+  } else if (phone.startsWith('254')) {
+    list.push('0' + phone.substring(3), phone.substring(3), '+' + phone);
+  }
+  return Array.from(new Set(list));
+}
+
+async function findRecentPendingTokenPurchase(
+  serviceClient: ReturnType<typeof createClient>,
+  body: any,
+): Promise<{ id: string; user_id: string; amount: number } | null> {
+  const paid = extractPaidAmount(body);
+  const windowStart = new Date(
+    Date.now() - RECENT_PENDING_LOOKUP_WINDOW_MINUTES * 60 * 1000,
+  ).toISOString();
+
+  const { data: candidates, error } = await serviceClient
+    .from('token_transactions')
+    .select('id, user_id, amount, created_at')
+    .eq('status', 'pending')
+    .eq('type', 'purchase')
+    .eq('payment_method', 'mpesa')
+    .gte('created_at', windowStart)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error('Coin purchase fallback query failed:', error);
+    return null;
+  }
+  if (!candidates?.length) return null;
+
+  let pool = candidates as { id: string; user_id: string; amount: number }[];
+
+  // Narrow by the payer's phone number when we can resolve it to a profile.
+  const phone = extractPhoneNumber(body);
+  if (phone) {
+    const { data: profiles } = await serviceClient
+      .from('profiles')
+      .select('user_id')
+      .in('phone', phoneVariants(phone));
+    const userIds = (profiles ?? []).map((p: any) => p.user_id);
+    if (userIds.length) {
+      const byPhone = pool.filter((c) => userIds.includes(c.user_id));
+      if (byPhone.length) pool = byPhone;
+    }
+  }
+
+  // Narrow by the amount actually paid.
+  if (paid !== null) {
+    const byAmount = pool.filter((c) => Math.abs(expectedKes(Number(c.amount)) - paid) <= 2);
+    if (byAmount.length) pool = byAmount;
+    else if (pool.length > 1) return null;
+  }
+
+  if (pool.length !== 1) {
+    console.log(
+      'Coin purchase fallback ambiguous — candidates:',
+      pool.map((c) => c.id).join(', '),
+    );
+    return null;
+  }
+
+  console.log('Matched coin purchase by fallback:', pool[0].id, 'user:', pool[0].user_id);
+  return pool[0];
+}
+
 async function findRecentPendingSubscriptionByAmount(
+
   serviceClient: ReturnType<typeof createClient>,
   body: any
 ): Promise<SubscriptionRecord | null> {
