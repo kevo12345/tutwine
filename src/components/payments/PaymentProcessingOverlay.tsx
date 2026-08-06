@@ -50,6 +50,7 @@ export function PaymentProcessingOverlay({
   const [state, setState] = useState<PaymentState>("waiting");
   const [phase, setPhase] = useState<Phase>("processing");
   const [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const startedAt = useRef<number>(Date.now());
   const stopped = useRef(false);
 
@@ -126,7 +127,7 @@ export function PaymentProcessingOverlay({
       if (timer) window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, orderId, paymentId, paymentMethod, purchaseType]);
+  }, [open, orderId, paymentId, paymentMethod, purchaseType, attempt]);
 
   if (!open) return null;
 
@@ -134,9 +135,8 @@ export function PaymentProcessingOverlay({
     phase === "success" ? 3 : state === "confirmed" ? 2 : state === "waiting" ? 1 : state === "confirming" ? 1 : 1;
 
   const keepWaiting = () => {
-    startedAt.current = Date.now();
-    stopped.current = false;
     setPhase("processing");
+    setAttempt((n) => n + 1);
   };
 
   const continueBrowsing = () => {
@@ -147,9 +147,8 @@ export function PaymentProcessingOverlay({
   const recheck = async () => {
     if (busy) return;
     setBusy(true);
-    stopped.current = false;
     setPhase("processing");
-    startedAt.current = Date.now();
+    setAttempt((n) => n + 1);
     setBusy(false);
   };
 
