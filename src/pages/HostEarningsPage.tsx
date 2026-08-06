@@ -350,6 +350,68 @@ export default function HostEarningsPage() {
                 value={fmtDuration(stats.total_watch_seconds ?? 0)}
               />
             </div>
+
+            {/* Gifts received — detail list with a shortcut to convert earnings */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-semibold">
+                    <Gift className="h-4 w-4" /> Gifts Received
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    You keep {Math.round(HOST_GIFT_SHARE * 100)}% of every gift as earnings.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => {
+                    setConvertAmount(String(Math.floor(available)));
+                    setConvertOpen(true);
+                  }}
+                  disabled={available <= 0}
+                >
+                  <ArrowRightLeft className="h-4 w-4" /> Convert to coins
+                </Button>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {giftsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : gifts.length === 0 ? (
+                  <p className="py-3 text-xs text-muted-foreground">
+                    No gifts yet. Go live and your viewers can send you gifts.
+                  </p>
+                ) : (
+                  gifts.map((g) => (
+                    <div
+                      key={g.id}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+                    >
+                      <span className="text-xl">{g.emoji}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{g.label}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          from {g.senderName} · {new Date(g.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">
+                          +{(g.token_amount * HOST_GIFT_SHARE).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          of {g.token_amount} coins
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
           </>
         )}
       </div>
