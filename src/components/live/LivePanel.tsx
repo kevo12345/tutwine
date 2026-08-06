@@ -10,6 +10,7 @@ import { LiveChatRail } from "./LiveChatRail";
 import { LiveTopBar } from "./LiveTopBar";
 import { LiveBottomBar } from "./LiveBottomBar";
 import { FloatingHearts, randomHeartColor, type FloatingHeart } from "./FloatingHearts";
+import { GiftAnimationOverlay } from "@/components/live/GiftAnimationOverlay";
 import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 import {
   Dialog,
@@ -506,6 +507,8 @@ export function LivePanel({
         <>
           <FloatingHearts hearts={hearts} onExpire={dropHeart} />
 
+          <GiftAnimationOverlay liveId={sessionId} />
+
           <LiveTopBar
             hostId={hostId}
             hostName={hostName}
@@ -538,7 +541,6 @@ export function LivePanel({
               userId={user.id}
               placeholder={`Say hi to ${hostName ?? "the host"}…`}
               onHeart={sendHeart}
-              onGift={sendHeart}
             />
           )}
         </>
