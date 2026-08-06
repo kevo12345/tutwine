@@ -726,7 +726,6 @@ export type Database = {
           interested_in: Database["public"]["Enums"]["gender_type"][] | null
           interests: string[] | null
           latitude: number | null
-          litecoin_wallet_address: string | null
           longitude: number | null
           onboarding_complete: boolean | null
           onboarding_step: number | null
@@ -741,6 +740,7 @@ export type Database = {
           token_balance: number
           total_lifetime_earnings: number
           updated_at: string
+          usdt_wallet_address: string | null
           user_id: string
           verified: boolean | null
         }
@@ -761,7 +761,6 @@ export type Database = {
           interested_in?: Database["public"]["Enums"]["gender_type"][] | null
           interests?: string[] | null
           latitude?: number | null
-          litecoin_wallet_address?: string | null
           longitude?: number | null
           onboarding_complete?: boolean | null
           onboarding_step?: number | null
@@ -776,6 +775,7 @@ export type Database = {
           token_balance?: number
           total_lifetime_earnings?: number
           updated_at?: string
+          usdt_wallet_address?: string | null
           user_id: string
           verified?: boolean | null
         }
@@ -796,7 +796,6 @@ export type Database = {
           interested_in?: Database["public"]["Enums"]["gender_type"][] | null
           interests?: string[] | null
           latitude?: number | null
-          litecoin_wallet_address?: string | null
           longitude?: number | null
           onboarding_complete?: boolean | null
           onboarding_step?: number | null
@@ -811,6 +810,7 @@ export type Database = {
           token_balance?: number
           total_lifetime_earnings?: number
           updated_at?: string
+          usdt_wallet_address?: string | null
           user_id?: string
           verified?: boolean | null
         }
