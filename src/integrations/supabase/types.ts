@@ -386,6 +386,7 @@ export type Database = {
           daily_room_name: string | null
           daily_room_url: string | null
           duration_hours: number
+          ended_at: string | null
           expires_at: string | null
           gross_tokens: number
           host_earning: number
@@ -409,6 +410,7 @@ export type Database = {
           daily_room_name?: string | null
           daily_room_url?: string | null
           duration_hours: number
+          ended_at?: string | null
           expires_at?: string | null
           gross_tokens?: number
           host_earning?: number
@@ -432,6 +434,7 @@ export type Database = {
           daily_room_name?: string | null
           daily_room_url?: string | null
           duration_hours?: number
+          ended_at?: string | null
           expires_at?: string | null
           gross_tokens?: number
           host_earning?: number

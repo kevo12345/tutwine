@@ -12,7 +12,7 @@ const steps = [
   {
     icon: Ticket,
     title: "Viewers buy time",
-    body: "Anyone can join for 1 coin per hour — 1 coin costs $0.25, so $1 buys 4 hours of watch time. Their pass expires automatically and they can renew in a tap.",
+    body: "Anyone can join for 1 coin per hour — 1 coin costs $0.25. A coin only unlocks that one live: when the live ends, the pass ends with it, and joining another live costs a new coin.",
   },
   {
     icon: Gift,
