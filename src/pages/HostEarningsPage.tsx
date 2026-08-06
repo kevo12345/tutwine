@@ -47,9 +47,12 @@ type Withdrawal = {
   amount: number;
   status: "pending" | "paid" | "rejected";
   requested_at: string;
+  processed_at?: string | null;
   cooldown_until: string;
   wallet_address: string;
+  admin_note?: string | null;
 };
+
 
 /** A single gift the host received, with sender + catalog details resolved. */
 type ReceivedGift = {
@@ -103,8 +106,11 @@ export default function HostEarningsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [latestWithdrawal, setLatestWithdrawal] = useState<Withdrawal | null>(null);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [grossTokens, setGrossTokens] = useState(0);
   const [gifts, setGifts] = useState<ReceivedGift[]>([]);
   const [giftsLoading, setGiftsLoading] = useState(true);
+
 
   const [convertOpen, setConvertOpen] = useState(false);
   const [renewOpen, setRenewOpen] = useState(false);
@@ -152,6 +158,17 @@ export default function HostEarningsPage() {
     setGiftsLoading(false);
   };
 
+  /** Gross ticket + gift coins across all of this host's lives (both tables). */
+  const loadGross = async (uid: string) => {
+    const [sessRes, livesRes] = await Promise.all([
+      supabase.from("live_sessions" as any).select("gross_tokens").eq("host_id", uid),
+      supabase.from("lives" as any).select("gross_tokens").eq("host_id", uid),
+    ]);
+    const sum = (rows: any[]) =>
+      (rows ?? []).reduce((acc, r) => acc + Number(r.gross_tokens ?? 0), 0);
+    setGrossTokens(sum(((sessRes as any)?.data ?? []) as any[]) + sum(((livesRes as any)?.data ?? []) as any[]));
+  };
+
   const load = async () => {
     if (!user) return;
     setLoading(true);
@@ -159,17 +176,21 @@ export default function HostEarningsPage() {
       supabase.rpc("host_earnings_stats", { _host_id: null }),
       supabase
         .from("withdrawals" as any)
-        .select("id, amount, status, requested_at, cooldown_until, wallet_address")
+        .select("id, amount, status, requested_at, processed_at, cooldown_until, wallet_address, admin_note")
         .eq("user_id", user.id)
         .order("requested_at", { ascending: false })
-        .limit(1),
+        .limit(25),
       loadGifts(user.id),
+      loadGross(user.id),
     ]);
     const row = Array.isArray(s) ? s[0] : (s as any);
     setStats(row ?? null);
-    setLatestWithdrawal(((w as any)?.[0] as Withdrawal) ?? null);
+    const list = (((w as any) ?? []) as Withdrawal[]);
+    setWithdrawals(list);
+    setLatestWithdrawal(list[0] ?? null);
     setLoading(false);
   };
+
 
 
   useEffect(() => {
@@ -184,7 +205,10 @@ export default function HostEarningsPage() {
   const cooldownActive =
     latestWithdrawal && new Date(latestWithdrawal.cooldown_until).getTime() > Date.now();
   const available = Number(stats?.available_earnings ?? 0);
+  const giftTokens = Number(stats?.total_gift_tokens ?? 0);
+  const ticketTokens = Math.max(0, grossTokens - giftTokens);
   const withdrawDisabled = available < MIN_WITHDRAWAL || cooldownActive;
+
 
   async function handleConvert() {
     const amt = Number(convertAmount);
@@ -362,6 +386,64 @@ export default function HostEarningsPage() {
               />
             </div>
 
+            {/* Total earnings breakdown: tickets + gifts in USD */}
+            <Card className="p-4">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <Coins className="h-4 w-4" /> Total earnings breakdown
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                Gross value collected on your lives and your host share. 1 coin = $
+                {TOKEN_USD.toFixed(2)}.
+              </p>
+              <div className="mt-3 divide-y divide-border/60 text-sm">
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-medium">Live tickets</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {ticketTokens.toFixed(2)} coins collected
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatTokensUsd(ticketTokens)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      your share {formatTokensUsd(ticketTokens * HOST_GIFT_SHARE)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-medium">Gifts</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {giftTokens.toFixed(2)} coins received
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatTokensUsd(giftTokens)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      your share {formatTokensUsd(giftTokens * HOST_GIFT_SHARE)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-semibold">Total</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(ticketTokens + giftTokens).toFixed(2)} coins gross
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-base font-semibold">
+                      {formatTokensUsd(ticketTokens + giftTokens)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      earned by you {formatTokensUsd(Number(stats.total_lifetime_earnings ?? 0))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+
             {/* Gifts received — detail list with a shortcut to convert earnings */}
             <Card className="p-4">
               <div className="flex items-center justify-between gap-3">
@@ -424,6 +506,57 @@ export default function HostEarningsPage() {
                 )}
               </div>
             </Card>
+
+            {/* Withdrawal transaction history */}
+            <Card className="p-4">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <Banknote className="h-4 w-4" /> Withdrawal history
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                Requested amounts leave your available balance immediately and appear here until they
+                are paid out to your USDT (BEP20) address.
+              </p>
+              <div className="mt-3 space-y-2">
+                {withdrawals.length === 0 ? (
+                  <p className="py-3 text-xs text-muted-foreground">No withdrawals yet.</p>
+                ) : (
+                  withdrawals.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">
+                          {formatTokensUsd(Number(w.amount))}{" "}
+                          <span className="text-[11px] font-normal text-muted-foreground">
+                            ({Number(w.amount).toFixed(2)} coins)
+                          </span>
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {new Date(w.requested_at).toLocaleString()} ·{" "}
+                          <span className="font-mono">{w.wallet_address}</span>
+                        </p>
+                        {w.admin_note && (
+                          <p className="truncate text-[11px] text-muted-foreground">{w.admin_note}</p>
+                        )}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${
+                          w.status === "paid"
+                            ? "bg-primary/10 text-primary"
+                            : w.status === "rejected"
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {w.status}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
 
           </>
         )}
