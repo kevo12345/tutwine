@@ -62,27 +62,132 @@ serve(async (req) => {
 
     switch (action) {
       case "get_stats": {
-        const { count: totalUsers } = await adminClient.from("profiles").select("*", { count: "exact", head: true });
-        const { count: pendingReports } = await adminClient.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending");
-        const { count: subscribers } = await adminClient.from("subscriptions").select("*", { count: "exact", head: true }).neq("tier", "free").eq("status", "active");
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { count: recentSignups } = await adminClient.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo);
-        result = { totalUsers: totalUsers ?? 0, pendingReports: pendingReports ?? 0, subscribers: subscribers ?? 0, recentSignups: recentSignups ?? 0 };
+        const now = Date.now();
+        const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        const head = (table: string) => adminClient.from(table).select("*", { count: "exact", head: true });
+
+        const [
+          usersRes, reportsRes, subsRes, recentRes, onlineRes, liveRes,
+          purchasesRes, giftsRes, ticketsRes, passesRes, matchesRes,
+          profileMoneyRes, sessionMoneyRes, livesMoneyRes, signupSeriesRes, purchaseSeriesRes, tiersRes, withdrawalsRes,
+        ] = await Promise.all([
+          head("profiles"),
+          head("reports").eq("status", "pending"),
+          adminClient.from("subscriptions").select("*", { count: "exact", head: true }).neq("tier", "free").eq("status", "active"),
+          adminClient.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
+          adminClient.from("user_presence").select("*", { count: "exact", head: true }).eq("is_online", true),
+          adminClient.from("live_sessions").select("*", { count: "exact", head: true }).eq("status", "active"),
+          adminClient.from("token_transactions").select("amount").eq("type", "purchase").eq("status", "completed"),
+          adminClient.from("gifts").select("token_amount"),
+          head("live_tickets"),
+          head("live_passes"),
+          head("matches"),
+          adminClient.from("profiles").select("available_earnings, pending_withdrawals, total_lifetime_earnings, token_balance"),
+          adminClient.from("live_sessions").select("platform_earning, host_earning"),
+          adminClient.from("lives").select("platform_earning, host_earning"),
+          adminClient.from("profiles").select("created_at").gte("created_at", thirtyDaysAgo),
+          adminClient.from("token_transactions").select("amount, created_at, type, status").gte("created_at", thirtyDaysAgo),
+          adminClient.from("subscriptions").select("tier").eq("status", "active"),
+          adminClient.from("withdrawals").select("amount, status"),
+        ]);
+
+        const sum = (rows: any[] | null, key: string) =>
+          (rows ?? []).reduce((acc: number, r: any) => acc + Number(r[key] ?? 0), 0);
+
+        const days: string[] = [];
+        for (let i = 29; i >= 0; i--) {
+          days.push(new Date(now - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10));
+        }
+        const signupMap: Record<string, number> = {};
+        (signupSeriesRes.data ?? []).forEach((p: any) => {
+          const d = String(p.created_at).substring(0, 10);
+          signupMap[d] = (signupMap[d] ?? 0) + 1;
+        });
+        const revenueMap: Record<string, number> = {};
+        (purchaseSeriesRes.data ?? []).forEach((t: any) => {
+          if (t.type !== "purchase" || t.status !== "completed") return;
+          const d = String(t.created_at).substring(0, 10);
+          revenueMap[d] = (revenueMap[d] ?? 0) + Number(t.amount ?? 0);
+        });
+
+        const tierCounts: Record<string, number> = {};
+        (tiersRes.data ?? []).forEach((s: any) => { tierCounts[s.tier] = (tierCounts[s.tier] ?? 0) + 1; });
+
+        result = {
+          totalUsers: usersRes.count ?? 0,
+          pendingReports: reportsRes.count ?? 0,
+          subscribers: subsRes.count ?? 0,
+          recentSignups: recentRes.count ?? 0,
+          onlineNow: onlineRes.count ?? 0,
+          liveNow: liveRes.count ?? 0,
+          totalMatches: matchesRes.count ?? 0,
+          ticketsSold: (ticketsRes.count ?? 0) + (passesRes.count ?? 0),
+          giftsSent: (giftsRes.data ?? []).length,
+          giftTokens: sum(giftsRes.data, "token_amount"),
+          tokensSold: sum(purchasesRes.data, "amount"),
+          platformEarnings: sum(sessionMoneyRes.data, "platform_earning") + sum(livesMoneyRes.data, "platform_earning"),
+          hostEarnings: sum(sessionMoneyRes.data, "host_earning") + sum(livesMoneyRes.data, "host_earning"),
+          availableEarnings: sum(profileMoneyRes.data, "available_earnings"),
+          lifetimeEarnings: sum(profileMoneyRes.data, "total_lifetime_earnings"),
+          coinsInCirculation: sum(profileMoneyRes.data, "token_balance"),
+          pendingWithdrawalCount: (withdrawalsRes.data ?? []).filter((w: any) => w.status === "pending").length,
+          pendingWithdrawalTokens: (withdrawalsRes.data ?? [])
+            .filter((w: any) => w.status === "pending")
+            .reduce((a: number, w: any) => a + Number(w.amount ?? 0), 0),
+          paidWithdrawalTokens: (withdrawalsRes.data ?? [])
+            .filter((w: any) => w.status === "paid")
+            .reduce((a: number, w: any) => a + Number(w.amount ?? 0), 0),
+          tierCounts,
+          series: days.map((d) => ({
+            date: d,
+            signups: signupMap[d] ?? 0,
+            revenue: Number((revenueMap[d] ?? 0).toFixed(2)),
+          })),
+        };
         break;
       }
 
       case "get_users": {
-        const { data: users } = await adminClient.from("profiles").select("*").order("created_at", { ascending: false }).limit(100);
+        const { data: users } = await adminClient.from("profiles").select("*").order("created_at", { ascending: false }).limit(1000);
         const userIds = (users ?? []).map((u: any) => u.user_id);
         const { data: subs } = await adminClient.from("subscriptions").select("*").in("user_id", userIds).eq("status", "active");
         const { data: blockedUsers } = await adminClient.from("blocked_users").select("blocked_id");
         const blockedIds = new Set((blockedUsers ?? []).map((b: any) => b.blocked_id));
+
+        // Emails live in auth.users — page through the admin list API.
+        const emailMap = new Map<string, string>();
+        const confirmedMap = new Map<string, string | null>();
+        const lastSignInMap = new Map<string, string | null>();
+        for (let page = 1; page <= 20; page++) {
+          const { data: authPage, error: authErr } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+          if (authErr) break;
+          const list = authPage?.users ?? [];
+          list.forEach((au: any) => {
+            if (au.email) emailMap.set(au.id, au.email);
+            confirmedMap.set(au.id, au.email_confirmed_at ?? null);
+            lastSignInMap.set(au.id, au.last_sign_in_at ?? null);
+          });
+          if (list.length < 1000) break;
+        }
+
         result = (users ?? []).map((u: any) => {
           const sub = (subs ?? []).find((s: any) => s.user_id === u.user_id);
-          return { ...u, tier: sub?.tier ?? "free", status: blockedIds.has(u.user_id) ? "suspended" : "active", onboarding_complete: u.onboarding_complete ?? false, onboarding_step: u.onboarding_step ?? 0 };
+          return {
+            ...u,
+            email: emailMap.get(u.user_id) ?? null,
+            email_confirmed_at: confirmedMap.get(u.user_id) ?? null,
+            last_sign_in_at: lastSignInMap.get(u.user_id) ?? null,
+            tier: sub?.tier ?? "free",
+            status: blockedIds.has(u.user_id) ? "suspended" : "active",
+            onboarding_complete: u.onboarding_complete ?? false,
+            onboarding_step: u.onboarding_step ?? 0,
+          };
         });
         break;
       }
+
 
       case "get_reports": {
         const { data: reports } = await adminClient.from("reports").select("*").order("created_at", { ascending: false }).limit(100);
