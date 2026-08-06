@@ -50,6 +50,20 @@ type Withdrawal = {
   wallet_address: string;
 };
 
+/** A single gift the host received, with sender + catalog details resolved. */
+type ReceivedGift = {
+  id: string;
+  gift_key: string;
+  token_amount: number;
+  created_at: string;
+  senderName: string;
+  emoji: string;
+  label: string;
+};
+
+const HOST_GIFT_SHARE = 0.6;
+
+
 const MIN_WITHDRAWAL = 100;
 
 function fmtDuration(s: number) {
@@ -88,6 +102,8 @@ export default function HostEarningsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [latestWithdrawal, setLatestWithdrawal] = useState<Withdrawal | null>(null);
+  const [gifts, setGifts] = useState<ReceivedGift[]>([]);
+  const [giftsLoading, setGiftsLoading] = useState(true);
 
   const [convertOpen, setConvertOpen] = useState(false);
   const [renewOpen, setRenewOpen] = useState(false);
@@ -96,6 +112,44 @@ export default function HostEarningsPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [walletAddr, setWalletAddr] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  /** Recent gifts received, enriched with the sender name and catalog emoji. */
+  const loadGifts = async (uid: string) => {
+    setGiftsLoading(true);
+    const [giftRes, catalogRes] = await Promise.all([
+      supabase
+        .from("gifts" as any)
+        .select("id, gift_key, token_amount, created_at, sender_id")
+        .eq("host_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase.from("gift_catalog" as any).select("key, label, emoji"),
+    ]);
+    const rows = ((giftRes as any)?.data ?? []) as any[];
+    const catalog = new Map<string, { label: string; emoji: string }>(
+      (((catalogRes as any)?.data ?? []) as any[]).map((c) => [c.key, c]),
+    );
+    const senderIds = Array.from(new Set(rows.map((r) => r.sender_id).filter(Boolean)));
+    let names = new Map<string, string>();
+    if (senderIds.length) {
+      const { data: profs } = await supabase.rpc("get_profiles_public", { _targets: senderIds });
+      names = new Map(
+        (((profs as any) ?? []) as any[]).map((p) => [p.user_id, p.display_name ?? "Someone"]),
+      );
+    }
+    setGifts(
+      rows.map((r) => ({
+        id: r.id,
+        gift_key: r.gift_key,
+        token_amount: Number(r.token_amount ?? 0),
+        created_at: r.created_at,
+        senderName: names.get(r.sender_id) ?? "Someone",
+        emoji: catalog.get(r.gift_key)?.emoji ?? "🎁",
+        label: catalog.get(r.gift_key)?.label ?? r.gift_key,
+      })),
+    );
+    setGiftsLoading(false);
+  };
 
   const load = async () => {
     if (!user) return;
@@ -108,12 +162,14 @@ export default function HostEarningsPage() {
         .eq("user_id", user.id)
         .order("requested_at", { ascending: false })
         .limit(1),
+      loadGifts(user.id),
     ]);
     const row = Array.isArray(s) ? s[0] : (s as any);
     setStats(row ?? null);
     setLatestWithdrawal(((w as any)?.[0] as Withdrawal) ?? null);
     setLoading(false);
   };
+
 
   useEffect(() => {
     load();
@@ -294,6 +350,68 @@ export default function HostEarningsPage() {
                 value={fmtDuration(stats.total_watch_seconds ?? 0)}
               />
             </div>
+
+            {/* Gifts received — detail list with a shortcut to convert earnings */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-semibold">
+                    <Gift className="h-4 w-4" /> Gifts Received
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    You keep {Math.round(HOST_GIFT_SHARE * 100)}% of every gift as earnings.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-2"
+                  onClick={() => {
+                    setConvertAmount(String(Math.floor(available)));
+                    setConvertOpen(true);
+                  }}
+                  disabled={available <= 0}
+                >
+                  <ArrowRightLeft className="h-4 w-4" /> Convert to coins
+                </Button>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {giftsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : gifts.length === 0 ? (
+                  <p className="py-3 text-xs text-muted-foreground">
+                    No gifts yet. Go live and your viewers can send you gifts.
+                  </p>
+                ) : (
+                  gifts.map((g) => (
+                    <div
+                      key={g.id}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+                    >
+                      <span className="text-xl">{g.emoji}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{g.label}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          from {g.senderName} · {new Date(g.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">
+                          +{(g.token_amount * HOST_GIFT_SHARE).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          of {g.token_amount} coins
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
           </>
         )}
       </div>
