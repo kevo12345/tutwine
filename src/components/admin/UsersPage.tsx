@@ -190,26 +190,6 @@ export default function UsersPage({ users, actionLoading, handleAction }: UsersP
 
                   <TableCell>
 
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9 border border-border">
-                        <AvatarImage src={u.photos?.[0] ?? ""} />
-                        <AvatarFallback className="text-xs bg-primary/5">{u.display_name?.[0] ?? "?"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">{u.display_name ?? "No name"}</p>
-                        <div className="flex items-center gap-2">
-                          {(u as any).emrand_id && (
-                            <code className="text-[10px] font-semibold text-primary/80">
-                              #{(u as any).emrand_id}
-                            </code>
-                          )}
-                          <p className="text-[11px] text-muted-foreground">{u.city ?? ""}{u.country ? `, ${u.country}` : ""}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
                     <Badge
                       variant={u.onboarding_complete ? "default" : "secondary"}
                       className={`text-[11px] font-normal ${
