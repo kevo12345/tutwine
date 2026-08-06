@@ -4,12 +4,10 @@ import { Radio, Users, Clock, Loader2, Smartphone, ArrowUpRight } from "lucide-r
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useActiveLiveSessions, type ActiveLiveSession } from "@/hooks/useActiveLiveSessions";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
@@ -36,7 +34,7 @@ export default function LivePage() {
   const isPhone = useIsPhone();
   const desktopBlocked = isPhone === false;
   const [sheet, setSheet] = useState<{ kind: Kind; session?: ActiveLiveSession } | null>(null);
-  const [hours, setHours] = useState<number>(1);
+  const hours = 1;
   const [submitting, setSubmitting] = useState(false);
   const [shortfall, setShortfall] = useState<{ hours: number; sessionId: string } | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
