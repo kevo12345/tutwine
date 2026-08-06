@@ -307,7 +307,7 @@ export default function HostEarningsPage() {
                   }}
                   disabled={!!withdrawDisabled}
                 >
-                  <Banknote className="h-4 w-4" /> Withdraw to Litecoin
+                  <Banknote className="h-4 w-4" /> Withdraw to USDT (BEP20)
                 </Button>
                 {available < MIN_WITHDRAWAL && (
                   <p className="text-[11px] text-muted-foreground">
