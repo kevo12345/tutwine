@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Users, Flag, TrendingUp, Crown, Coins, Radio, Heart, Gift,
-  Ticket, Banknote, Wallet, ArrowUpRight, CircleDot, Eye, EyeOff,
+  Ticket, Banknote, Wallet, ArrowUpRight, ArrowDownRight, CircleDot, Eye, EyeOff, Activity,
 } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line,
@@ -67,6 +67,12 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
   const series = (stats?.series ?? []).map((d) => ({
     ...d,
     label: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+  }));
+
+  const growthUp = Number(stats?.signupGrowthPct ?? 0) >= 0;
+  const sessionActivity = (stats?.sessionActivity ?? []).map((s) => ({
+    ...s,
+    when: new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
   }));
 
   const heroCards = [
@@ -336,13 +342,10 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold">Growth & revenue</h3>
-                <p className="text-[11px] text-muted-foreground">New signups vs. coin revenue, last 30 days</p>
+                <h3 className="text-sm font-semibold">Coin revenue</h3>
+                <p className="text-[11px] text-muted-foreground">Completed coin purchases per day, last 30 days</p>
               </div>
               <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-primary" /> Signups
-                </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-success" /> Revenue ($)
                 </span>
@@ -353,16 +356,15 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                 <ComposedChart data={series} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
                   <defs>
                     <linearGradient id="signupFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="signups" name="Signups" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#signupFill)" />
-                  <Line type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--success))" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--success))" strokeWidth={2} fill="url(#signupFill)" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
