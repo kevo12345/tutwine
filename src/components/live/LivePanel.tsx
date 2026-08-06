@@ -118,8 +118,15 @@ export function LivePanel({
           if (cancelled) return;
           const row = Array.isArray(bought) ? bought[0] : bought;
           if (buyErr || !row?.expires_at) {
+            const msg = String((buyErr as any)?.message ?? "");
             setLoading(false);
-            setTopUpOpen(true);
+            if (!buyErr || msg.includes("insufficient tokens")) {
+              // Coins are short — offer a top-up for this live.
+              setTopUpOpen(true);
+            } else {
+              toast.error(msg || "This live is no longer available");
+              onExit ? onExit() : navigate("/live", { replace: true });
+            }
             return;
           }
           await refreshProfile();
