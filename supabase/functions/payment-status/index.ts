@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     // ---------- Token purchases / other token-backed purchases ----------
     const { data: tx, error: txErr } = await service
       .from('token_transactions')
-      .select('id, user_id, status, type, amount')
+      .select('id, user_id, status, type, amount, payment_ref')
       .eq('id', orderId)
       .maybeSingle();
 
@@ -149,7 +149,37 @@ Deno.serve(async (req) => {
 
     if (tx.status === 'completed') return json({ state: 'finished', order_id: tx.id });
     if (tx.status === 'failed') return json({ state: 'failed', order_id: tx.id });
+
+    // Crypto coin purchases can be verified directly with NOWPayments.
+    if (paymentMethod === 'crypto') {
+      const apiKey = Deno.env.get('NOWPAYMENTS_API_KEY');
+      const npId = paymentId || tx.payment_ref;
+      if (apiKey && npId) {
+        const res = await fetch(`${NOWPAYMENTS_BASE}/payment/${npId}`, {
+          headers: { 'x-api-key': apiKey },
+        });
+        const npData = await res.json().catch(() => null);
+        if (res.ok && npData?.payment_status) {
+          const state = mapNowPaymentsStatus(String(npData.payment_status));
+          if (state === 'finished' || state === 'confirmed') {
+            // Idempotent: complete_token_purchase only credits a pending row.
+            const { error: rpcErr } = await service.rpc('complete_token_purchase', {
+              _tx_id: tx.id,
+              _payment_ref: String(npId),
+            });
+            if (rpcErr) console.error('complete_token_purchase failed:', rpcErr);
+            else return json({ state: 'finished', order_id: tx.id, provider_status: npData.payment_status });
+          }
+          if (state === 'failed' || state === 'expired') {
+            await service.rpc('fail_token_purchase', { _tx_id: tx.id, _payment_ref: String(npId) });
+          }
+          return json({ state, order_id: tx.id, provider_status: npData.payment_status });
+        }
+      }
+    }
+
     return json({ state: 'waiting', order_id: tx.id });
+
   } catch (err) {
     console.error('payment-status error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';
