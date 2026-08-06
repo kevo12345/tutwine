@@ -95,6 +95,7 @@ serve(async (req) => {
           adminClient.from("user_presence").select("last_seen_at"),
           adminClient.from("live_sessions").select("id, host_id, status, started_at, ended_at, created_at").gte("created_at", thirtyDaysAgo),
           adminClient.from("live_passes").select("session_id, viewer_id, created_at, expires_at").gte("created_at", thirtyDaysAgo),
+          adminClient.from("token_transactions").select("amount").eq("type", "spend").eq("status", "completed"),
         ]);
 
 
