@@ -128,8 +128,14 @@
   #root {
     min-height: 100dvh;
   }
-  img, video {
+  img {
     content-visibility: auto;
+  }
+  /* Never apply content-visibility/containment to video: on Chrome (Android)
+     it makes live <video> elements lay out at an intrinsic size instead of
+     filling their container, which produced a black band above the stream. */
+  video {
+    content-visibility: visible;
   }
   /* GPU-accelerated transforms for smoother animations */
   .will-change-transform {

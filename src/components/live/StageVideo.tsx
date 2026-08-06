@@ -33,14 +33,29 @@ export function StageVideo({
     if (fg && fg.srcObject !== stream) fg.srcObject = stream;
   }, [stream, videoRef]);
 
-  const mirrorStyle: CSSProperties = mirror ? { transform: "scaleX(-1)" } : {};
+  const videoStyle: CSSProperties = {
+    ...(mirror ? { transform: "scaleX(-1)" } : {}),
+    filter,
+    // Explicit pixel-independent fill: some Android/Chrome builds size the
+    // video from its intrinsic ratio when only utility classes are used,
+    // which left a black band at the top of the stage.
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    minWidth: "100%",
+    minHeight: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    contentVisibility: "visible",
+  } as CSSProperties;
 
   return (
     <div className={className ?? "absolute inset-0 h-full w-full overflow-hidden bg-black"}>
       <video
         ref={videoRef}
         className="pointer-events-none absolute inset-0 z-[1] block h-full w-full object-cover object-center"
-        style={{ ...mirrorStyle, filter }}
+        style={videoStyle}
         playsInline
         autoPlay
         muted={muted}
