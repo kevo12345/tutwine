@@ -17,7 +17,7 @@ type Props = {
  * Renders the host's remote video/audio into our own <video> element so we can
  * lay overlays on top TikTok-style.
  */
-export function LiveViewer({ roomUrl, active, userName }: Props) {
+export function LiveViewer({ roomUrl, active, userName, posterUrl }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
