@@ -178,3 +178,52 @@ export async function sellapayStkPush(params: {
   console.log('SellaPay STK push:', res.status, raw.slice(0, 400));
   return { ok, status: res.status, raw, data };
 }
+
+/**
+ * Best-effort transaction status lookup.
+ * SellaPay's docs only guarantee callbacks, so we probe the documented status
+ * routes and return a normalised verdict. `unknown` means "keep waiting".
+ */
+export async function sellapayTransactionStatus(
+  reference: string,
+): Promise<'success' | 'failed' | 'unknown'> {
+  let token: string;
+  try {
+    token = await getSellapayToken();
+  } catch {
+    return 'unknown';
+  }
+
+  const paths = [
+    `/transactionStatus?reference=${encodeURIComponent(reference)}`,
+    `/checkTransaction?reference=${encodeURIComponent(reference)}`,
+    `/transaction/${encodeURIComponent(reference)}`,
+  ];
+
+  for (const path of paths) {
+    try {
+      const res = await fetchWithTimeout(`${sellapayBase()}${path}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      });
+      const raw = (await res.text()).trim();
+      if (!res.ok || !raw) continue;
+      let data: any;
+      try { data = JSON.parse(raw); } catch { continue; }
+      const node = data?.data ?? data?.message ?? data;
+      const status = String(node?.status ?? node?.payment_status ?? '').toLowerCase();
+      const code = node?.ResultCode ?? node?.result_code;
+      if (code === 0 || code === '0' ||
+          ['completed', 'complete', 'success', 'successful', 'paid'].includes(status)) {
+        return 'success';
+      }
+      if (['failed', 'cancelled', 'canceled', 'expired', 'rejected'].includes(status)) {
+        return 'failed';
+      }
+      return 'unknown';
+    } catch {
+      // try the next candidate route
+    }
+  }
+  return 'unknown';
+}
