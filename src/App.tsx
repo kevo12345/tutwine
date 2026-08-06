@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { TikTokPixel } from "@/components/TikTokPixel";
 import { MetaPixel } from "@/components/MetaPixel";
+import { PendingPaymentWatcher } from "@/components/payments/PendingPaymentWatcher";
 import { Loader2 } from "lucide-react";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -73,6 +74,7 @@ const App = () => (
         <MetaPixel />
         <ScrollToTop />
         <AuthProvider>
+          <PendingPaymentWatcher />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
