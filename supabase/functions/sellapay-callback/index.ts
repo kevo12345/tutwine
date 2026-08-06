@@ -659,7 +659,27 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ---- Coin purchase fallback (SellaPay does not echo our reference) ----
+    const fallbackTokenTx = await findRecentPendingTokenPurchase(serviceClient, body);
+    if (fallbackTokenTx) {
+      const rpc = isSuccess ? 'complete_token_purchase' : 'fail_token_purchase';
+      const { error: rpcErr } = await serviceClient.rpc(rpc, {
+        _tx_id: fallbackTokenTx.id,
+        _payment_ref: identifiers[0] ?? null,
+      });
+      if (rpcErr) console.error('Coin purchase fallback settlement failed:', rpcErr);
+      return new Response(
+        JSON.stringify({
+          success: !rpcErr,
+          matched_by: 'token_amount_phone_fallback',
+          matched_identifier: identifiers[0] ?? null,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     console.log('Phone fallback failed — trying recent pending amount fallback');
+
 
     const recentPendingSub = await findRecentPendingSubscriptionByAmount(serviceClient, body);
     if (recentPendingSub) {
