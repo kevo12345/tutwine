@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Users, Flag, TrendingUp, Crown, Coins, Radio, Heart, Gift,
-  Ticket, Banknote, Wallet, ArrowUpRight, CircleDot,
+  Ticket, Banknote, Wallet, ArrowUpRight, CircleDot, Eye, EyeOff,
 } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line,
@@ -16,10 +18,18 @@ interface OverviewPageProps {
   stats: AdminStats | null;
 }
 
-const num = (v?: number | null) =>
-  v === undefined || v === null ? "—" : Math.round(v).toLocaleString();
-const money = (v?: number | null) =>
-  v === undefined || v === null ? "—" : `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+const exactNum = (v: number) => Math.round(v).toLocaleString("en-US");
+const exactMoney = (v: number) =>
+  `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Anything past 999 is rounded to k / M / B, with the exact figure on hover.
+function compact(value: number) {
+  const abs = Math.abs(value);
+  if (abs < 1000) return exactNum(value);
+  if (abs < 1_000_000) return `${(value / 1000).toFixed(abs < 10_000 ? 1 : 0)}k`;
+  if (abs < 1_000_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  return `${(value / 1_000_000_000).toFixed(1)}B`;
+}
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
@@ -28,6 +38,7 @@ const PIE_COLORS = [
   "hsl(var(--warning))",
   "hsl(var(--success))",
 ];
+
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -44,6 +55,15 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 export default function OverviewPage({ stats }: OverviewPageProps) {
+  const [showExact, setShowExact] = useState(false);
+
+  const num = (v?: number | null) =>
+    v === undefined || v === null ? "—" : showExact ? exactNum(Number(v)) : compact(Number(v));
+  const money = (v?: number | null) =>
+    v === undefined || v === null ? "—" : showExact ? exactMoney(Number(v)) : `$${compact(Number(v))}`;
+  const titleNum = (v?: number | null) => (v === undefined || v === null ? undefined : exactNum(Number(v)));
+  const titleMoney = (v?: number | null) => (v === undefined || v === null ? undefined : exactMoney(Number(v)));
+
   const series = (stats?.series ?? []).map((d) => ({
     ...d,
     label: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -51,31 +71,33 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
 
   const heroCards = [
     {
-      label: "Total Users", value: num(stats?.totalUsers), icon: Users,
+      label: "Total Users", value: num(stats?.totalUsers), exact: titleNum(stats?.totalUsers), icon: Users,
       sub: `${num(stats?.recentSignups)} new this week`, tone: "primary" as const, href: "/admin/users",
     },
     {
-      label: "Coins Sold", value: num(stats?.tokensSold), icon: Coins,
+      label: "Coins Sold", value: num(stats?.tokensSold), exact: titleNum(stats?.tokensSold), icon: Coins,
       sub: `${money(stats?.tokensSold)} gross volume`, tone: "success" as const, href: "/admin/payments",
     },
     {
-      label: "Platform Earnings", value: money(stats?.platformEarnings), icon: Wallet,
+      label: "Platform Earnings", value: money(stats?.platformEarnings), exact: titleMoney(stats?.platformEarnings), icon: Wallet,
       sub: `${money(stats?.hostEarnings)} paid to hosts`, tone: "info" as const, href: "/admin/live-monitor",
     },
     {
-      label: "Live Right Now", value: num(stats?.liveNow), icon: Radio,
+      label: "Live Right Now", value: num(stats?.liveNow), exact: titleNum(stats?.liveNow), icon: Radio,
       sub: `${num(stats?.onlineNow)} users online`, tone: "accent" as const, href: "/admin/live-monitor",
     },
   ];
 
   const secondary = [
-    { label: "Active Subscribers", value: num(stats?.subscribers), icon: Crown },
-    { label: "Tickets Sold", value: num(stats?.ticketsSold), icon: Ticket },
-    { label: "Gifts Sent", value: num(stats?.giftsSent), icon: Gift },
-    { label: "Matches", value: num(stats?.totalMatches), icon: Heart },
-    { label: "Pending Reports", value: num(stats?.pendingReports), icon: Flag },
-    { label: "Pending Payouts", value: num(stats?.pendingWithdrawalCount), icon: Banknote },
+    { label: "Active Subscribers", value: num(stats?.subscribers), exact: titleNum(stats?.subscribers), icon: Crown },
+    { label: "Tickets Sold", value: num(stats?.ticketsSold), exact: titleNum(stats?.ticketsSold), icon: Ticket },
+    { label: "Gifts Sent", value: num(stats?.giftsSent), exact: titleNum(stats?.giftsSent), icon: Gift },
+    { label: "Matches", value: num(stats?.totalMatches), exact: titleNum(stats?.totalMatches), icon: Heart },
+    { label: "Pending Reports", value: num(stats?.pendingReports), exact: titleNum(stats?.pendingReports), icon: Flag },
+    { label: "Pending Payouts", value: num(stats?.pendingWithdrawalCount), exact: titleNum(stats?.pendingWithdrawalCount), icon: Banknote },
   ];
+
+
 
   const tierData = Object.entries(stats?.tierCounts ?? {}).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
@@ -113,9 +135,16 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             Everything happening across Tutwine — growth, revenue, lives and community health.
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-        </p>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setShowExact((v) => !v)} className="shrink-0 gap-2">
+            {showExact ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showExact ? "Rounded" : "Exact amounts"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+          </p>
+        </div>
+
       </div>
 
       {/* Hero KPI cards */}
@@ -131,7 +160,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   </div>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
-                <p className="text-3xl font-semibold tracking-tight text-foreground">{c.value}</p>
+                <p className="text-3xl font-semibold tracking-tight text-foreground" title={c.exact}>{c.value}</p>
                 <p className="mt-1 text-xs font-medium text-foreground/80">{c.label}</p>
                 <p className="mt-2 text-[11px] text-muted-foreground">{c.sub}</p>
               </CardContent>
@@ -150,7 +179,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                 <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-lg font-semibold leading-none tracking-tight">{s.value}</p>
+                <p className="text-lg font-semibold leading-none tracking-tight" title={s.exact}>{s.value}</p>
                 <p className="mt-1 text-[11px] text-muted-foreground">{s.label}</p>
               </div>
             </div>
@@ -270,7 +299,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5 transition-colors hover:bg-muted"
                 >
                   <span className="text-sm">{a.label}</span>
-                  <Badge variant="secondary" className="text-[11px] font-semibold">{a.count}</Badge>
+                  <Badge variant="secondary" className="text-[11px] font-semibold" title={exactNum(a.count)}>{num(a.count)}</Badge>
                 </Link>
               ))}
             </div>
