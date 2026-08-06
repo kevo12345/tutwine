@@ -8,11 +8,32 @@ interface AdminStats {
   pendingReports: number;
   subscribers: number;
   recentSignups: number;
+  onlineNow?: number;
+  liveNow?: number;
+  totalMatches?: number;
+  ticketsSold?: number;
+  giftsSent?: number;
+  giftTokens?: number;
+  tokensSold?: number;
+  platformEarnings?: number;
+  hostEarnings?: number;
+  availableEarnings?: number;
+  lifetimeEarnings?: number;
+  coinsInCirculation?: number;
+  pendingWithdrawalCount?: number;
+  pendingWithdrawalTokens?: number;
+  paidWithdrawalTokens?: number;
+  tierCounts?: Record<string, number>;
+  series?: { date: string; signups: number; revenue: number }[];
 }
 
 interface AdminUser {
   user_id: string;
   display_name: string | null;
+  email?: string | null;
+  email_confirmed_at?: string | null;
+  last_sign_in_at?: string | null;
+  emrand_id?: string | null;
   photos: string[] | null;
   created_at: string;
   verified: boolean | null;
@@ -23,6 +44,7 @@ interface AdminUser {
   onboarding_complete: boolean | null;
   onboarding_step: number | null;
 }
+
 
 interface AdminReport {
   id: string;
