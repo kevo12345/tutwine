@@ -1453,6 +1453,15 @@ export type Database = {
           platform_share: number
         }[]
       }
+      send_session_gift: {
+        Args: { _gift_key: string; _session_id: string; _token_amount: number }
+        Returns: {
+          gift_id: string
+          host_share: number
+          new_balance: number
+          platform_share: number
+        }[]
+      }
       set_live_paused: {
         Args: { _paused: boolean; _session_id: string }
         Returns: boolean
