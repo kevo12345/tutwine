@@ -174,7 +174,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused,
       </div>
 
       <div className="safe-bottom pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center p-2 sm:p-3">
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-black/60 p-1.5 sm:gap-2">
+        <div className="pointer-events-auto flex w-auto max-w-full flex-nowrap items-center justify-center gap-1 rounded-full bg-black/60 p-1.5 sm:gap-2">
           <IconBtn onClick={toggleMic} title={micOn ? "Mute mic" : "Unmute mic"}>
             {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
           </IconBtn>
@@ -185,7 +185,7 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused,
             <Button
               size="sm"
               variant={paused ? "default" : "secondary"}
-              className="h-9 shrink-0 gap-1.5 rounded-full px-3"
+              className="h-9 shrink-0 gap-1 whitespace-nowrap rounded-full px-2.5 text-xs sm:px-3 sm:text-sm"
               onClick={() => void onTogglePause()}
             >
               {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
@@ -195,19 +195,25 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused,
           <Button
             size="sm"
             variant={beauty.enabled ? "default" : "secondary"}
-            className="h-9 shrink-0 gap-1.5 rounded-full px-3"
+            className="h-9 shrink-0 gap-1 whitespace-nowrap rounded-full px-2.5 text-xs sm:px-3 sm:text-sm"
             onClick={() => setBeautyOpen(true)}
           >
             <Sparkles className="h-4 w-4" />
             Beauty
           </Button>
           {onLeave && (
-            <Button size="sm" variant="destructive" className="h-9 shrink-0 rounded-full px-3" onClick={onLeave}>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-9 shrink-0 whitespace-nowrap rounded-full px-2.5 text-xs sm:px-3 sm:text-sm"
+              onClick={onLeave}
+            >
               End live
             </Button>
           )}
         </div>
       </div>
+
 
       <BeautySettingsPanel
         value={beauty}
