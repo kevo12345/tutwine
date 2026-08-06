@@ -206,7 +206,18 @@ export default function PaymentsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {s.price != null ? `$${Number(s.price).toFixed(2)}` : "—"} {s.currency?.toUpperCase() ?? ""}
+                      {s.price != null ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help">
+                              {symbolFor(s.currency ?? "USD")}{fmt(Number(s.price))}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {symbolFor(s.currency ?? "USD")}{exactAmount(Number(s.price))}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(s.started_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
@@ -222,5 +233,7 @@ export default function PaymentsPage() {
         </div>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
+
