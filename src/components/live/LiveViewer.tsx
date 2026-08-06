@@ -8,7 +8,9 @@ type Props = {
   roomUrl: string;
   active: boolean; // only join when true
   userName?: string;
+  posterUrl?: string | null;
 };
+
 
 /**
  * Viewer joins the Daily room in call-object mode (no iframe, no Daily chrome).
