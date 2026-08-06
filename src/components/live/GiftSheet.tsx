@@ -28,6 +28,12 @@ type Props = {
   liveId: string;
   hostIsSelf: boolean;
   onSent?: () => void;
+  /** "session" targets live_sessions (vertical live feed), "live" targets lives. */
+  source?: "session" | "live";
+  triggerClassName?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 };
 
 // Cached across mounts so the sheet opens instantly after the first load.
@@ -49,10 +55,24 @@ async function fetchCatalog(attempt = 0): Promise<CatalogGift[]> {
   return (data as CatalogGift[]) ?? [];
 }
 
-export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
+export function GiftSheet({
+  liveId,
+  hostIsSelf,
+  onSent,
+  source = "live",
+  triggerClassName,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: Props) {
   const { profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => {
+    setOpenState(v);
+    onOpenChange?.(v);
+  };
   const [sending, setSending] = useState<string | null>(null);
   const [gifts, setGifts] = useState<CatalogGift[]>(catalogCache ?? []);
   const [loading, setLoading] = useState(false);
@@ -98,11 +118,18 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
       return;
     }
     setSending(gift.key);
-    const { error } = await supabase.rpc("send_gift", {
-      _live_id: liveId,
-      _gift_key: gift.key,
-      _token_amount: gift.token_price,
-    });
+    const { error } =
+      source === "session"
+        ? await (supabase as any).rpc("send_session_gift", {
+            _session_id: liveId,
+            _gift_key: gift.key,
+            _token_amount: gift.token_price,
+          })
+        : await supabase.rpc("send_gift", {
+            _live_id: liveId,
+            _gift_key: gift.key,
+            _token_amount: gift.token_price,
+          });
     setSending(null);
     if (error) {
       if (error.message?.includes("insufficient")) {
@@ -137,15 +164,17 @@ export function GiftSheet({ liveId, hostIsSelf, onSent }: Props) {
   return (
     <>
     <Sheet open={open} onOpenChange={setOpen}>
+      {!hideTrigger && (
       <SheetTrigger asChild>
         <button
-          className="flex h-11 items-center gap-1 rounded-full bg-black/60 px-3 text-white disabled:opacity-50"
+          className={triggerClassName ?? "flex h-11 items-center gap-1 rounded-full bg-black/60 px-3 text-white disabled:opacity-50"}
           aria-label="Send gift"
           disabled={hostIsSelf}
         >
           <Gift className="h-4 w-4" /> <span className="text-xs">Gift</span>
         </button>
       </SheetTrigger>
+      )}
       <SheetContent side="bottom" className="max-h-[70vh]">
         <SheetHeader className="mb-3">
           <SheetTitle className="flex items-center justify-between">
