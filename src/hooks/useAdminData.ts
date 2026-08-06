@@ -24,7 +24,16 @@ interface AdminStats {
   pendingWithdrawalTokens?: number;
   paidWithdrawalTokens?: number;
   tierCounts?: Record<string, number>;
-  series?: { date: string; signups: number; revenue: number }[];
+  signupsToday?: number;
+  signupsYesterday?: number;
+  signupGrowthPct?: number;
+  dau?: number;
+  wau?: number;
+  mau?: number;
+  avgViewersPerSession?: number;
+  activeSessions?: { id: string; status: string; startedAt: string; minutes: number; viewers: number; activeViewers: number }[];
+  sessionActivity?: { label: string; startedAt: string; viewers: number; activeViewers: number; minutes: number }[];
+  series?: { date: string; signups: number; cumulativeUsers?: number; revenue: number }[];
 }
 
 interface AdminUser {
