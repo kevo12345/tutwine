@@ -6,7 +6,7 @@ import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { MatchAnimation } from "@/components/MatchAnimation";
 import { DiscoverFiltersSheet, type DiscoverFilters } from "@/components/discover/DiscoverFiltersSheet";
 import { Button } from "@/components/ui/button";
-import { Heart, X, Star, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, X, SlidersHorizontal, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -474,27 +474,17 @@ export default function DiscoverPage() {
                 )}
               </div>
 
-              <div className="shrink-0 flex items-center justify-center gap-2 py-2 pb-3 sm:gap-4">
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-2 border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive/10 sm:h-14 sm:w-14" onClick={() => handleSwipe("pass")}>
-                  <X className="h-4 w-4 sm:h-7 sm:w-7" />
+              <div className="shrink-0 flex items-center justify-center gap-4 py-2 pb-3 sm:gap-6">
+                <Button variant="outline" size="icon" className="h-12 w-12 rounded-full border-2 border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive/10 sm:h-16 sm:w-16" onClick={() => handleSwipe("pass")}>
+                  <X className="h-5 w-5 sm:h-7 sm:w-7" />
                 </Button>
                 {limits.undoSwipe && (
-                  <Button variant="outline" size="icon" className="h-7 w-7 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10 sm:h-9 sm:w-9" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
+                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-2 border-warning/30 text-warning hover:bg-warning/10 sm:h-10 sm:w-10" onClick={() => toast("↩️ Undo last swipe!", { description: "Your last swipe was undone." })}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                   </Button>
                 )}
-                <Button size="icon" className="gradient-warm h-11 w-11 rounded-full border-0 text-primary-foreground shadow-glow sm:h-16 sm:w-16" onClick={() => handleSwipe("like")}>
-                  <Heart className="h-5 w-5 fill-current sm:h-8 sm:w-8" />
-                </Button>
-                <Button variant="outline" size="icon" className={`h-9 w-9 rounded-full border-2 border-accent/30 text-accent hover:border-accent hover:bg-accent/10 sm:h-14 sm:w-14 ${!limits.superLike ? "opacity-50" : ""}`} onClick={() => {
-                  if (!limits.superLike) {
-                    toast("⭐ Super Like is a Pro feature", { description: "Upgrade to Pro to send Super Likes.", action: { label: "Upgrade", onClick: () => navigate("/pricing") } });
-                  } else {
-                    toast.success("⭐ Super Like sent!");
-                    handleSwipe("like");
-                  }
-                }}>
-                  <Star className="h-4 w-4 sm:h-7 sm:w-7" />
+                <Button size="icon" className="gradient-warm h-12 w-12 rounded-full border-0 text-primary-foreground shadow-glow sm:h-16 sm:w-16" onClick={() => handleSwipe("like")}>
+                  <Heart className="h-6 w-6 fill-current sm:h-8 sm:w-8" />
                 </Button>
               </div>
             </>
