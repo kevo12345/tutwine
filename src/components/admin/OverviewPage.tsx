@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Users, Flag, TrendingUp, Crown, Coins, Radio, Heart, Gift,
-  Ticket, Banknote, Wallet, ArrowUpRight, CircleDot, Eye, EyeOff,
+  Ticket, Banknote, Wallet, ArrowUpRight, ArrowDownRight, CircleDot, Eye, EyeOff, Activity,
 } from "lucide-react";
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line,
+  Area, Bar, BarChart, CartesianGrid, Cell, Legend,
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart,
 } from "recharts";
 import { AdminStats } from "@/hooks/useAdminData";
@@ -30,6 +30,8 @@ function compact(value: number) {
   if (abs < 1_000_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   return `${(value / 1_000_000_000).toFixed(1)}B`;
 }
+
+const COIN_USD = 0.25;
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
@@ -66,7 +68,14 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
 
   const series = (stats?.series ?? []).map((d) => ({
     ...d,
+    revenue: Number((Number(d.revenue ?? 0) * COIN_USD).toFixed(2)),
     label: new Date(d.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+  }));
+
+  const growthUp = Number(stats?.signupGrowthPct ?? 0) >= 0;
+  const sessionActivity = (stats?.sessionActivity ?? []).map((s) => ({
+    ...s,
+    when: new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
   }));
 
   const heroCards = [
@@ -76,7 +85,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
     },
     {
       label: "Coins Sold", value: num(stats?.tokensSold), exact: titleNum(stats?.tokensSold), icon: Coins,
-      sub: `${money(stats?.tokensSold)} gross volume`, tone: "success" as const, href: "/admin/payments",
+      sub: `${money(Number(stats?.tokensSold ?? 0) * COIN_USD)} gross volume`, tone: "success" as const, href: "/admin/payments",
     },
     {
       label: "Platform Earnings", value: money(stats?.platformEarnings), exact: titleMoney(stats?.platformEarnings), icon: Wallet,
@@ -107,10 +116,10 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
   const moneyFlow = [
     { name: "Coins sold", value: Number(stats?.tokensSold ?? 0) },
     { name: "Gift coins", value: Number(stats?.giftTokens ?? 0) },
-    { name: "Host earnings", value: Number(stats?.hostEarnings ?? 0) },
-    { name: "Platform cut", value: Number(stats?.platformEarnings ?? 0) },
-    { name: "Paid out", value: Number(stats?.paidWithdrawalTokens ?? 0) },
-    { name: "Pending payout", value: Number(stats?.pendingWithdrawalTokens ?? 0) },
+    { name: "In wallets", value: Number(stats?.coinsInCirculation ?? 0) },
+    { name: "Host earnings", value: Number(stats?.hostEarnings ?? 0) / COIN_USD },
+    { name: "Platform cut", value: Number(stats?.platformEarnings ?? 0) / COIN_USD },
+    { name: "Paid out", value: Number(stats?.paidWithdrawalTokens ?? 0) / COIN_USD },
   ];
 
   const toneClass = {
@@ -187,19 +196,159 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
         </CardContent>
       </Card>
 
+      {/* Signups & audience */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Card className="border border-border/70 shadow-sm xl:col-span-2">
+          <CardContent className="p-5">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">Daily signups & growth</h3>
+                <p className="text-[11px] text-muted-foreground">New accounts per day with cumulative user growth, last 30 days</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-2xl font-semibold leading-none tracking-tight" title={titleNum(stats?.signupsToday)}>
+                    {num(stats?.signupsToday)}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Signups today</p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`gap-1 text-[10px] ${growthUp ? "border-success/30 bg-success/10 text-success" : "border-destructive/30 bg-destructive/10 text-destructive"}`}
+                >
+                  {growthUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  {Math.abs(Number(stats?.signupGrowthPct ?? 0))}% vs prev 7d
+                </Badge>
+              </div>
+            </div>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={series} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="cumulativeFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--info))" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(var(--info))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" width={40} allowDecimals={false} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="right" orientation="right" width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
+                  <Area yAxisId="right" type="monotone" dataKey="cumulativeUsers" name="Total users" stroke="hsl(var(--info))" strokeWidth={2} fill="url(#cumulativeFill)" />
+                  <Bar yAxisId="left" dataKey="signups" name="New signups" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={22} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/70 shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold">Active audience</h3>
+              <p className="text-[11px] text-muted-foreground">Users seen in the last 24h / 7d / 30d</p>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: "Online right now", value: stats?.onlineNow, icon: CircleDot, tone: "text-success" },
+                { label: "Active today (DAU)", value: stats?.dau, icon: Activity, tone: "text-primary" },
+                { label: "Active this week (WAU)", value: stats?.wau, icon: Activity, tone: "text-info" },
+                { label: "Active this month (MAU)", value: stats?.mau, icon: Activity, tone: "text-accent" },
+              ].map((r) => (
+                <div key={r.label} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <r.icon className={`h-3.5 w-3.5 ${r.tone}`} /> {r.label}
+                  </span>
+                  <span className="text-base font-semibold tracking-tight" title={titleNum(r.value)}>{num(r.value)}</span>
+                </div>
+              ))}
+            </div>
+            <Separator className="my-4" />
+            <div className="flex items-baseline justify-between">
+              <p className="text-[11px] text-muted-foreground">Avg viewers per live session</p>
+              <p className="text-lg font-semibold tracking-tight">{stats?.avgViewersPerSession ?? 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active users per live session */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Card className="border border-border/70 shadow-sm xl:col-span-2">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold">Active users per live session</h3>
+              <p className="text-[11px] text-muted-foreground">
+                Viewers who bought into each of the last {sessionActivity.length || 0} sessions, and how many are still active
+              </p>
+            </div>
+            {sessionActivity.length === 0 ? (
+              <div className="flex h-[240px] items-center justify-center text-xs text-muted-foreground">
+                No live sessions in the last 30 days
+              </div>
+            ) : (
+              <div className="h-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={sessionActivity} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="when" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                    <YAxis width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+                    <Bar dataKey="viewers" name="Total viewers" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                    <Bar dataKey="activeViewers" name="Still active" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/70 shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold">Live now</h3>
+                <p className="text-[11px] text-muted-foreground">Active sessions and their viewers</p>
+              </div>
+              <Link to="/admin/live-monitor" className="text-[11px] font-medium text-primary hover:underline">
+                Monitor
+              </Link>
+            </div>
+            {(stats?.activeSessions ?? []).length === 0 ? (
+              <div className="flex h-[200px] items-center justify-center text-xs text-muted-foreground">
+                Nobody is live right now
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(stats?.activeSessions ?? []).map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5">
+                    <div>
+                      <p className="text-xs font-medium">Session {s.id.slice(0, 6)}</p>
+                      <p className="text-[11px] text-muted-foreground">{s.minutes} min running</p>
+                    </div>
+                    <Badge variant="secondary" className="gap-1 text-[11px] font-semibold">
+                      <Users className="h-3 w-3" /> {s.activeViewers}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Growth + revenue */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="border border-border/70 shadow-sm xl:col-span-2">
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold">Growth & revenue</h3>
-                <p className="text-[11px] text-muted-foreground">New signups vs. coin revenue, last 30 days</p>
+                <h3 className="text-sm font-semibold">Coin revenue</h3>
+                <p className="text-[11px] text-muted-foreground">Completed coin purchases per day, last 30 days</p>
               </div>
               <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-primary" /> Signups
-                </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-success" /> Revenue ($)
                 </span>
@@ -207,19 +356,18 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             </div>
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={series} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                <ComposedChart data={series} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
                   <defs>
                     <linearGradient id="signupFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(series.length / 8))} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis width={44} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="signups" name="Signups" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#signupFill)" />
-                  <Line type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--success))" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--success))" strokeWidth={2} fill="url(#signupFill)" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -267,10 +415,10 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
             </div>
             <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={moneyFlow} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
+                <BarChart data={moneyFlow} margin={{ top: 6, right: 8, left: 4, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <YAxis width={52} tickFormatter={(v: number) => compact(Number(v))} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
                   <Bar dataKey="value" name="Coins" radius={[6, 6, 0, 0]}>
                     {moneyFlow.map((_, i) => (
