@@ -108,13 +108,25 @@ export function LivePanel({
           .order("expires_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (!pass) {
-          toast.error("You need a ticket to join this live");
-          onExit ? onExit() : navigate("/live", { replace: true });
-          return;
+        let passExpiresAt = pass?.expires_at ?? null;
+        if (!passExpiresAt) {
+          // No ticket yet: buy one with coins, or prompt a top-up when the balance is short.
+          const { data: bought, error: buyErr } = await (supabase as any).rpc(
+            "purchase_live_pass",
+            { _session_id: sessionId, _hours: TICKET_TOKENS },
+          );
+          if (cancelled) return;
+          const row = Array.isArray(bought) ? bought[0] : bought;
+          if (buyErr || !row?.expires_at) {
+            setLoading(false);
+            setTopUpOpen(true);
+            return;
+          }
+          await refreshProfile();
+          passExpiresAt = row.expires_at;
         }
         myExpiresAt = new Date(
-          Math.min(new Date(pass.expires_at).getTime(), new Date(session.expires_at).getTime()),
+          Math.min(new Date(passExpiresAt).getTime(), new Date(session.expires_at).getTime()),
         ).toISOString();
       }
       setRoomUrl(session.daily_room_url);
@@ -569,7 +581,9 @@ export function LivePanel({
         }}
         needed={TICKET_TOKENS}
         balance={balance}
-        action="keep watching this live"
+        action="watch this live"
+        joinSessionId={sessionId}
+        joinHours={TICKET_TOKENS}
       />
     </div>
   );
