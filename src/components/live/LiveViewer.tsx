@@ -8,14 +8,16 @@ type Props = {
   roomUrl: string;
   active: boolean; // only join when true
   userName?: string;
+  posterUrl?: string | null;
 };
+
 
 /**
  * Viewer joins the Daily room in call-object mode (no iframe, no Daily chrome).
  * Renders the host's remote video/audio into our own <video> element so we can
  * lay overlays on top TikTok-style.
  */
-export function LiveViewer({ roomUrl, active, userName }: Props) {
+export function LiveViewer({ roomUrl, active, userName, posterUrl }: Props) {
   const callRef = useRef<DailyCall | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -108,6 +110,16 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
+      {/* Cover art keeps the stage filled until the host's track arrives. */}
+      {!hasVideo && posterUrl && (
+        <img
+          src={posterUrl}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover opacity-70"
+        />
+      )}
+
       <StageVideo
         videoRef={videoRef}
         stream={videoStream}
@@ -132,14 +144,16 @@ export function LiveViewer({ roomUrl, active, userName }: Props) {
           Tap to hear live
         </Button>
       )}
-      {(connecting || !hasVideo) && (
-        <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-xs opacity-80">
-            {connecting ? "Connecting to live…" : "Waiting for host video…"}
+      {/* Non-blocking status pill: the viewer is already inside the live. */}
+      {!hasVideo && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 text-white backdrop-blur-sm">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <p className="text-xs opacity-90">
+            {connecting ? "Connecting…" : "Host video starting…"}
           </p>
         </div>
       )}
     </div>
   );
 }
+

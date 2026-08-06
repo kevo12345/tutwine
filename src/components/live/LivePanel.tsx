@@ -484,7 +484,13 @@ export function LivePanel({
                 onTogglePause={togglePause}
               />
             ) : (
-              <LiveViewer roomUrl={roomUrl} active={active} userName={profile?.display_name ?? "Guest"} />
+              <LiveViewer
+                roomUrl={roomUrl}
+                active={active}
+                userName={profile?.display_name ?? "Guest"}
+                posterUrl={coverUrl ?? hostPhoto}
+              />
+
             )}
           </div>
         </div>
