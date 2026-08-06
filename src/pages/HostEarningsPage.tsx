@@ -103,8 +103,11 @@ export default function HostEarningsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [latestWithdrawal, setLatestWithdrawal] = useState<Withdrawal | null>(null);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [grossTokens, setGrossTokens] = useState(0);
   const [gifts, setGifts] = useState<ReceivedGift[]>([]);
   const [giftsLoading, setGiftsLoading] = useState(true);
+
 
   const [convertOpen, setConvertOpen] = useState(false);
   const [renewOpen, setRenewOpen] = useState(false);
