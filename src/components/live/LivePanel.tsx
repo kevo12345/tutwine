@@ -351,13 +351,44 @@ export function LivePanel({
       return;
     }
     setIsPaused(next);
-    toast.success(next ? "Live paused — viewers see your cover" : "You're back live");
+    setPausedAt(next ? new Date().toISOString() : null);
+    toast.success(
+      next
+        ? "Live paused — viewers see your cover. It ends automatically after 5 minutes."
+        : "You're back live",
+    );
   };
+
+  // Auto-end the live if the host stays paused for more than 5 minutes.
+  useEffect(() => {
+    if (!active || !isHost || !isPaused || !pausedAt) {
+      setPauseRemaining("5:00");
+      return;
+    }
+    let ended = false;
+    const tick = () => {
+      const left = 5 * 60 * 1000 - (Date.now() - new Date(pausedAt).getTime());
+      if (left <= 0) {
+        if (ended) return;
+        ended = true;
+        setPauseRemaining("0:00");
+        toast.info("Paused for 5 minutes — your live has ended");
+        void endLive();
+        return;
+      }
+      const total = Math.floor(left / 1000);
+      setPauseRemaining(`${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, "0")}`);
+    };
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
+  }, [active, isHost, isPaused, pausedAt]);
 
   const abortFailedLive = async () => {
     await (supabase as any).rpc("end_live_session", { _session_id: sessionId });
     closeLive();
   };
+
 
 
   return (
