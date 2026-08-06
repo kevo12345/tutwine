@@ -444,6 +444,18 @@ export function LivePanel({
         </div>
       )}
 
+      {/* Paused — host sees the auto-end countdown */}
+      {authorized && isHost && isPaused && (
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-[16] flex justify-center px-4">
+          <div className="pointer-events-none flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-center text-xs font-semibold text-white backdrop-blur">
+            <PauseCircle className="h-4 w-4 shrink-0" />
+            <span>
+              Paused — resume within 5 minutes or your live ends automatically ({pauseRemaining})
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Loading state */}
       {active && loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
