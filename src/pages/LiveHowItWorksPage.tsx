@@ -124,7 +124,7 @@ export default function LiveHowItWorksPage() {
             </div>
             <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
               <li>Convert earnings to tokens 1:1, or use them to renew your subscription.</li>
-              <li>Withdraw to Litecoin from $100, with a 72-hour cooldown between requests.</li>
+              <li>Withdraw to USDT (BEP20) from $100, with a 72-hour cooldown between requests.</li>
               <li>Tokens you buy are for spending in the app — they can't be withdrawn as cash.</li>
             </ul>
           </div>
