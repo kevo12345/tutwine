@@ -507,6 +507,57 @@ export default function HostEarningsPage() {
               </div>
             </Card>
 
+            {/* Withdrawal transaction history */}
+            <Card className="p-4">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <Banknote className="h-4 w-4" /> Withdrawal history
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                Requested amounts leave your available balance immediately and appear here until they
+                are paid out to your USDT (BEP20) address.
+              </p>
+              <div className="mt-3 space-y-2">
+                {withdrawals.length === 0 ? (
+                  <p className="py-3 text-xs text-muted-foreground">No withdrawals yet.</p>
+                ) : (
+                  withdrawals.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">
+                          {formatTokensUsd(Number(w.amount))}{" "}
+                          <span className="text-[11px] font-normal text-muted-foreground">
+                            ({Number(w.amount).toFixed(2)} coins)
+                          </span>
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {new Date(w.requested_at).toLocaleString()} ·{" "}
+                          <span className="font-mono">{w.wallet_address}</span>
+                        </p>
+                        {w.admin_note && (
+                          <p className="truncate text-[11px] text-muted-foreground">{w.admin_note}</p>
+                        )}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${
+                          w.status === "paid"
+                            ? "bg-primary/10 text-primary"
+                            : w.status === "rejected"
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {w.status}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
+
           </>
         )}
       </div>
