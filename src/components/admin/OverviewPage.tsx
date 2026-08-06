@@ -113,14 +113,26 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
     value,
   }));
 
+  const coinsBought = Number(stats?.tokensSold ?? 0);
+  const coinsAvailable = Number(stats?.coinsInCirculation ?? 0);
+  const coinsSpent = Number(stats?.coinsSpent ?? 0);
+
+  const coinLedger = [
+    { label: "Coins bought", coins: coinsBought, note: "Completed purchases", tone: "text-success" },
+    { label: "Available in wallets", coins: coinsAvailable, note: "Unspent user balances", tone: "text-info" },
+    { label: "Coins spent", coins: coinsSpent, note: "Tickets, gifts & unlocks", tone: "text-primary" },
+  ];
+
   const moneyFlow = [
-    { name: "Coins sold", value: Number(stats?.tokensSold ?? 0) },
+    { name: "Coins sold", value: coinsBought },
+    { name: "Spent", value: coinsSpent },
     { name: "Gift coins", value: Number(stats?.giftTokens ?? 0) },
-    { name: "In wallets", value: Number(stats?.coinsInCirculation ?? 0) },
+    { name: "In wallets", value: coinsAvailable },
     { name: "Host earnings", value: Number(stats?.hostEarnings ?? 0) / COIN_USD },
     { name: "Platform cut", value: Number(stats?.platformEarnings ?? 0) / COIN_USD },
     { name: "Paid out", value: Number(stats?.paidWithdrawalTokens ?? 0) / COIN_USD },
   ];
+
 
   const toneClass = {
     primary: "from-primary/15 to-primary/0 text-primary",
