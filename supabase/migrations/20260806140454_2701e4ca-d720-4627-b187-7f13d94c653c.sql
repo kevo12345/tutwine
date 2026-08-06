@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles RENAME COLUMN litecoin_wallet_address TO usdt_wallet_address;

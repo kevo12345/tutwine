@@ -365,7 +365,7 @@ export default function WithdrawalsPage() {
                         <Copy className="h-3 w-3" />
                       </Button>
                       <a
-                        href={`https://blockchair.com/litecoin/address/${r.wallet_address}`}
+                        href={`https://bscscan.com/address/${r.wallet_address}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-muted-foreground hover:text-foreground"
