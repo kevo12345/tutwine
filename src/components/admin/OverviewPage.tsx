@@ -8,7 +8,7 @@ import {
   Ticket, Banknote, Wallet, ArrowUpRight, ArrowDownRight, CircleDot, Eye, EyeOff, Activity,
 } from "lucide-react";
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line,
+  Area, Bar, BarChart, CartesianGrid, Cell, Legend,
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart,
 } from "recharts";
 import { AdminStats } from "@/hooks/useAdminData";
