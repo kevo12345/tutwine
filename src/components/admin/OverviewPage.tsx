@@ -299,7 +299,7 @@ export default function OverviewPage({ stats }: OverviewPageProps) {
                   className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5 transition-colors hover:bg-muted"
                 >
                   <span className="text-sm">{a.label}</span>
-                  <Badge variant="secondary" className="text-[11px] font-semibold">{a.count}</Badge>
+                  <Badge variant="secondary" className="text-[11px] font-semibold" title={exactNum(a.count)}>{num(a.count)}</Badge>
                 </Link>
               ))}
             </div>
