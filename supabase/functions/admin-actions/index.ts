@@ -194,6 +194,7 @@ serve(async (req) => {
           giftsSent: (giftsRes.data ?? []).length,
           giftTokens: sum(giftsRes.data, "token_amount"),
           tokensSold: sum(purchasesRes.data, "amount"),
+          coinsSpent: sum(spendRes.data, "amount"),
           platformEarnings: sum(sessionMoneyRes.data, "platform_earning") + sum(livesMoneyRes.data, "platform_earning"),
           hostEarnings: sum(sessionMoneyRes.data, "host_earning") + sum(livesMoneyRes.data, "host_earning"),
           availableEarnings: sum(profileMoneyRes.data, "available_earnings"),
