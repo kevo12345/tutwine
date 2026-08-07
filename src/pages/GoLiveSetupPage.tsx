@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
 import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
@@ -31,7 +30,6 @@ const THUMB_KEY = "tutwine:live-thumbnail";
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { tier } = useSubscription();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);

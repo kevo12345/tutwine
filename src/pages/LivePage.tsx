@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
 import { useIsPhone } from "@/hooks/useIsPhone";
-import { useSubscription } from "@/hooks/useSubscription";
 import { InsufficientTokensDialog } from "@/components/InsufficientTokensDialog";
 
 type Kind = "host" | "viewer";
@@ -29,7 +28,6 @@ function formatRemaining(expiresAt: string): string {
 export default function LivePage() {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
-  const { tier } = useSubscription();
   const { sessions, loading } = useActiveLiveSessions();
   const isPhone = useIsPhone();
   const desktopBlocked = isPhone === false;
