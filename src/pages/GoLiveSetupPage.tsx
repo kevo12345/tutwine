@@ -108,11 +108,7 @@ export default function GoLiveSetupPage() {
       navigate("/login");
       return;
     }
-    if (tier === "free") {
-      toast.error("An active subscription is required to go live");
-      navigate("/pricing");
-      return;
-    }
+    // Hosting a live is free — no subscription required.
     if (hours < 1) {
       toast.error("Live session must be at least 1 hour");
       return;
