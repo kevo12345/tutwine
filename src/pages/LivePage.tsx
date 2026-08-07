@@ -38,7 +38,7 @@ export default function LivePage() {
   const [submitting, setSubmitting] = useState(false);
   const [shortfall, setShortfall] = useState<{ hours: number; sessionId: string } | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
-  const canHost = tier !== "free";
+  const canHost = true; // Hosting a live is free for everyone
 
   const openHost = () => {
     if (desktopBlocked) {
