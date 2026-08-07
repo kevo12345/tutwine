@@ -276,7 +276,7 @@ export default function GoLiveSetupPage() {
         </Button>
         <p className="text-center text-[11px] text-foreground/70">
           {shownThumb
-            ? "Subscribers only. Viewers pay 1 coin per hour ($0.25) to join."
+            ? "Hosting is free. Viewers pay 1 coin per hour ($0.25) to join."
             : "A cover image is required — it's shown when you pause your live."}
         </p>
       </div>
