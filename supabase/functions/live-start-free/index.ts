@@ -90,23 +90,8 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Only subscribers may host a live.
-    const { data: isActive, error: subErr } = await service.rpc('has_active_subscription', {
-      _user_id: userId,
-    });
-    if (subErr) {
-      console.error('subscription check failed', subErr);
-      return new Response(JSON.stringify({ error: 'Could not verify subscription' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    if (!isActive) {
-      return new Response(
-        JSON.stringify({ error: 'An active subscription is required to go live' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Hosting a live is free — no subscription check.
+
 
     // Cancel any prior pending/active rows from this host to avoid dupes
     await service

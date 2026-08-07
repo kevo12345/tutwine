@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
 import { LIVE_DURATION_OPTIONS } from "@/lib/constants";
 import { toast } from "sonner";
 import { requestAvPermissions } from "@/lib/media-permissions";
@@ -31,7 +30,6 @@ const THUMB_KEY = "tutwine:live-thumbnail";
 export default function GoLiveSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { tier } = useSubscription();
   const [hours, setHours] = useState<number>(1);
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
@@ -108,11 +106,7 @@ export default function GoLiveSetupPage() {
       navigate("/login");
       return;
     }
-    if (tier === "free") {
-      toast.error("An active subscription is required to go live");
-      navigate("/pricing");
-      return;
-    }
+    // Hosting a live is free — no subscription required.
     if (hours < 1) {
       toast.error("Live session must be at least 1 hour");
       return;
@@ -282,7 +276,7 @@ export default function GoLiveSetupPage() {
         </Button>
         <p className="text-center text-[11px] text-foreground/70">
           {shownThumb
-            ? "Subscribers only. Viewers pay 1 coin per hour ($0.25) to join."
+            ? "Hosting is free. Viewers pay 1 coin per hour ($0.25) to join."
             : "A cover image is required — it's shown when you pause your live."}
         </p>
       </div>
