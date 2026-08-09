@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Mic, MicOff, Video, VideoOff, Loader2, Pause, Play } from "lucide-react";
+import { Sparkles, Mic, MicOff, Loader2, Pause, Play } from "lucide-react";
 import { BeautyCamera, BeautyCameraHandle } from "@/components/live/BeautyCamera";
 import { BeautySettingsPanel } from "@/components/live/BeautySettingsPanel";
 import { BeautySettings, loadBeauty } from "@/lib/beautyFilter";
@@ -33,7 +33,8 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused,
   onJoinFailedRef.current = onJoinFailed;
   const [joined, setJoined] = useState(false);
   const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  // The host camera must stay on for the whole live — no manual off switch.
+  const camOn = true;
   const [beautyOpen, setBeautyOpen] = useState(false);
   const [beauty, setBeauty] = useState<BeautySettings>(() => loadBeauty());
   const [connecting, setConnecting] = useState(true);
@@ -132,19 +133,6 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused,
     await call.setLocalAudio(next);
   }
 
-  async function toggleCam() {
-    const call = callRef.current;
-    if (!call) return;
-    const next = !camOn;
-    setCamOn(next);
-    if (next) {
-      const track = camRef.current?.getTrack() ?? null;
-      if (track) await call.setInputDevicesAsync({ videoSource: track });
-      await call.setLocalVideo(true);
-    } else {
-      await call.setLocalVideo(false);
-    }
-  }
 
   return (
     <div
@@ -177,9 +165,6 @@ export function HostBroadcaster({ roomUrl, token, onLeave, onJoinFailed, paused,
         <div className="pointer-events-auto flex w-auto max-w-full flex-nowrap items-center justify-center gap-1 rounded-full bg-black/60 p-1.5 sm:gap-2">
           <IconBtn onClick={toggleMic} title={micOn ? "Mute mic" : "Unmute mic"}>
             {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-          </IconBtn>
-          <IconBtn onClick={toggleCam} title={camOn ? "Turn camera off" : "Turn camera on"}>
-            {camOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
           </IconBtn>
           {onTogglePause && (
             <Button
