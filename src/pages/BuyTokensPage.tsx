@@ -33,7 +33,7 @@ import { TOKEN_USD, tokensToUsd } from "@/lib/constants";
 
 type Method = "mpesa" | "crypto";
 type PayCurrency = "ltc" | "usdttrc20";
-const PRESETS = [5, 10];
+const PRESETS = [3, 5, 10];
 const CUSTOM_MIN = 15;
 const USD_TO_KES = 130;
 const USDT_MIN_USD = 8;
