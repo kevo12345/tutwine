@@ -222,8 +222,8 @@ export default function BuyTokensPage() {
               selected === "custom" ? "border-primary bg-primary/10" : "border-border bg-card"
             }`}
           >
-            <div className="font-display text-xl font-bold">Custom</div>
-            <div className="text-xs text-muted-foreground">min {CUSTOM_MIN} coins</div>
+            <div className="font-display text-base font-bold leading-7">Custom</div>
+            <div className="text-[10px] text-muted-foreground">min {CUSTOM_MIN}</div>
           </button>
         </div>
 
