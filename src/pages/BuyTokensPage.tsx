@@ -33,7 +33,7 @@ import { TOKEN_USD, tokensToUsd } from "@/lib/constants";
 
 type Method = "mpesa" | "crypto";
 type PayCurrency = "ltc" | "usdttrc20";
-const PRESETS = [5, 10];
+const PRESETS = [3, 5, 10];
 const CUSTOM_MIN = 15;
 const USD_TO_KES = 130;
 const USDT_MIN_USD = 8;
@@ -197,7 +197,7 @@ export default function BuyTokensPage() {
 
         {/* Amount picker */}
         <p className="text-sm font-medium mb-2">Choose amount</p>
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="grid grid-cols-4 gap-2 mb-3">
           {PRESETS.map((p) => (
             <button
               key={p}
@@ -222,8 +222,8 @@ export default function BuyTokensPage() {
               selected === "custom" ? "border-primary bg-primary/10" : "border-border bg-card"
             }`}
           >
-            <div className="font-display text-xl font-bold">Custom</div>
-            <div className="text-xs text-muted-foreground">min {CUSTOM_MIN} coins</div>
+            <div className="font-display text-base font-bold leading-7">Custom</div>
+            <div className="text-[10px] text-muted-foreground">min {CUSTOM_MIN}</div>
           </button>
         </div>
 

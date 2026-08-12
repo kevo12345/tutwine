@@ -23,7 +23,7 @@ const USDT_TRC20_MIN_USD = 8;
 const USD_TO_KES = 130;
 // 1 coin = $0.25, so $1 buys 4 coins.
 const TOKEN_USD = 0.25;
-const PRESETS = [5, 10];
+const PRESETS = [3, 5, 10];
 const CUSTOM_MIN = 15;
 
 function json(body: unknown, status = 200) {
