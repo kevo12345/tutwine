@@ -197,7 +197,7 @@ export default function BuyTokensPage() {
 
         {/* Amount picker */}
         <p className="text-sm font-medium mb-2">Choose amount</p>
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="grid grid-cols-4 gap-2 mb-3">
           {PRESETS.map((p) => (
             <button
               key={p}
