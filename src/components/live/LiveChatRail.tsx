@@ -84,11 +84,17 @@ export function LiveChatRail({ sessionId, active }: Props) {
   }, [sessionId, active]);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-20 flex max-h-[38%] flex-col justify-end gap-1.5 overflow-hidden px-2 sm:bottom-24 sm:max-h-[45%] sm:px-3">
-      {messages.slice(-12).map((m) => (
+    <div
+      className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-20 flex max-h-[30%] flex-col justify-end gap-1 overflow-hidden px-2 sm:bottom-24 sm:max-h-[35%] sm:px-3"
+      style={{
+        maskImage: "linear-gradient(to top, black 70%, transparent)",
+        WebkitMaskImage: "linear-gradient(to top, black 70%, transparent)",
+      }}
+    >
+      {messages.slice(-6).map((m) => (
         <div
           key={m.id}
-          className="flex max-w-[88%] items-start gap-2 rounded-2xl bg-black/55 px-2 py-1 sm:max-w-[80%] sm:px-2.5 sm:py-1.5 text-white backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
+          className="flex max-w-[80%] items-start gap-2 bg-transparent px-1 py-0.5 text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] animate-in fade-in slide-in-from-bottom-2"
         >
           {m.author_photo ? (
             <img src={m.author_photo} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" />
