@@ -1,0 +1,12 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
+    container_name: tutwine-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
