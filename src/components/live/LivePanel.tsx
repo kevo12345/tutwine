@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 const TICKET_TOKENS = 1; // 1 coin ($0.25) = 1 hour of access to this live
+const PREVIEW_SECONDS = 15; // free look before a viewer has to buy a ticket
 
 type Props = {
   sessionId: string;
@@ -69,6 +70,23 @@ export function LivePanel({
   const heartChanRef = useRef<any>(null);
   const presenceChanRef = useRef<any>(null);
   const renewingRef = useRef(false);
+  const [previewEndsAt, setPreviewEndsAt] = useState<number | null>(null);
+  const [previewLeft, setPreviewLeft] = useState(PREVIEW_SECONDS);
+  const [previewOver, setPreviewOver] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const previewing = !authorized && previewEndsAt !== null && !previewOver;
+
+  useEffect(() => {
+    if (previewEndsAt === null || authorized || previewOver) return;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((previewEndsAt - Date.now()) / 1000));
+      setPreviewLeft(left);
+      if (left <= 0) setPreviewOver(true);
+    };
+    tick();
+    const i = setInterval(tick, 250);
+    return () => clearInterval(i);
+  }, [previewEndsAt, authorized, previewOver]);
 
   const isHost = !!(user && hostId && user.id === hostId);
   const balance = Number((profile as any)?.token_balance ?? 0);
@@ -113,27 +131,13 @@ export function LivePanel({
       if (session.host_id !== user.id) {
         let passExpiresAt = (passRes as any)?.data?.expires_at ?? null;
         if (!passExpiresAt) {
-          // No ticket yet: buy one with coins, or prompt a top-up when the balance is short.
-          const { data: bought, error: buyErr } = await (supabase as any).rpc(
-            "purchase_live_pass",
-            { _session_id: sessionId, _hours: TICKET_TOKENS },
-          );
-          if (cancelled) return;
-          const row = Array.isArray(bought) ? bought[0] : bought;
-          if (buyErr || !row?.expires_at) {
-            const msg = String((buyErr as any)?.message ?? "");
-            setLoading(false);
-            if (!buyErr || msg.includes("insufficient tokens")) {
-              // Coins are short — offer a top-up for this live.
-              setTopUpOpen(true);
-            } else {
-              toast.error(msg || "This live is no longer available");
-              onExit ? onExit() : navigate("/live", { replace: true });
-            }
-            return;
-          }
-          passExpiresAt = row.expires_at;
-          refreshProfile();
+          // No ticket yet: show a free 15-second preview, then ask them to join.
+          setRoomUrl(session.daily_room_url);
+          setPreviewEndsAt(Date.now() + PREVIEW_SECONDS * 1000);
+          setPreviewLeft(PREVIEW_SECONDS);
+          setPreviewOver(false);
+          setLoading(false);
+          return;
         }
         myExpiresAt = new Date(
           Math.min(new Date(passExpiresAt).getTime(), new Date(session.expires_at).getTime()),
@@ -170,6 +174,35 @@ export function LivePanel({
     };
   }, [sessionId, user, active, navigate, onExit, initialHostName, initialHostPhoto]);
 
+
+  /** After the free preview: spend 1 coin to join, or open the top-up. */
+  const joinAfterPreview = async () => {
+    if (joining) return;
+    if (balance < TICKET_TOKENS) {
+      setTopUpOpen(true);
+      return;
+    }
+    setJoining(true);
+    const { data, error } = await (supabase as any).rpc("purchase_live_pass", {
+      _session_id: sessionId,
+      _hours: TICKET_TOKENS,
+    });
+    setJoining(false);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row?.expires_at) {
+      if (!error || String(error?.message ?? "").includes("insufficient tokens")) setTopUpOpen(true);
+      else toast.error(error.message || "Could not join the live");
+      return;
+    }
+    const capped = sessionEndsAt
+      ? new Date(Math.min(new Date(row.expires_at).getTime(), new Date(sessionEndsAt).getTime())).toISOString()
+      : row.expires_at;
+    setExpiresAt(capped);
+    setAuthorized(true);
+    setPreviewEndsAt(null);
+    setPreviewOver(false);
+    refreshProfile();
+  };
 
   /** Buy another hour on this live. Returns true when access was extended. */
   const renewTicket = useCallback(async (): Promise<boolean> => {
@@ -471,7 +504,7 @@ export function LivePanel({
       )}
 
       {/* Video stage — full-bleed portrait on phones, centered 9:16 stage on wider screens */}
-      {active && authorized && roomUrl && (
+      {active && (authorized || previewing) && roomUrl && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative h-full w-full overflow-hidden bg-black">
             {isHost ? (
@@ -528,6 +561,37 @@ export function LivePanel({
           </div>
         </div>
       )}
+
+      {/* Free preview countdown */}
+      {active && previewing && (
+        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <span className="rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+            Free preview · {previewLeft}s
+          </span>
+          <Button size="sm" className="rounded-full" onClick={() => void joinAfterPreview()} disabled={joining}>
+            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : `Join · ${TICKET_TOKENS} coin`}
+          </Button>
+        </div>
+      )}
+
+      {/* Preview ended — join or leave */}
+      <Dialog open={active && previewOver && !authorized && !topUpOpen} onOpenChange={(v) => !v && closeLive()}>
+        <DialogContent className="max-w-sm rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Preview ended</DialogTitle>
+            <DialogDescription>
+              Spend {TICKET_TOKENS} coin ($0.25) to keep watching for 1 hour on this live. Your balance is{" "}
+              {balance} coin{balance === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button className="w-full" size="lg" disabled={joining} onClick={() => void joinAfterPreview()}>
+              {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : balance >= TICKET_TOKENS ? `Join · ${TICKET_TOKENS} coin` : "Buy coins to join"}
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={closeLive}>Exit live</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Loading state */}
       {active && loading && (

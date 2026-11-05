@@ -61,8 +61,8 @@ export default function LivePage() {
       navigate(`/live/${s.id}`);
       return;
     }
-    setSheet({ kind: "viewer", session: s });
-    
+    // Viewers get a free 15-second preview inside the live before paying.
+    navigate(`/live/${s.id}`);
   };
 
   /** Viewers pay with tokens (1 token per hour) to get a live pass. */
