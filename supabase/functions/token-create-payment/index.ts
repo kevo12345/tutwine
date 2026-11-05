@@ -3,6 +3,7 @@
 // M-Pesa STK push or a NOWPayments crypto payment. Tokens are ONLY credited by
 // the callbacks / payment-status verification via `complete_token_purchase`.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { CUSTOM_COIN_MIN, isValidCoinPurchase } from '../_shared/coin-packages.ts';
 import {
   getSellapayToken,
   cleanKenyanPhone,
@@ -23,8 +24,7 @@ const USDT_TRC20_MIN_USD = 8;
 const USD_TO_KES = 130;
 // 1 coin = $0.25, so $1 buys 4 coins.
 const TOKEN_USD = 0.25;
-const PRESETS = [3, 5, 10];
-const CUSTOM_MIN = 15;
+const CUSTOM_MIN = CUSTOM_COIN_MIN;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -52,13 +52,13 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub as string;
 
     const body = await req.json().catch(() => ({}));
-    const amount = Math.floor(Number(body?.amount));
+    const amount = Number(body?.amount);
     const provider = String(body?.provider ?? '');
     const phone = body?.phone ? String(body.phone) : '';
     const payCurrency = String(body?.pay_currency ?? 'ltc').toLowerCase();
 
     if (!Number.isFinite(amount) || amount <= 0) return json({ error: 'invalid amount' }, 400);
-    if (!PRESETS.includes(amount) && amount < CUSTOM_MIN) {
+    if (!isValidCoinPurchase(amount)) {
       return json({ error: `Minimum custom purchase is ${CUSTOM_MIN} coins` }, 400);
     }
     const usdAmount = Math.round(amount * TOKEN_USD * 100) / 100;

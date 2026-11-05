@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { ChatPassAccess } from "@/components/ChatPassAccess";
 
 type SafeProfile = {
   user_id: string;
@@ -87,7 +88,7 @@ export default function ChatListPage() {
       ]);
 
       const profile = ((profileRows ?? []) as SafeProfile[])[0];
-      if (!outgoingLike || !incomingLike || !profile) continue;
+      if (!profile) continue;
 
       items.push({
         matchId: m.id,
@@ -119,31 +120,12 @@ export default function ChatListPage() {
     );
   }
 
-  if (isFree && chats.length === 0) {
-    return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-          <MessageCircle className="h-16 w-16 text-muted-foreground/30" />
-          <h2 className="mt-4 font-display text-xl font-bold">No messages yet</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Visit a profile and send your first message!
-          </p>
-        </div>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
       <div className="h-full overflow-y-auto">
         <div className="px-3 pt-3 sm:px-4 sm:pt-4">
           <h1 className="mb-4 sm:mb-6 font-display text-xl sm:text-2xl font-bold">Chat</h1>
-          {isFree && chats.length > 0 && (
-            <div className="mb-4 flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2.5 text-sm text-muted-foreground">
-              <Lock className="h-4 w-4 shrink-0" />
-              <span>Free plan: 1 message per conversation. <button onClick={() => navigate("/pricing")} className="font-medium text-primary underline">Upgrade</button> for unlimited.</span>
-            </div>
-          )}
+          <ChatPassAccess />
           {chats.length === 0 ? (
             <div className="flex flex-col items-center py-20 text-center">
               <MessageCircle className="h-16 w-16 text-muted-foreground/30" />

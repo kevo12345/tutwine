@@ -30,11 +30,12 @@ import {
 import { toast } from "sonner";
 import { PaymentProcessingOverlay } from "@/components/payments/PaymentProcessingOverlay";
 import { TOKEN_USD, tokensToUsd } from "@/lib/constants";
+import { COIN_PRESETS, CUSTOM_COIN_MIN, isValidCoinPurchase } from "../../supabase/functions/_shared/coin-packages";
 
 type Method = "mpesa" | "crypto";
 type PayCurrency = "ltc" | "usdttrc20";
-const PRESETS = [3, 5, 10];
-const CUSTOM_MIN = 15;
+const PRESETS = COIN_PRESETS;
+const CUSTOM_MIN = CUSTOM_COIN_MIN;
 const USD_TO_KES = 130;
 const USDT_MIN_USD = 8;
 /** Minimum coins that satisfy the USDT-TRC20 invoice minimum. */
@@ -49,6 +50,8 @@ export default function BuyTokensPage() {
   const requested = Number(searchParams.get("amount") ?? 0);
   const joinSessionId = searchParams.get("join");
   const joinHours = Number(searchParams.get("hours") ?? 1);
+  const chatReturn = searchParams.get("chat");
+  const safeChatReturn = chatReturn && /^\/chat(?:\/[a-f0-9-]+)?$/.test(chatReturn) ? chatReturn : null;
 
   const [selected, setSelected] = useState<number | "custom">(
     requested > 0 && !PRESETS.includes(requested) ? "custom" : requested > 0 ? requested : 5,
@@ -79,12 +82,12 @@ export default function BuyTokensPage() {
   const balance = Number((profile as any)?.token_balance ?? 0);
 
   const amount = selected === "custom" ? Number(customAmount || 0) : Number(selected);
-  const amountValid = selected === "custom" ? amount >= CUSTOM_MIN : PRESETS.includes(amount);
+  const amountValid = isValidCoinPurchase(amount);
   const usdAmount = tokensToUsd(amount || 0);
   const usdtBelowMin = amount < USDT_MIN_TOKENS;
   const effectiveCurrency: PayCurrency = usdtBelowMin ? "ltc" : payCurrency;
 
-  const successRedirect = joinSessionId
+  const successRedirect = safeChatReturn ? `${safeChatReturn}?unlock=1` : joinSessionId
     ? `/live/${joinSessionId}?join=${Math.max(1, joinHours)}`
     : "/buy-tokens";
 
@@ -197,34 +200,34 @@ export default function BuyTokensPage() {
 
         {/* Amount picker */}
         <p className="text-sm font-medium mb-2">Choose amount</p>
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
           {PRESETS.map((p) => (
-            <button
+            <Button variant="outline"
               key={p}
               onClick={() => {
                 setSelected(p);
                 resetRequests();
               }}
-              className={`rounded-xl border p-3 text-center transition ${
+              className={`h-auto flex-col rounded-lg border p-3 text-center transition ${
                 selected === p ? "border-primary bg-primary/10" : "border-border bg-card"
               }`}
             >
               <div className="font-display text-xl font-bold">{p}</div>
               <div className="text-xs text-muted-foreground">${tokensToUsd(p).toFixed(2)}</div>
-            </button>
+            </Button>
           ))}
-          <button
+          <Button variant="outline"
             onClick={() => {
               setSelected("custom");
               resetRequests();
             }}
-            className={`rounded-xl border p-3 text-center transition ${
+            className={`h-auto flex-col rounded-lg border p-3 text-center transition ${
               selected === "custom" ? "border-primary bg-primary/10" : "border-border bg-card"
             }`}
           >
             <div className="font-display text-base font-bold leading-7">Custom</div>
             <div className="text-[10px] text-muted-foreground">min {CUSTOM_MIN}</div>
-          </button>
+          </Button>
         </div>
 
         {selected === "custom" && (
