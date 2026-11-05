@@ -2,10 +2,12 @@ services:
   web:
     build:
       context: .
+      dockerfile: Dockerfile
       args:
-        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
-        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
-        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-https://erhmkxbcubdopxbryetm.supabase.co}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyaG1reGJjdWJkb3B4YnJ5ZXRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTcwMzUsImV4cCI6MjA4ODM3MzAzNX0.rMo7aZ0YthgBKMjovMGvu1NlKvZktSt4BgSEuQIQFjs}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID:-erhmkxbcubdopxbryetm}
+    image: tutwine-web:latest
     container_name: tutwine-web
     restart: unless-stopped
     ports:
