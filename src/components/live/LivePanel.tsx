@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 const TICKET_TOKENS = 1; // 1 coin ($0.25) = 1 hour of access to this live
+const PREVIEW_SECONDS = 15; // free look before a viewer has to buy a ticket
 
 type Props = {
   sessionId: string;
@@ -69,6 +70,23 @@ export function LivePanel({
   const heartChanRef = useRef<any>(null);
   const presenceChanRef = useRef<any>(null);
   const renewingRef = useRef(false);
+  const [previewEndsAt, setPreviewEndsAt] = useState<number | null>(null);
+  const [previewLeft, setPreviewLeft] = useState(PREVIEW_SECONDS);
+  const [previewOver, setPreviewOver] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const previewing = !authorized && previewEndsAt !== null && !previewOver;
+
+  useEffect(() => {
+    if (previewEndsAt === null || authorized || previewOver) return;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((previewEndsAt - Date.now()) / 1000));
+      setPreviewLeft(left);
+      if (left <= 0) setPreviewOver(true);
+    };
+    tick();
+    const i = setInterval(tick, 250);
+    return () => clearInterval(i);
+  }, [previewEndsAt, authorized, previewOver]);
 
   const isHost = !!(user && hostId && user.id === hostId);
   const balance = Number((profile as any)?.token_balance ?? 0);
@@ -113,27 +131,13 @@ export function LivePanel({
       if (session.host_id !== user.id) {
         let passExpiresAt = (passRes as any)?.data?.expires_at ?? null;
         if (!passExpiresAt) {
-          // No ticket yet: buy one with coins, or prompt a top-up when the balance is short.
-          const { data: bought, error: buyErr } = await (supabase as any).rpc(
-            "purchase_live_pass",
-            { _session_id: sessionId, _hours: TICKET_TOKENS },
-          );
-          if (cancelled) return;
-          const row = Array.isArray(bought) ? bought[0] : bought;
-          if (buyErr || !row?.expires_at) {
-            const msg = String((buyErr as any)?.message ?? "");
-            setLoading(false);
-            if (!buyErr || msg.includes("insufficient tokens")) {
-              // Coins are short — offer a top-up for this live.
-              setTopUpOpen(true);
-            } else {
-              toast.error(msg || "This live is no longer available");
-              onExit ? onExit() : navigate("/live", { replace: true });
-            }
-            return;
-          }
-          passExpiresAt = row.expires_at;
-          refreshProfile();
+          // No ticket yet: show a free 15-second preview, then ask them to join.
+          setRoomUrl(session.daily_room_url);
+          setPreviewEndsAt(Date.now() + PREVIEW_SECONDS * 1000);
+          setPreviewLeft(PREVIEW_SECONDS);
+          setPreviewOver(false);
+          setLoading(false);
+          return;
         }
         myExpiresAt = new Date(
           Math.min(new Date(passExpiresAt).getTime(), new Date(session.expires_at).getTime()),
