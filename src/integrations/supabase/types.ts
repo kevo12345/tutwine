@@ -35,6 +35,24 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_passes: {
+        Row: {
+          expires_at: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          expires_at: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_usage: {
         Row: {
           boosts_count: number | null
@@ -1367,6 +1385,7 @@ export type Database = {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
       }
+      has_private_chat_access: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1398,6 +1417,14 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      open_private_chat: { Args: { _target: string }; Returns: string }
+      purchase_chat_pass: {
+        Args: never
+        Returns: {
+          expires_at: string
+          new_balance: number
+        }[]
       }
       purchase_live_pass: {
         Args: { _hours?: number; _session_id: string }

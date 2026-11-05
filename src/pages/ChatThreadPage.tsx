@@ -12,6 +12,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { ProfileDetailSheet } from "@/components/ProfileDetailSheet";
 import { Tables } from "@/integrations/supabase/types";
 import VideoCall from "@/components/VideoCall";
+import { useChatAccess } from "@/hooks/useChatAccess";
+import { ChatPassAccess } from "@/components/ChatPassAccess";
 
 type Message = Tables<"messages">;
 
@@ -21,6 +23,9 @@ export default function ChatThreadPage() {
   const { user } = useAuth();
   const { tier } = useSubscription();
   const isFree = tier === "free";
+  const { canChat, refetch: refreshAccess } = useChatAccess();
+  const [sendError, setSendError] = useState("");
+  const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [otherProfile, setOtherProfile] = useState<{ user_id: string; display_name: string | null; photos: string[] | null; verified: boolean | null; bio: string | null; interests: string[] | null; city: string | null; state: string | null; gender: string | null; age: number | null } | null>(null);
@@ -98,20 +103,26 @@ export default function ChatThreadPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const myMessageCount = messages.filter((m) => m.sender_id === user?.id).length;
-  const canSend = !isFree || myMessageCount < 1;
+  const canSend = canChat;
 
   const sendMessage = async () => {
-    if (!newMsg.trim() || !user || !matchId || !canSend) return;
+    if (!newMsg.trim() || !user || !matchId || !canSend || sending) return;
     const content = newMsg.trim();
-    setNewMsg("");
-
-    await supabase.from("messages").insert({
+    setSending(true);
+    setSendError("");
+    const { error } = await supabase.from("messages").insert({
       match_id: matchId,
       sender_id: user.id,
       content,
       type: "text",
     });
+    setSending(false);
+    if (error) {
+      setSendError("Message not sent. Check your chat pass and try again.");
+      void refreshAccess();
+    } else {
+      setNewMsg("");
+    }
   };
 
   const handleBlock = async () => {
@@ -160,7 +171,7 @@ export default function ChatThreadPage() {
               <p className="text-[10px] sm:text-xs text-muted-foreground">Active now</p>
             </div>
           </button>
-          {!isFree && <VideoCall matchId={matchId!} />}
+          {!isFree && matchId && <VideoCall matchId={matchId} />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -204,19 +215,9 @@ export default function ChatThreadPage() {
 
         {/* Input - with safe area for mobile */}
         <div className="border-t border-border bg-card px-2 py-2 sm:p-3 shrink-0 lg:rounded-b-2xl" style={{ paddingBottom: `max(0.5rem, env(safe-area-inset-bottom, 0px))` }}>
-          {isFree && !canSend ? (
-            <div className="flex items-center justify-center gap-2 py-1">
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Upgrade to reply</span>
-              <Button
-                size="sm"
-                className="gradient-warm border-0 text-primary-foreground ml-2"
-                onClick={() => navigate("/pricing")}
-              >
-                Upgrade
-              </Button>
-            </div>
-          ) : (
+          <ChatPassAccess />
+          {sendError && <p role="alert" className="pb-2 text-xs text-destructive">{sendError}</p>}
+          {canSend && (
             <div className="flex gap-1.5 sm:gap-2">
               <Input
                 placeholder="Type a message..."
@@ -229,7 +230,7 @@ export default function ChatThreadPage() {
                 size="icon"
                 className="shrink-0 rounded-full gradient-warm border-0 text-primary-foreground h-9 w-9 sm:h-10 sm:w-10"
                 onClick={sendMessage}
-                disabled={!newMsg.trim()}
+                disabled={!newMsg.trim() || sending}
               >
                 <Send className="h-4 w-4" />
               </Button>

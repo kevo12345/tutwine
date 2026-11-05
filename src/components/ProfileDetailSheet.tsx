@@ -88,16 +88,14 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
 
   if (!profile) return null;
 
-  const handleChat = () => {
-    if (isFree) {
-      toast("Chat is a premium feature", {
-        description: "Upgrade to start chatting with your matches.",
-        action: { label: "Upgrade", onClick: () => navigate("/pricing") },
-      });
+  const handleChat = async () => {
+    const { data: matchId, error } = await supabase.rpc("open_private_chat", { _target: profile.id });
+    if (error || !matchId) {
+      toast.error("Couldn't start conversation");
       return;
     }
     onClose();
-    navigate("/chat");
+    navigate(`/chat/${matchId}`);
   };
 
   const location = [profile.city, profile.state].filter(Boolean).join(", ");
@@ -213,7 +211,7 @@ export function ProfileDetailSheet({ open, onClose, profile }: ProfileDetailProp
             >
               {isFree ? (
                 <>
-                  <Lock className="h-4 w-4" /> Upgrade to Chat
+                  <MessageCircle className="h-4 w-4" /> Chat · 1 coin / 12h
                 </>
               ) : (
                 <>

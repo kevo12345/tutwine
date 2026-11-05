@@ -140,31 +140,12 @@ export default function UserProfilePage() {
 
   const handleChat = async () => {
     if (!userId || !user) return;
-    // Find existing match between the two users
-    const userA = user.id < userId ? user.id : userId;
-    const userB = user.id < userId ? userId : user.id;
-    const { data: match } = await supabase
-      .from("matches")
-      .select("id")
-      .eq("user_a", userA)
-      .eq("user_b", userB)
-      .maybeSingle();
-    if (match) {
-      navigate(`/chat/${match.id}`);
-    } else {
-      // Create a new match so they can chat
-      const { data: newMatch, error } = await supabase
-        .from("matches")
-        .insert({ user_a: userA, user_b: userB })
-        .select("id")
-        .single();
-      if (error) {
-        toast.error("Couldn't start conversation");
-        console.error(error);
-        return;
-      }
-      navigate(`/chat/${newMatch.id}`);
+    const { data: matchId, error } = await supabase.rpc("open_private_chat", { _target: userId });
+    if (error || !matchId) {
+      toast.error("Couldn't start conversation");
+      return;
     }
+    navigate(`/chat/${matchId}`);
   };
 
   return (
@@ -342,7 +323,7 @@ export default function UserProfilePage() {
             >
               {isFree ? (
                 <>
-                  <Lock className="h-4 w-4" /> Upgrade
+                  <MessageCircle className="h-4 w-4" /> Chat · 1 coin
                 </>
               ) : (
                 <>
