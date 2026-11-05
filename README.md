@@ -1,73 +1,130 @@
-# Welcome to your Lovable project
+# Tutwine
 
-## Project info
+Build a full‑stack dating web app (mobile‑first) called “PulseMatch” that lets users create accounts, upload photos, show approximate location, discover other members, and chat in real time. Must support free and paid membership tiers with subscription packages priced from $3, $5, and $10 (and equivalents in local currencies depending on the user’s state/region). Free mode must limit profile views and certain actions.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+1) Core goals
+- Safe, modern dating app UX.
+- Location-aware discovery (approximate distance, no precise address shown).
+- In-app 1:1 chat between matched/connected users.
+- Subscription billing with localized currency and price mapping.
 
-## How can I edit this code?
+2) User roles
+- Guest (not logged in): can view marketing/landing pages only.
+- Member (free): limited profile views and limited likes/messages.
+- Member (paid): expanded limits depending on tier.
+- Admin: manage users, reports, subscriptions, settings.
 
-There are several ways of editing your application.
+3) Required features
+A. Authentication & Profiles
+- Email + password signup/login, plus optional Google/Apple sign-in if available.
+- Mandatory age gate: users must confirm they are 18+ to register.
+- Profile fields: display name, age, gender, interested-in, bio, interests/tags, photos (up to 6), verification badge (optional), preferred distance, state/region selection.
+- Photo upload with moderation flags (basic nudity/abuse detection placeholder + admin review queue).
+- Privacy settings: hide/show state, hide distance, block user, remove account.
 
-**Use Lovable**
+B. Location
+- Ask user permission for approximate location; if denied, allow manual state/region selection.
+- Store: country, state/region, city (optional), and approximate lat/lng (rounded/geohash). Never display exact coordinates.
+- Discovery shows distance ranges (e.g., “within 5 km”, “within 20 km”).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+C. Discovery & Matching
+- Swipe/stack UI: like/pass.
+- Match occurs when both like each other.
+- Filters: age range, distance, gender preference, interests.
+- Limitations in Free mode:
+  - Profile views/day capped (configurable; default 20/day).
+  - Likes/day capped (default 10/day).
+  - Can only message after a match.
+- Paid tiers expand these limits:
+  - Tier Basic ($3): profile views 100/day, likes 50/day.
+  - Tier Plus ($5): unlimited views, likes 200/day, one “boost”/week.
+  - Tier Pro ($10): unlimited views/likes, daily boost, see who liked you.
 
-Changes made via Lovable will be committed automatically to this repo.
+D. Chat
+- 1:1 chat only between matched users.
+- Real-time updates (websockets or realtime DB).
+- Message types: text, emoji, image (optional).
+- Read receipts, typing indicator (nice-to-have).
+- Safety: block/report from chat.
 
-**Use your preferred IDE**
+E. Subscription & Payments
+- Subscription packages: Basic (3), Plus (5), Pro (10) USD base.
+- Currency and pricing adapt based on user location (state/region + country):
+  - Use a pricing table per country/state with currency code and converted prices.
+  - Default conversion from USD using stored exchange rates (admin-editable), and allow overriding prices per region.
+- Billing provider: Stripe (preferred) with Checkout/subscriptions; fallback stub if not available.
+- Free trial: optional config (default none).
+- Upgrade/downgrade/cancel flows with immediate UI updates.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+F. Admin dashboard
+- Users list, profile review, photo moderation queue.
+- Reports: reported users/messages with actions (warn, suspend, ban).
+- Subscription management: view status, refunds link (if supported), region pricing table editor.
+- Content settings: daily limits per tier.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+4) Pages / Routes
+- Landing page (pricing, safety, how it works)
+- Auth: login/signup/forgot password
+- Onboarding: age gate, profile setup, photo upload, interests, location permissions
+- Discovery (swipe)
+- Matches (list)
+- Chat (thread)
+- Profile (view/edit)
+- Settings (privacy, notifications, subscription)
+- Pricing/Upgrade
+- Admin (protected)
 
-Follow these steps:
+5) Data model (minimum)
+- users: id, email, password_hash, created_at, role
+- profiles: user_id, display_name, dob_or_age, gender, interested_in, bio, interests[], photos[], verified, country, state, city, geohash/rounded_latlng, prefs(distance, age_range)
+- swipes: id, swiper_id, target_id, action(like/pass), created_at
+- matches: id, user_a, user_b, created_at
+- messages: id, match_id, sender_id, type, content, created_at, read_at
+- subscriptions: id, user_id, tier, status, provider, provider_sub_id, currency, price, started_at, ends_at
+- reports: id, reporter_id, target_user_id, reason, details, status, created_at
+- region_pricing: id, country, state(optional), currency, basic_price, plus_price, pro_price, updated_at
+
+6) Technical requirements
+- Use a modern stack with auth, database, and realtime chat.
+- Ensure secure storage, input validation, rate limiting, and basic anti-spam.
+- Store images in object storage with signed URLs.
+- Implement daily usage counters to enforce free/paid limits.
+- Make UI mobile-first, clean, and modern.
+
+7) UX / Design
+- Brand: warm, modern, minimal.
+- Use clear CTAs and a pricing card layout.
+- Show “limited on free plan” gently with upgrade prompts.
+
+8) Safety & compliance
+- 18+ only; include Terms, Privacy Policy placeholders.
+- Reporting & blocking required.
+- Do not show precise user locations.
+
+Deliverables
+- Working app with seeded demo users (optional).
+- Admin login credentials in env/config.
+- Clear README for local dev + deployment.
+
+This project was built with [Lovable](https://lovable.dev).
+
+**Live app**: https://tutwine.lovable.app
+
+## Build with Lovable
+
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/360adade-e28d-415a-a234-af87562af5ff).
+
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+
+## Development
+
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
