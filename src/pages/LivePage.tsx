@@ -36,7 +36,6 @@ export default function LivePage() {
   const [submitting, setSubmitting] = useState(false);
   const [shortfall, setShortfall] = useState<{ hours: number; sessionId: string } | null>(null);
   const balance = Number(profile?.token_balance ?? 0);
-  const canHost = true; // Hosting a live is free for everyone
 
   const openHost = () => {
     if (desktopBlocked) {
@@ -45,11 +44,6 @@ export default function LivePage() {
     }
     if (!user) {
       navigate("/login");
-      return;
-    }
-    if (!canHost) {
-      toast.error("An active subscription is required to go live");
-      navigate("/pricing");
       return;
     }
     navigate("/live/start");
@@ -145,7 +139,7 @@ export default function LivePage() {
             size="lg"
             className="w-full rounded-xl font-semibold"
           >
-            {desktopBlocked ? "Mobile only" : canHost ? "Go live" : "Subscribe to go live"}
+            {desktopBlocked ? "Mobile only" : "Go live"}
           </Button>
 
           <button

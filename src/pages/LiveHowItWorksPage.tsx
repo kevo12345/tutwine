@@ -7,7 +7,7 @@ const steps = [
   {
     icon: Radio,
     title: "Open your room",
-    body: "Hosting is free for subscribers. Add a title, check your camera, and go live straight from your phone.",
+    body: "Hosting is free for everyone — no subscription needed. Add a title, check your camera, and go live straight from your phone.",
   },
   {
     icon: Ticket,
