@@ -208,12 +208,12 @@ export default function GiftCatalogPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Price (tokens)</Label>
-                <Input type="number" min={1} value={form.token_price}
+                <Input type="number" min={1} value={form.token_price as number}
                   onChange={(e) => setForm((f) => ({ ...f, token_price: e.target.value as any }))} />
               </div>
               <div>
                 <Label>Sort order</Label>
-                <Input type="number" min={0} value={form.sort_order}
+                <Input type="number" min={0} value={form.sort_order as number}
                   onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value as any }))} />
               </div>
             </div>
