@@ -1,6 +1,6 @@
 # Tutwine
 
-Build a full‑stack dating web app (mobile‑first) called “PulseMatch” that lets users create accounts, upload photos, show approximate location, discover other members, and chat in real time. Must support free and paid membership tiers with subscription packages priced from $3, $5, and $10 (and equivalents in local currencies depending on the user’s state/region). Free mode must limit profile views and certain actions.
+Build a full‑stack dating web app (mobile‑first) called “tutwine” that lets users create accounts, upload photos, show approximate location, discover other members, and chat in real time. Must support free and paid membership tiers with subscription packages priced from $3, $5, and $10 (and equivalents in local currencies depending on the user’s state/region). Free mode must limit profile views and certain actions.
 
 1) Core goals
 - Safe, modern dating app UX.
