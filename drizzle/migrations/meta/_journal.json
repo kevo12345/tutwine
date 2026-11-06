@@ -8,6 +8,13 @@
       "when": 1793881779943,
       "tag": "0000_twelve_hour_chat_pass",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793976191988,
+      "tag": "0001_restrict_user_presence_select",
+      "breakpoints": true
     }
   ]
 }
