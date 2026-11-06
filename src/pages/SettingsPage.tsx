@@ -42,7 +42,7 @@ export default function SettingsPage() {
 
   const handleToggle = async (field: "hide_distance" | "hide_state", value: boolean) => {
     if (!user) return;
-    await supabase.from("profiles").update({ [field]: value }).eq("user_id", user.id);
+    await supabase.from("profiles").update({ [field]: value } as { hide_distance?: boolean; hide_state?: boolean }).eq("user_id", user.id);
   };
 
   const handleSaveWallet = async () => {
