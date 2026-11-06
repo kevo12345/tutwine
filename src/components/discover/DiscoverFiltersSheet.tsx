@@ -226,6 +226,7 @@ export function DiscoverFiltersSheet({
                 ))}
                 <SelectItem value="250">250 km</SelectItem>
                 <SelectItem value="500">500 km</SelectItem>
+                <SelectItem value="0">Everywhere (worldwide)</SelectItem>
               </SelectContent>
             </Select>
           </div>

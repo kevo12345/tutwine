@@ -39,7 +39,7 @@ const DEFAULT_FILTERS: DiscoverFilters = {
   gender: "any",
   minAge: 18,
   maxAge: null,
-  maxDistanceKm: 500,
+  maxDistanceKm: 0, // 0 = everywhere (worldwide)
 };
 
 const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=600&fit=crop";
@@ -81,7 +81,7 @@ export default function DiscoverPage() {
     const args = {
       _my_lat: myProfile?.latitude ?? null,
       _my_lng: myProfile?.longitude ?? null,
-      _max_distance_km: filters.maxDistanceKm,
+      _max_distance_km: filters.maxDistanceKm > 0 ? filters.maxDistanceKm : 50000,
       _min_age: filters.minAge,
       _max_age: filters.maxAge ?? 120,
       _gender: filters.gender === "any" ? null : filters.gender,
@@ -146,9 +146,24 @@ export default function DiscoverPage() {
 
     load();
     const iv = setInterval(load, 45_000);
+    const idSet = new Set(ids);
+    const channel = supabase
+      .channel(`discover-presence-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_presence" }, (payload: any) => {
+        const r = payload.new;
+        if (!r?.user_id || !idSet.has(r.user_id)) return;
+        setOnlineIds((prev) => {
+          const next = new Set(prev);
+          if (r.is_online) next.add(r.user_id); else next.delete(r.user_id);
+          return next;
+        });
+        if (r.last_seen_at) setLastSeenMap((prev) => new Map(prev).set(r.user_id, r.last_seen_at));
+      })
+      .subscribe();
     return () => {
       cancelled = true;
       clearInterval(iv);
+      supabase.removeChannel(channel);
     };
   }, [profiles]);
 
@@ -194,7 +209,7 @@ export default function DiscoverPage() {
     interests: profile.interests ?? [],
     photos: (profile.photos?.length ? profile.photos : [FALLBACK_PHOTO]) as string[],
     distance: profile.distance_km != null ? Math.round(Number(profile.distance_km)) : null,
-    city: profile.city ?? "",
+    city: [profile.city, profile.country].filter(Boolean).join(", "),
     state: profile.state ?? "",
     verified: profile.verified ?? false,
     tier: profile.active_tier ?? "free",
