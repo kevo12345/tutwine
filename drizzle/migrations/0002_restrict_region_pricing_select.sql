@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can read region pricing" ON public.region_pricing;
