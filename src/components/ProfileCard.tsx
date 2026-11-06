@@ -79,18 +79,21 @@ export function ProfileCard({ profile, style, className, onTap, isOnline, lastSe
               <Circle className="h-2 w-2 fill-current" />
               Online
             </Badge>
-          ) : lastSeenText ? (
+          ) : (
             <Badge className="gap-1 text-xs backdrop-blur-sm bg-foreground/40 text-primary-foreground border-primary-foreground/20">
               <Clock className="h-3 w-3" />
-              Seen {lastSeenText}
+              {lastSeenText ? `Offline · ${lastSeenText}` : "Offline"}
             </Badge>
-          ) : null}
+          )}
 
         </div>
         <div className="mt-1 flex items-center gap-1 text-sm opacity-90">
           <MapPin className="h-3.5 w-3.5" />
           <span>
-            {profile.distance != null ? `${profile.distance} km away` : profile.city || profile.state || "Nearby"}
+            {[
+              profile.distance != null ? `${profile.distance.toLocaleString()} km away` : null,
+              profile.city || profile.state || null,
+            ].filter(Boolean).join(" · ") || "Location not set"}
           </span>
         </div>
         <p className="mt-2 line-clamp-2 text-sm opacity-80">{profile.bio}</p>
