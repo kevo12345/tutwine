@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { reverseGeocode } from "@/lib/reverseGeocode";
 
 
 type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable";
@@ -15,9 +16,16 @@ export function useLocationPrompt() {
     if (!user) return;
     const latitude = Math.round(lat * 10) / 10;
     const longitude = Math.round(lng * 10) / 10;
+    const place = await reverseGeocode(lat, lng);
+    const update: Record<string, unknown> = { latitude, longitude };
+    if (place) {
+      if (place.country) update.country = place.country;
+      if (place.state) update.state = place.state;
+      if (place.city) update.city = place.city;
+    }
     await supabase
       .from("profiles")
-      .update({ latitude, longitude })
+      .update(update as any)
       .eq("user_id", user.id);
     setHasLocation(true);
     setLocationStatus("granted");
