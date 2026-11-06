@@ -71,7 +71,7 @@ export function ChatPassAccess() {
             {balance >= CHAT_PASS_COINS ? (
               <Button disabled={busy} onClick={() => void activate()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Coins className="mr-2 h-4 w-4" />}Activate · 1 coin</Button>
             ) : (
-              <Button onClick={() => navigate(`/buy-tokens?amount=1&chat=${encodeURIComponent(location.pathname)}`)}>Buy 1 coin · $0.25</Button>
+              <Button onClick={() => navigate(`/buy-tokens?amount=3&chat=${encodeURIComponent(location.pathname)}`)}>Buy 3 coins · $0.75</Button>
             )}
           </DialogFooter>
         </DialogContent>

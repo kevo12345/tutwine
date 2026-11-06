@@ -53,8 +53,14 @@ export default function BuyTokensPage() {
   const chatReturn = searchParams.get("chat");
   const safeChatReturn = chatReturn && /^\/chat(?:\/[a-f0-9-]+)?$/.test(chatReturn) ? chatReturn : null;
 
+  // Small top-up requests (e.g. 1 coin) snap to the smallest preset that covers them.
+  const snappedPreset = requested > 0 ? PRESETS.find((p) => p >= requested) : undefined;
   const [selected, setSelected] = useState<number | "custom">(
-    requested > 0 && !PRESETS.includes(requested) ? "custom" : requested > 0 ? requested : 5,
+    requested > 0 && snappedPreset === undefined && requested < CUSTOM_MIN
+      ? PRESETS[PRESETS.length - 1]
+      : requested > 0 && (snappedPreset === undefined || requested >= CUSTOM_MIN) && !PRESETS.includes(requested)
+        ? "custom"
+        : snappedPreset ?? 5,
   );
   const [customAmount, setCustomAmount] = useState<string>(
     requested > 0 && !PRESETS.includes(requested) ? String(Math.max(requested, CUSTOM_MIN)) : "",
