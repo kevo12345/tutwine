@@ -181,28 +181,44 @@ export default function OnboardingPage() {
     setProfile((p) => ({ ...p, photos: p.photos.filter((_, j) => j !== index) }));
   };
 
+  const [locStatus, setLocStatus] = useState<"idle" | "detecting" | "detected" | "denied">("idle");
+  const [country, setCountry] = useState<string>(existingProfile?.country ?? "");
+
   const requestLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation not supported");
+      setLocStatus("denied");
       return;
     }
+    setLocStatus("detecting");
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        const place = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
         // Round coordinates for privacy
         const lat = Math.round(pos.coords.latitude * 10) / 10;
         const lng = Math.round(pos.coords.longitude * 10) / 10;
-
-        if (user) {
-          await supabase.from("profiles").update({
-            latitude: lat, longitude: lng,
-          }).eq("user_id", user.id);
+        const update: Record<string, unknown> = { latitude: lat, longitude: lng };
+        if (place) {
+          update.country = place.country;
+          update.state = place.state;
+          update.city = place.city;
+          setCountry(place.country);
+          setProfile((p) => ({ ...p, state: place.state, city: place.city }));
         }
-        toast.success("Approximate location detected");
-        setProfile((p) => ({ ...p, state: "Detected", city: "Detected" }));
+        if (user) await supabase.from("profiles").update(update as any).eq("user_id", user.id);
+        setLocStatus("detected");
       },
-      () => toast.error("Location denied. Enter manually below.")
+      () => setLocStatus("denied"),
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 },
     );
   };
+
+  // Ask for location automatically when the user reaches the location step
+  useEffect(() => {
+    if (step === 3 && locStatus === "idle") requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  const locationLocked = locStatus === "detected";
 
   return (
     <div className="flex min-h-screen flex-col bg-background p-4">
@@ -339,21 +355,27 @@ export default function OnboardingPage() {
                   <h1 className="font-display text-2xl font-bold">Your location</h1>
                   <p className="text-sm text-muted-foreground">We'll show approximate distance to keep you safe.</p>
                 </div>
-                <Button variant="outline" className="w-full gap-2" onClick={requestLocation}>
-                  <MapPin className="h-4 w-4" /> Use my approximate location
-                </Button>
-                <div className="relative flex items-center gap-4">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-xs text-muted-foreground">or enter manually</span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
+                {locStatus === "detected" ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-success/40 bg-success/10 p-3 text-sm">
+                    <MapPin className="h-4 w-4 text-success" />
+                    <span>Detected: {[profile.city, profile.state, country].filter(Boolean).join(", ")}</span>
+                  </div>
+                ) : (
+                  <Button variant="outline" className="w-full gap-2" onClick={requestLocation} disabled={locStatus === "detecting"}>
+                    {locStatus === "detecting" ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+                    {locStatus === "detecting" ? "Detecting your location…" : "Allow location"}
+                  </Button>
+                )}
+                {locStatus === "denied" && (
+                  <p className="text-xs text-muted-foreground">Location is blocked. Allow it in your browser settings for a verified location, or enter it below.</p>
+                )}
                 <div className="space-y-2">
                   <Label>State / Region</Label>
-                  <Input placeholder="e.g., Texas" value={profile.state} onChange={(e) => setProfile({ ...profile, state: e.target.value })} />
+                  <Input placeholder="e.g., Nairobi" value={profile.state} readOnly={locationLocked} disabled={locationLocked} onChange={(e) => setProfile({ ...profile, state: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label>City (optional)</Label>
-                  <Input placeholder="e.g., Austin" value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} />
+                  <Input placeholder="e.g., Westlands" value={profile.city} readOnly={locationLocked} disabled={locationLocked} onChange={(e) => setProfile({ ...profile, city: e.target.value })} />
                 </div>
               </div>
             )}
