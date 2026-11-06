@@ -22,6 +22,13 @@
       "when": 1793976237937,
       "tag": "0002_restrict_region_pricing_select",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793985013230,
+      "tag": "0003_coin_presets_3_5_10_20",
+      "breakpoints": true
     }
   ]
 }

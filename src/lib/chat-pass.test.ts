@@ -16,13 +16,14 @@ describe("chat pass rules", () => {
     expect(isChatPassActive(expiry, start + 43200000)).toBe(false);
     expect(isChatPassActive(null, start)).toBe(false);
   });
-  it("allows buying 1, 3, 5 and 10 coins", () => {
-    expect(COIN_PRESETS).toEqual([1, 3, 5, 10]);
-    for (const amount of [1, 3, 5, 10]) expect(isValidCoinPurchase(amount)).toBe(true);
+  it("allows buying 3, 5, 10 and 20 coins, but not 1", () => {
+    expect(COIN_PRESETS).toEqual([3, 5, 10, 20]);
+    for (const amount of [3, 5, 10, 20]) expect(isValidCoinPurchase(amount)).toBe(true);
+    expect(isValidCoinPurchase(1)).toBe(false);
   });
   it("keeps custom purchases at fifteen whole coins or more", () => {
     expect(CUSTOM_COIN_MIN).toBe(15);
-    for (const amount of [0, 2, 4, 11, 14, 15.5, Infinity]) expect(isValidCoinPurchase(amount)).toBe(false);
+    for (const amount of [0, 1, 2, 4, 11, 14, 15.5, Infinity]) expect(isValidCoinPurchase(amount)).toBe(false);
     expect(isValidCoinPurchase(15)).toBe(true);
     expect(isValidCoinPurchase(16)).toBe(true);
   });
